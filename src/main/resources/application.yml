@@ -1,0 +1,174 @@
+# ==================== SmartATS 应用配置 ====================
+#
+# 📌 环境配置说明：
+#    - 开发环境：使用 application-dev.yml（默认激活）
+#    - 生产环境：使用 application-prod.yml
+#    - 切换方式：设置环境变量 SPRING_PROFILES_ACTIVE=prod
+# ================================================================
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # 📌 本地 .env 文件自动加载（Spring Boot 2.4+ 内置支持，无需额外依赖）
+  # .env 中的变量会被注入到 ${KEY:default} 占位符中
+  config:
+    import: optional:file:.env[.properties]
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB       # 单个文件最大 10MB
+      max-request-size: 50MB    # 请求最大 50MB
+      file-size-threshold: 2MB  # 超过 2MB 才写入磁盘
+
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your_email@qq.com}
+    password: ${MAIL_PASSWORD:}   # 从环境变量读取，本地开发在 .env 或 IDE 中配置
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        ssl:
+          trust: smtp.qq.com
+    default-encoding: UTF-8
+
+  application:
+    name: smartats              # 应用名称（会在日志、监控中显示）
+
+  # ==================== 数据库配置 ====================
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver    # MySQL 驱动类
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartats}?useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:smartats}                     # 数据库用户名
+    password: ${DB_PASSWORD:smartats123}                          # 数据库密码（从环境变量读取）
+
+    # 📌 HikariCP 连接池配置（Spring Boot 默认连接池）
+    hikari:
+      maximum-pool-size: 20       # 最大连接数（根据数据库性能调整）
+      minimum-idle: 5             # 最小空闲连接数
+      connection-timeout: 30000   # 获取连接超时时间（毫秒）
+      idle-timeout: 600000       # 空闲连接超时时间（10分钟）
+
+  # ==================== Redis 配置 ====================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}            # Redis 服务器地址
+      port: ${REDIS_PORT:6379}                # Redis 端口
+      password: ${REDIS_PASSWORD:}                # Redis 密码（从环境变量读取）
+      database: 0               # Redis 数据库索引（0-15，共16个库）
+      timeout: 5000             # 连接超时时间（毫秒）
+
+      # 📌 Lettuce 连接池配置（Spring Boot 默认 Redis 客户端）
+      lettuce:
+        pool:
+          max-active: 20         # 最大活跃连接数
+          max-idle: 10          # 最大空闲连接数
+          min-idle: 5           # 最小空闲连接数
+
+  # ==================== RabbitMQ 配置 ====================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}             # RabbitMQ 服务器地址
+    port: ${RABBITMQ_PORT:5672}                 # AMQP 协议端口（管理界面是 15672）
+    username: ${RABBITMQ_USERNAME:admin}            # 用户名
+    password: ${RABBITMQ_PASSWORD:admin123}                # 密码（从环境变量读取）
+    virtual-host: ${RABBITMQ_VHOST:smartats}    # 虚拟主机（类似 MySQL 的 database）
+    listener:
+      simple:
+        acknowledge-mode: manual  # 手动确认消息（确保消息不丢失）
+        prefetch: 1             # 每次只从队列取 1 条消息（保证顺序）
+
+  # ==================== Jackson 配置（JSON 序列化）====================
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss   # 日期格式
+    time-zone: Asia/Shanghai            # 时区
+    default-property-inclusion: non_null # 不序列化 null 值（减少 JSON 大小）
+
+  # ==================== Spring AI 配置（智谱 AI）====================
+  # 智谱 API 完全兼容 OpenAI 格式，使用 OpenAI starter
+  ai:
+    openai:
+      api-key: ${ZHIPU_API_KEY:placeholder-set-in-env}                    # 智谱 API Key
+      base-url: https://open.bigmodel.cn/api/paas/v4  # 智谱 API 地址
+      chat:
+        enabled: true
+        options:
+          # 模型选择（2026年2月最新）
+          model: ${ZHIPU_MODEL:glm-4-flash-250414}  # 开发测试用免费模型
+          temperature: 0.3                          # 温度（0-1，简历解析建议 0.3）
+          max-tokens: 4000                          # 最大 token 数
+
+server:
+  port: 8080                    # 应用端口（浏览器访问 http://localhost:8080）
+  servlet:
+    context-path: /api/v1         # 全局路径前缀（所有接口以 /api/v1 开头）
+
+# ==================== Actuator 健康检查配置 ====================
+management:
+  health:
+    mail:
+      enabled: false  # 禁用邮件健康检查（邮件服务不影响应用核心功能）
+
+# ==================== MyBatis-Plus 配置 ====================
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true    # 数据库下划线 → Java 驼峰命名（user_name → userName）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印 SQL 日志（开发环境）
+  global-config:
+    db-config:
+      id-type: auto                    # 主键自增（MySQL 用 auto，PostgreSQL 用 assign_id）
+      logic-delete-field: deleted        # 逻辑删除字段（软删除）
+      logic-delete-value: 1             # 删除后的值
+      logic-not-delete-value: 0         # 未删除的值
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    root: INFO                       # 全局日志级别
+    com.smartats: DEBUG              # 本项目的日志级别（开发用 DEBUG）
+    com.smartats.mapper: DEBUG       # Mapper 接口日志（打印 SQL）
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'  # 日志格式
+
+# ==================== 应用自定义配置 ====================
+smartats:
+  jwt:
+    secret: ${JWT_SECRET:SmartATS2026SecretKeyMustBeLongEnoughForHS256}    # JWT 密钥（生产环境必须改！）
+    expiration: 7200              # Access Token 过期时间（2小时，单位：秒）
+    refresh-expiration: 604800    # Refresh Token 过期时间（7天）
+
+  file:
+    upload-path: ./data/uploads    # 文件上传路径（简历存储位置）
+    max-size: 10485760           # 最大文件大小（10MB = 10 * 1024 * 1024）
+
+  ai:
+    daily-quota: 100              # 每日 AI 调用配额
+    embedding:
+      model: ${ZHIPU_EMBEDDING_MODEL:embedding-3}  # 智谱 embedding-3，1024 维
+
+  cors:
+    allowed-origins: "*"          # 开发环境允许所有域名，生产环境通过环境变量设置
+
+  verification-code:
+    expire-time: 300              # 验证码过期时间（5分钟 = 300秒）
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:admin}
+  secret-key: ${MINIO_SECRET_KEY:admin123456}
+  bucket-name: smartats-resumes
+  connect-timeout: 10000  # 10秒
+  write-timeout: 60000     # 60秒
+  read-timeout: 10000      # 10秒
+
+# ==================== Milvus 向量数据库配置 ====================
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  database: ${MILVUS_DATABASE:default}
+  connect-timeout: 10000  # 10秒

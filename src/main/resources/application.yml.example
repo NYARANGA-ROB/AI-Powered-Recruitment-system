@@ -1,0 +1,134 @@
+# ==================== SmartATS 应用配置模板 ====================
+#
+# 📌 使用说明：
+# 1. 复制此文件为 application.yml 并填入实际配置
+# 2. 或设置环境变量（推荐用于生产环境）
+#    - 开发环境：使用 .env 文件（不提交到 git）
+#    - 生产环境：使用环境变量或配置中心
+# ================================================================
+
+server:
+  port: 8080                    # 应用端口（浏览器访问 http://localhost:8080）
+  servlet:
+    context-path: /api/v1         # 全局路径前缀（所有接口以 /api/v1 开头）
+    multipart:
+      enabled: true
+      max-file-size: 10MB       # 单个文件最大 10MB
+      max-request-size: 50MB    # 请求最大 50MB
+      file-size-threshold: 2MB  # 超过 2MB 才写入磁盘
+
+spring:
+  # ==================== 邮件配置 ====================
+  mail:
+    host: ${MAIL_HOST:smtp.qq.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your_email@qq.com}
+    password: ${MAIL_PASSWORD}   # 从环境变量读取，本地开发在 .env 配置
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        ssl:
+          trust: ${MAIL_HOST:smtp.qq.com}
+    default-encoding: UTF-8
+
+  application:
+    name: smartats              # 应用名称（会在日志、监控中显示）
+
+  # ==================== 数据库配置 ====================
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver    # MySQL 驱动类
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartats}?useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:smartats}                     # 数据库用户名
+    password: ${DB_PASSWORD}                          # 数据库密码（从环境变量读取）
+
+    # 📌 HikariCP 连接池配置（Spring Boot 默认连接池）
+    hikari:
+      maximum-pool-size: 20       # 最大连接数（根据数据库性能调整）
+      minimum-idle: 5             # 最小空闲连接数
+      connection-timeout: 30000   # 获取连接超时时间（毫秒）
+      idle-timeout: 600000       # 空闲连接超时时间（10分钟）
+
+  # ==================== Redis 配置 ====================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}            # Redis 服务器地址
+      port: ${REDIS_PORT:6379}                # Redis 端口
+      password: ${REDIS_PASSWORD}                # Redis 密码（从环境变量读取）
+      database: 0               # Redis 数据库索引（0-15，共16个库）
+      timeout: 5000             # 连接超时时间（毫秒）
+
+      # 📌 Lettuce 连接池配置（Spring Boot 默认 Redis 客户端）
+      lettuce:
+        pool:
+          max-active: 20         # 最大活跃连接数
+          max-idle: 10          # 最大空闲连接数
+          min-idle: 5           # 最小空闲连接数
+
+  # ==================== RabbitMQ 配置 ====================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}             # RabbitMQ 服务器地址
+    port: ${RABBITMQ_PORT:5672}                 # AMQP 协议端口（管理界面是 15672）
+    username: ${RABBITMQ_USERNAME:admin}            # 用户名
+    password: ${RABBITMQ_PASSWORD}                # 密码（从环境变量读取）
+    virtual-host: ${RABBITMQ_VHOST:smartats}    # 虚拟主机（类似 MySQL 的 database）
+    listener:
+      simple:
+        acknowledge-mode: manual  # 手动确认消息（确保消息不丢失）
+        prefetch: 1             # 每次只从队列取 1 条消息（保证顺序）
+
+  # ==================== Jackson 配置（JSON 序列化）====================
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss   # 日期格式
+    time-zone: Asia/Shanghai            # 时区
+    default-property-inclusion: non_null # 不序列化 null 值（减少 JSON 大小）
+
+# ==================== MyBatis-Plus 配置 ====================
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true    # 数据库下划线 → Java 驼峰命名（user_name → userName）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印 SQL 日志（开发环境）
+  global-config:
+    db-config:
+      id-type: auto                    # 主键自增（MySQL 用 auto，PostgreSQL 用 assign_id）
+      logic-delete-field: deleted        # 逻辑删除字段（软删除）
+      logic-delete-value: 1             # 删除后的值
+      logic-not-delete-value: 0         # 未删除的值
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    root: INFO                       # 全局日志级别
+    com.smartats: DEBUG              # 本项目的日志级别（开发用 DEBUG）
+    com.smartats.mapper: DEBUG       # Mapper 接口日志（打印 SQL）
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'  # 日志格式
+
+# ==================== 应用自定义配置 ====================
+smartats:
+  jwt:
+    secret: ${JWT_SECRET:SmartATS2026SecretKeyMustBeLongEnoughForHS256}    # JWT 密钥（生产环境必须改！）
+    expiration: 7200              # Access Token 过期时间（2小时，单位：秒）
+    refresh-expiration: 604800    # Refresh Token 过期时间（7天）
+
+  file:
+    upload-path: ./data/uploads    # 文件上传路径（简历存储位置）
+    max-size: 10485760           # 最大文件大小（10MB = 10 * 1024 * 1024）
+
+  ai:
+    daily-quota: 100              # 每日 AI 调用配额
+
+  verification-code:
+    expire-time: 300              # 验证码过期时间（5分钟 = 300秒）
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:admin}
+  secret-key: ${MINIO_SECRET_KEY:admin123456}
+  bucket-name: smartats-resumes
+  connect-timeout: 10000  # 10秒
+  write-timeout: 60000     # 60秒
+  read-timeout: 10000      # 10秒
