@@ -1,140 +1,156 @@
-# SmartATS 从 0 到 1 开发教学手册（Java 初学者版）
+# SmartATS — From Zero to One Development Guide (Java Beginner Edition)
 
-> 适用对象：第一次独立做 Java 项目的学习者  
-> 目标：你可以“照着做”完成一个可运行、可演示、可扩展的 SmartATS 后端项目  
-> 依据文档：SmartATS 设计文档（v1.0）
-
----
-
-## 0. 先建立正确预期（非常重要）
-
-这个项目不是“只写几个接口”的练手项目，而是一个完整后端系统，包含：
-1. 用户认证
-2. 文件上传与异步处理
-3. AI 解析（Spring AI）
-4. 向量检索（RAG）
-5. 缓存、限流、分布式锁
-6. 消息队列（RabbitMQ）
-
-你要按“阶段”推进，不要一上来就做最难的 AI 搜索。正确顺序是：
-- **先跑通基础骨架** → **再做业务 CRUD** → **再做异步解析** → **最后做 AI 与向量搜索**。
+> **Target Audience:** Developers learning to build an independent Java project for the first time.  
+> **Goal:** Follow this guide step by step to build a functional, demonstrable, and extensible SmartATS backend application.  
+> **Reference Document:** SmartATS Design Document (v1.0)
 
 ---
 
-## 1. 项目全景图（先理解你在做什么）
+## 0. Set the Right Expectations First (Very Important)
 
-你可以把 SmartATS 想成 4 条主链路：
+This project is not a simple practice project involving just a few API endpoints. It is a complete backend system that includes:
 
-1. **登录链路**：注册/登录/JWT 鉴权
-2. **上传链路**：上传简历 → 存库 → 投递 MQ → 后台解析
-3. **检索链路**：关键词/语义搜索候选人
-4. **招聘流程链路**：职位管理 → 投递申请 → 面试记录
+1. User authentication.
+2. File uploads and asynchronous processing.
+3. AI-powered parsing (Spring AI).
+4. Vector retrieval (RAG).
+5. Caching, rate limiting, and distributed locking.
+6. Message queues (RabbitMQ).
 
-你每完成一条链路，就有“可验收结果”。
+You should develop the project in stages. Do not start with the most difficult AI search functionality.
 
----
+The correct development sequence is:
 
-## 2. 开发前准备（macOS 环境）
-
-> 原则：先把环境一次性配完整，避免后面边开发边修环境。
-
-### 2.1 必装软件清单
-
-1. JDK 21（建议 LTS）
-2. Maven 3.9+
-3. Docker Desktop
-4. IntelliJ IDEA（Community 也可）
-5. Postman 或 Apifox（测接口）
-6. DBeaver / DataGrip（看数据库）
-7. Redis 可视化工具（可选）
-
-### 2.2 验证安装是否成功
-
-你要逐个验证：
-1. Java 版本正确
-2. Maven 可用
-3. Docker 正常启动
-4. IDE 能导入 Maven 项目
-
-### 2.3 新手最容易踩坑
-
-1. **Java 版本不对**（例如 JDK 17/8 混用）
-2. **Maven 使用了错误 settings.xml**
-3. **Docker 内存过小**导致 MySQL/Milvus 异常
-4. **本地 3306/6379/5672 端口被占用**
-
-建议你一开始就记录“端口占用情况”。
+- **First, get the basic project structure running.**
+- **Then, implement business CRUD operations.**
+- **Next, implement asynchronous processing.**
+- **Finally, integrate AI and vector search.**
 
 ---
 
-## 3. 第一次搭建：只启动基础设施，不写业务
+## 1. Project Overview (Understand What You Are Building)
 
-### 3.1 按设计文档准备容器
+You can think of SmartATS as having four main business workflows:
 
-启动以下服务：
-1. MySQL 8.0
-2. Redis 7
-3. RabbitMQ（含管理台）
-4. Milvus（或先用 PgVector，二选一）
-5. MinIO（用于简历文件存储，建议加上）
+1. **Authentication Workflow:** Registration / Login / JWT Authentication.
+2. **Upload Workflow:** Resume Upload → Database Storage → MQ Publishing → Background Parsing.
+3. **Search Workflow:** Keyword Search / Semantic Candidate Search.
+4. **Recruitment Workflow:** Job Management → Job Applications → Interview Records.
 
-### 3.2 服务健康检查清单
-
-启动后逐项检查：
-1. MySQL 可连接，能看到 `smartats` 数据库
-2. Redis PING 返回成功
-3. RabbitMQ 管理页面可登录
-4. MinIO 控制台可打开
-5. Milvus 端口可用（若暂不做 RAG，可后置）
-
-### 3.3 验收标准
-
-你必须达到：
-- 本地重启电脑后，能在 10 分钟内重新拉起所有依赖。
+Every time you complete one workflow, you should have a verifiable result that can be tested and evaluated.
 
 ---
 
-## 4. 项目初始化（后端骨架）
+## 2. Development Environment Setup (macOS)
 
-### 4.1 创建 Spring Boot 项目
+> **Principle:** Configure your development environment completely before starting development to avoid troubleshooting environment issues while implementing business functionality.
 
-按设计文档技术栈选依赖：
-1. Spring Web
-2. Validation
-3. Spring Security
-4. MyBatis-Plus
-5. MySQL Driver
-6. Redis + Redisson
-7. RabbitMQ
-8. Spring AI（Chat + Embedding）
-9. Lombok（可选）
+### 2.1 Required Software
 
-### 4.2 建立目录结构
+1. JDK 21 (LTS recommended).
+2. Maven 3.9+.
+3. Docker Desktop.
+4. IntelliJ IDEA (Community Edition is sufficient).
+5. Postman or Apifox (for API testing).
+6. DBeaver / DataGrip (for database management).
+7. Redis GUI Client (optional).
 
-严格按设计文档推荐结构分层：
-- common（公共响应、异常、注解、切面）
-- config（配置类）
-- module（auth/resume/candidate/job/ai）
-- infrastructure（redis/mq/storage）
+### 2.2 Verify Successful Installation
 
-### 4.3 统一基础能力（先做这 4 个）
+Verify each component individually:
 
-1. 统一响应结构 `Result`
-2. 全局异常处理
-3. 参数校验失败返回规范
-4. 全局日志格式（至少含 traceId、请求路径、耗时）
+1. Confirm that the Java version is correct.
+2. Confirm that Maven is installed and working.
+3. Confirm that Docker starts successfully.
+4. Confirm that your IDE can import Maven projects.
 
-### 4.4 阶段验收
+### 2.3 Common Beginner Mistakes
 
-你可以在浏览器打开健康接口，看到统一格式返回，说明骨架完成。
+1. **Incorrect Java version:** For example, mixing JDK 17 and JDK 8.
+2. **Incorrect Maven configuration:** Using the wrong `settings.xml` file.
+3. **Insufficient Docker memory:** This can cause MySQL or Milvus to malfunction.
+4. **Port conflicts:** Local ports `3306`, `6379`, or `5672` may already be occupied.
+
+It is recommended that you record port usage before starting development.
 
 ---
 
-## 5. 数据库阶段（先把“数据地基”打稳）
+## 3. Initial Setup: Start Infrastructure Before Writing Business Logic
 
-### 5.1 建库建表顺序（按依赖关系）
+### 3.1 Prepare Containers According to the Design Document
 
-建议顺序：
+Start the following services:
+
+1. MySQL 8.0.
+2. Redis 7.
+3. RabbitMQ (including the Management UI).
+4. Milvus (or PgVector initially; choose one).
+5. MinIO (for resume file storage; recommended).
+
+### 3.2 Service Health Check Checklist
+
+After starting the services, verify each one:
+
+1. MySQL is accessible and the `smartats` database exists.
+2. Redis responds successfully to the `PING` command.
+3. The RabbitMQ Management UI is accessible and you can log in.
+4. The MinIO Console opens successfully.
+5. The Milvus port is accessible (this can be postponed if RAG is not being implemented yet).
+
+### 3.3 Acceptance Criteria
+
+You must achieve the following:
+
+- After restarting your computer, you should be able to start all infrastructure dependencies again within 10 minutes.
+
+---
+
+## 4. Project Initialization (Backend Foundation)
+
+### 4.1 Create a Spring Boot Project
+
+Select dependencies according to the technology stack in the design document:
+
+1. Spring Web.
+2. Validation.
+3. Spring Security.
+4. MyBatis-Plus.
+5. MySQL Driver.
+6. Redis + Redisson.
+7. RabbitMQ.
+8. Spring AI (Chat + Embedding).
+9. Lombok (optional).
+
+### 4.2 Establish the Project Directory Structure
+
+Follow the recommended layered architecture in the design document:
+
+- `common` — Shared API responses, exceptions, annotations, and aspects.
+- `config` — Configuration classes.
+- `module` — Business modules (`auth`, `resume`, `candidate`, `job`, `ai`).
+- `infrastructure` — Infrastructure components (`redis`, `mq`, `storage`).
+
+### 4.3 Implement Four Essential Shared Capabilities First
+
+1. Unified API response structure: `Result`.
+2. Global exception handling.
+3. Standardized responses for parameter validation failures.
+4. Global logging format (including at least `traceId`, request path, and execution time).
+
+### 4.4 Phase Acceptance Criteria
+
+You should be able to open a health-check endpoint in your browser and receive a response in the standardized API format.
+
+Once this works, your backend foundation is ready.
+
+---
+
+## 5. Database Development (Establish a Solid Data Foundation)
+
+### 5.1 Database and Table Creation Order
+
+Follow the dependency relationships and create the tables in this order:
+
 1. `users`
 2. `jobs`
 3. `resumes`
@@ -142,421 +158,99 @@
 5. `job_applications`
 6. `interview_records`
 
-### 5.2 为什么这个顺序
+### 5.2 Why This Order?
 
-因为后面的表会依赖前面的主键关系，先建基础实体再建流程实体，调试更轻松。
+Later tables depend on primary key relationships established by earlier tables. Creating foundational entities first and workflow-related entities afterward makes development and debugging easier.
 
-### 5.3 每张表你都要做的 3 件事
+### 5.3 Three Tasks to Complete for Every Table
 
-1. 写实体类（Entity）
-2. 写 Mapper（含基础 CRUD）
-3. 写最小查询测试（确保增删改查 OK）
+1. Create the Entity class.
+2. Create the Mapper, including basic CRUD operations.
+3. Write a minimal database query test to verify that create, read, update, and delete operations work correctly.
 
-### 5.4 数据库验收清单
+### 5.4 Database Acceptance Checklist
 
-1. 所有表都能在客户端看到
-2. 索引创建正确
-3. 插入测试数据无报错
-4. JSON 字段可正常读写
-
----
-
-## 6. 第一条完整业务链：认证模块（最先做）
-
-> 原因：后续所有接口都依赖用户身份。
-
-### 6.1 目标接口
-
-1. 注册
-2. 登录
-3. 刷新 token
-
-### 6.2 你要先做哪些组件
-
-1. 用户 DTO（请求/响应）
-2. 用户服务层
-3. 密码加密（BCrypt）
-4. JWT 生成与校验
-5. Security 过滤链
-
-### 6.3 开发顺序（建议照抄执行）
-
-1. 先把注册做通（可写入 users）
-2. 再做登录（返回 accessToken）
-3. 再接入鉴权拦截（除登录/注册外都需要 token）
-4. 最后做 refreshToken
-
-### 6.4 验收标准
-
-1. 未登录访问业务接口返回 401
-2. 登录后带 token 可访问
-3. token 过期后可刷新
+1. All tables are visible in your database client.
+2. Database indexes are created correctly.
+3. Test data can be inserted without errors.
+4. JSON fields can be read and written correctly.
 
 ---
 
-## 7. 第二条业务链：职位管理（中等难度，适合练 CRUD）
+## 6. First Complete Business Workflow: Authentication Module
 
-### 7.1 目标接口
+> **Reason:** All subsequent business APIs depend on user identity and authentication.
 
-1. 创建职位
-2. 职位详情
-3. 发布/关闭职位
-4. 热门职位
+### 6.1 Target API Endpoints
 
-### 7.2 重点学习点
+1. User registration.
+2. User login.
+3. Token refresh.
 
-1. 分页查询
-2. 条件筛选
-3. Redis 缓存读写策略
-4. 缓存失效（更新后删缓存）
+### 6.2 Components to Implement First
 
-### 7.3 缓存策略（必须理解）
+1. User DTOs (request and response objects).
+2. User service layer.
+3. Password encryption using BCrypt.
+4. JWT generation and validation.
+5. Spring Security filter chain.
 
-1. 读详情：先查 Redis，没有再查 MySQL，并回填缓存
-2. 改状态：更新 MySQL 后删除对应缓存
-3. 热门职位：使用 ZSet 存热度分
+### 6.3 Recommended Development Sequence
 
-### 7.4 验收标准
+Follow these steps in order:
 
-连续调用职位详情接口时，第二次应明显快于第一次（命中缓存）。
+1. Implement registration first and verify that users can be saved to the `users` table.
+2. Implement login and return an `accessToken`.
+3. Integrate authentication filters (all endpoints except login and registration should require a valid token).
+4. Finally, implement `refreshToken` functionality.
 
----
+### 6.4 Acceptance Criteria
 
-## 8. 第三条业务链：简历上传与异步解析（核心）
-
-> 这是本项目最关键链路，分成“上传端”和“消费端”两部分。
-
-## 8.1 上传端（同步快速返回）
-
-### 上传步骤（必须严格按顺序）
-
-1. 接收文件并校验类型/大小
-2. 计算文件 MD5
-3. 查 Redis 去重标记
-4. 保存文件到本地或 MinIO
-5. 写 `resumes` 记录（初始状态）
-6. 写 Redis 任务状态 `task:resume:{taskId}`
-7. 发 MQ 消息到解析队列
-8. 立即返回 taskId
-
-### 初学者关键理解
-
-- 上传接口不要等待 AI 解析结束。
-- 解析是异步的，前端靠 taskId 轮询状态。
-
-## 8.2 状态查询接口
-
-查询 task 状态时：
-1. 优先读 Redis
-2. Redis 没有再回查 MySQL
-
-你要保证 4 种状态流转清晰：
-- `QUEUED` → `PROCESSING` → `SUCCESS`
-- 失败时到 `FAILED`
+1. Unauthenticated requests to protected business endpoints return HTTP 401.
+2. Authenticated users can access protected endpoints using a valid token.
+3. Expired access tokens can be refreshed successfully.
 
 ---
 
-## 9. MQ 消费者：解析、重试、死信（进阶）
+## 7. Second Business Workflow: Job Management
 
-### 9.1 消费者处理主流程
+This is a moderately difficult module and an excellent opportunity to practice CRUD operations.
 
-1. 收到消息
-2. 做幂等检查（避免重复处理）
-3. 获取分布式锁（按 fileHash）
-4. 更新任务状态为 PROCESSING
-5. 调 AI 进行简历提取
-6. 写 `candidates` + 更新 `resumes`
-7. 写向量数据库（embedding）
-8. 更新任务状态 SUCCESS
-9. ACK 消息
+### 7.1 Target API Endpoints
 
-### 9.2 失败处理策略
+1. Create a job.
+2. Retrieve job details.
+3. Publish / Close a job.
+4. Retrieve trending jobs.
 
-1. 可恢复错误：重试
-2. 达到重试上限：进入 DLQ
-3. 不可恢复错误：直接失败并记录原因
+### 7.2 Key Learning Areas
 
-### 9.3 你要观察的系统现象
+1. Paginated queries.
+2. Conditional filtering.
+3. Redis caching and retrieval strategies.
+4. Cache invalidation (deleting cached data after updates).
 
-1. RabbitMQ 队列消息数量变化
-2. 重试次数增长
-3. 失败消息进入死信队列
+### 7.3 Caching Strategy (Must Understand)
 
----
+1. **Reading job details:** Check Redis first. If the data does not exist, retrieve it from MySQL and populate the cache.
+2. **Updating job status:** Update MySQL first, then delete the corresponding cache entry.
+3. **Trending jobs:** Use Redis Sorted Sets (ZSet) to maintain job popularity scores.
 
-## 10. AI 解析模块（Spring AI）
+### 7.4 Acceptance Criteria
 
-### 10.1 先完成“稳定结构化输出”
-
-你的第一目标不是“最聪明”，而是“最稳定可解析”。
-
-你要做的事情：
-1. 把设计文档里的提取 Prompt 固化为模板
-2. 要求模型严格返回 JSON
-3. 对字段缺失容错（null）
-4. 对模型异常输出设置兜底策略
-
-### 10.2 AI 调用治理（非常关键）
-
-1. 超时控制
-2. 重试次数限制
-3. 错误日志可追踪
-4. 用户每日配额限制（Redis 计数）
-
-### 10.3 验收标准
-
-1. 同一份简历多次解析，结果结构一致
-2. 解析失败时，任务状态正确落盘
+When you call the job details endpoint repeatedly, the second request should be noticeably faster than the first because it retrieves data from the cache.
 
 ---
 
-## 11. 候选人模块（结构化数据展示）
+## 8. Third Business Workflow: Resume Upload and Asynchronous Parsing
 
-### 11.1 目标接口
+> This is the most important workflow in the project. Divide it into two components: the upload side and the consumer side.
 
-1. 候选人详情
-2. 候选人列表
-3. 智能搜索（后面做）
+### 8.1 Upload Side (Return Quickly and Synchronously)
 
-### 11.2 候选人详情要做的“用户体验细节”
+#### Upload Steps (Follow This Exact Order)
 
-1. 手机号脱敏
-2. 邮箱脱敏
-3. 缓存候选人详情（Redis 30 分钟）
-
-### 11.3 验收标准
-
-1. 能从 `resumeId` 关联到 `candidate`
-2. 页面可显示技能、经历、学历等结构化字段
-
----
-
-## 12. 智能搜索（RAG）实现路线
-
-> 这是全项目最复杂功能，拆成 4 步做。
-
-### 第一步：向量写入（离线）
-
-在简历解析完成后：
-1. 生成候选人文本摘要
-2. 调 embedding 模型生成向量
-3. 存入向量库并保存 vector_id
-
-### 第二步：基础语义召回
-
-1. 用户输入查询语句
-2. 转 embedding
-3. 在向量库 TopK 搜索
-
-### 第三步：元数据过滤
-
-在召回时叠加筛选条件：
-1. 工作年限
-2. 学历
-3. 技能标签
-
-### 第四步：LLM 重排与解释
-
-1. 把召回结果交给 LLM 排序
-2. 返回 matchScore、matchReasons、concerns
-
-### 验收标准
-
-输入“3年以上 Java + Spring Boot + Redis”时，排序结果应符合常识。
-
----
-
-## 13. 申请与面试流程模块
-
-### 13.1 实现顺序
-
-1. 创建申请
-2. 查询职位申请列表
-3. 更新申请状态
-4. 创建面试
-5. 提交面试反馈
-
-### 13.2 并发安全点
-
-投递接口要防重复：
-- 对 `jobId + candidateId` 使用 Redis 分布式锁
-
-### 13.3 验收标准
-
-同一候选人对同一职位重复投递时，只保留一条有效记录。
-
----
-
-## 14. 限流系统（Redis + 注解 + AOP）
-
-### 14.1 你要实现的能力
-
-1. 分钟级限流
-2. 天级配额限流
-3. Lua 原子操作
-
-### 14.2 开发顺序
-
-1. 先做简单计数器限流
-2. 再封装 `@RateLimiter` 注解
-3. 再用 AOP 统一拦截
-4. 最后引入 Lua 保证原子性
-
-### 14.3 验收标准
-
-当用户超出配额时，接口稳定返回 `42901`，并且不会误伤其他用户。
-
----
-
-## 15. 分阶段测试计划（你照这个节奏走）
-
-### 阶段 A：基础联调
-
-1. 注册/登录
-2. 职位 CRUD
-3. 候选人列表
-
-### 阶段 B：异步链路
-
-1. 单文件上传
-2. 任务状态轮询
-3. 消费者处理成功
-
-### 阶段 C：异常链路
-
-1. 重复文件上传
-2. AI 服务超时
-3. MQ 重试 + DLQ
-
-### 阶段 D：AI 检索
-
-1. 向量入库
-2. 语义搜索
-3. 过滤 + 重排
-
----
-
-## 16. 你每天该怎么学（新手执行版）
-
-### 每天固定 3 小时模板
-
-1. 30 分钟：复习昨天实现点（画流程图）
-2. 90 分钟：只做一个小目标（例如“上传接口打通”）
-3. 30 分钟：接口自测 + 记录问题
-4. 30 分钟：写开发日志（今天做了什么、哪里失败、明天计划）
-
-### 为什么这样有效
-
-新手最怕“任务太大”。你把任务拆到“今天必须完成一个可验证点”，进步会非常快。
-
----
-
-## 17. 里程碑计划（建议 4~6 周）
-
-### 第 1 周
-
-1. 环境搭建
-2. 项目骨架
-3. 数据库建表
-4. 认证模块
-
-### 第 2 周
-
-1. 职位管理
-2. 候选人基础查询
-3. 缓存体系
-
-### 第 3 周
-
-1. 简历上传
-2. MQ 异步解析
-3. 任务状态追踪
-
-### 第 4 周
-
-1. AI 提取稳定性
-2. 向量入库
-3. 基础语义搜索
-
-### 第 5~6 周（可选强化）
-
-1. 限流注解 + Lua
-2. 死信补偿任务
-3. 监控日志与性能优化
-
----
-
-## 18. 完成度自检表（上线前必须打勾）
-
-### 功能完整性
-
-1. [ ] 认证模块完整
-2. [ ] 简历上传与解析完整
-3. [ ] 候选人信息可查看
-4. [ ] 职位管理完整
-5. [ ] 申请与面试流程完整
-6. [ ] AI 搜索可用
-
-### 稳定性
-
-1. [ ] 接口有统一错误码
-2. [ ] MQ 重试与死信生效
-3. [ ] Redis 缓存与限流生效
-4. [ ] 分布式锁防并发重复
-
-### 可运维性
-
-1. [ ] 关键日志可追踪
-2. [ ] 关键配置区分 dev/prod
-3. [ ] 可一键启动依赖环境
-
----
-
-## 19. 初学者常见错误（提前避免）
-
-1. 一上来做 AI 搜索，导致全线卡住
-2. 没有先定义统一响应和错误码
-3. 没有做幂等，重复消费导致脏数据
-4. 缓存更新逻辑缺失，出现脏读
-5. 锁使用不当造成死锁或锁失效
-6. 把“异步任务”写成“同步阻塞”
-
----
-
-## 20. 你现在就可以开始的第一天任务清单
-
-按顺序执行：
-
-1. 准备本地环境（JDK/Maven/Docker/IDE）
-2. 启动 MySQL、Redis、RabbitMQ
-3. 创建 Spring Boot 工程和目录结构
-4. 建立统一返回体 + 全局异常处理
-5. 建好 `users` 表并完成注册/登录接口
-6. 用接口工具完成第一次端到端测试
-
-完成这 6 步后，你就已经跨过“从 0 到 1 最难阶段”。
-
----
-
-## 21. 最后给你的学习建议
-
-你现在最需要的不是“更多技术点”，而是“稳定推进节奏”：
-
-1. 每天只攻一个可验证目标
-2. 每个功能都必须有验收标准
-3. 所有异常都要记录原因与修复方式
-4. 每周回顾一次整体架构图，避免只见树木不见森林
-
-只要你按这个手册执行，你完全可以独立完成 SmartATS 的后端开发。
-
----
-
-## 22. 你可以如何使用本手册
-
-建议你边开发边打勾：
-
-1. 每完成一章，就做一次自测
-2. 卡住时，先回到对应章的“验收标准”定位问题
-3. 不要跳章节，严格按顺序推进
-
-> 结论：先完成“能跑”，再追求“优雅”。这是初学者做成项目最快路径。
+1. Receive the uploaded file and validate its type and size.
+2. Calculate the file's MD5 hash.
+3. Check Redis for duplicate file markers.
+4. Save the file locally or
