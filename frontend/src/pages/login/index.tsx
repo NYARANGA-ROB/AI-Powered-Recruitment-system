@@ -40,7 +40,7 @@ export default function LoginPage() {
       const { data } = await authApi.login(values);
       const res = data.data!;
       login(res.accessToken, res.refreshToken, res.userInfo);
-      message.success(`欢迎回来，${res.userInfo.username}`);
+      message.success(`Welcome back, ${res.userInfo.username}`);
       navigate(from, { replace: true });
     } catch {
       // interceptor handles error
@@ -53,13 +53,13 @@ export default function LoginPage() {
   const handleSendCode = async () => {
     const email = registerForm.getFieldValue('email');
     if (!email) {
-      message.warning('请先输入邮箱');
+      message.warning('Please enter your email first');
       return;
     }
     setCodeLoading(true);
     try {
       await authApi.sendVerificationCode({ email });
-      message.success('验证码已发送');
+      message.success('Verification code sent');
       setCountdown(60);
       const timer = setInterval(() => {
         setCountdown((prev) => {
@@ -81,7 +81,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await authApi.register(values);
-      message.success('注册成功，请登录');
+      message.success('Registration successful, please sign in');
       setActiveTab('login');
     } catch {
       /* handled */
@@ -113,18 +113,18 @@ export default function LoginPage() {
             SmartATS
           </h1>
           <p className="text-xl text-gray-600 font-light leading-relaxed mb-3">
-            智能招聘管理系统
+            Intelligent Recruitment Management System
           </p>
           <p className="text-gray-500 leading-relaxed max-w-md text-sm">
-            AI 驱动的简历解析 · RAG 语义候选人搜索 · 完整招聘流程管理
+            AI-powered resume parsing · RAG semantic candidate search · end-to-end recruitment workflow management
           </p>
 
           {/* Stats */}
           <div className="flex gap-12 mt-16">
             {[
-              { num: '40+', label: 'API 接口' },
-              { num: 'AI', label: '智能解析' },
-              { num: 'RAG', label: '语义搜索' },
+              { num: '40+', label: 'API Endpoints' },
+              { num: 'AI', label: 'Intelligent Parsing' },
+              { num: 'RAG', label: 'Semantic Search' },
             ].map((item, i) => (
               <motion.div
                 key={item.label}
@@ -163,7 +163,7 @@ export default function LoginPage() {
             items={[
               {
                 key: 'login',
-                label: '登录',
+                label: 'Sign In',
                 children: (
                   <Form
                     size="large"
@@ -173,20 +173,20 @@ export default function LoginPage() {
                   >
                     <Form.Item
                       name="username"
-                      rules={[{ required: true, message: '请输入用户名' }]}
+                      rules={[{ required: true, message: 'Please enter your username' }]}
                     >
                       <Input
                         prefix={<UserOutlined className="text-gray-400" />}
-                        placeholder="用户名"
+                        placeholder="Username"
                       />
                     </Form.Item>
                     <Form.Item
                       name="password"
-                      rules={[{ required: true, message: '请输入密码' }]}
+                      rules={[{ required: true, message: 'Please enter your password' }]}
                     >
                       <Input.Password
                         prefix={<LockOutlined className="text-gray-400" />}
-                        placeholder="密码"
+                        placeholder="Password"
                       />
                     </Form.Item>
                     <Form.Item className="mt-8">
@@ -197,7 +197,7 @@ export default function LoginPage() {
                         loading={loading}
                         className="h-12 text-sm"
                       >
-                        登 录
+                        Sign In
                         <ArrowRightOutlined className="ml-1" />
                       </Button>
                     </Form.Item>
@@ -206,7 +206,7 @@ export default function LoginPage() {
               },
               {
                 key: 'register',
-                label: '注册',
+                label: 'Sign Up',
                 children: (
                   <Form
                     form={registerForm}
@@ -219,59 +219,59 @@ export default function LoginPage() {
                     <Form.Item
                       name="username"
                       rules={[
-                        { required: true, message: '请输入用户名' },
-                        { min: 4, max: 20, message: '4-20个字符' },
+                        { required: true, message: 'Please enter your username' },
+                        { min: 4, max: 20, message: '4-20 characters' },
                       ]}
                     >
                       <Input
                         prefix={<UserOutlined className="text-gray-400" />}
-                        placeholder="用户名"
+                        placeholder="Username"
                       />
                     </Form.Item>
                     <Form.Item
                       name="password"
                       rules={[
-                        { required: true, message: '请输入密码' },
-                        { min: 6, max: 20, message: '6-20个字符' },
+                        { required: true, message: 'Please enter your password' },
+                        { min: 6, max: 20, message: '6-20 characters' },
                       ]}
                     >
                       <Input.Password
                         prefix={<LockOutlined className="text-gray-400" />}
-                        placeholder="密码"
+                        placeholder="Password"
                       />
                     </Form.Item>
                     <Form.Item
                       name="email"
                       rules={[
-                        { required: true, message: '请输入邮箱' },
-                        { type: 'email', message: '邮箱格式不正确' },
+                        { required: true, message: 'Please enter your email' },
+                        { type: 'email', message: 'Invalid email format' },
                       ]}
                     >
                       <Input
                         prefix={<MailOutlined className="text-gray-400" />}
-                        placeholder="邮箱"
+                        placeholder="Email"
                       />
                     </Form.Item>
-                    <Form.Item name="role" label="角色">
+                    <Form.Item name="role" label="Role">
                       <Select
                         options={[
                           { value: 'HR', label: 'HR' },
-                          { value: 'INTERVIEWER', label: '面试官' },
+                          { value: 'INTERVIEWER', label: 'Interviewer' },
                         ]}
                       />
                     </Form.Item>
                     <Form.Item
                       name="verificationCode"
                       rules={[
-                        { required: true, message: '请输入验证码' },
-                        { pattern: /^\d{6}$/, message: '6位数字验证码' },
+                        { required: true, message: 'Please enter the verification code' },
+                        { pattern: /^\d{6}$/, message: '6-digit numeric code' },
                       ]}
                     >
                       <Row gutter={8}>
                         <Col flex="auto">
                           <Input
                             prefix={<SafetyOutlined className="text-gray-400" />}
-                            placeholder="验证码"
+                            placeholder="Verification code"
                             maxLength={6}
                           />
                         </Col>
@@ -281,7 +281,7 @@ export default function LoginPage() {
                             loading={codeLoading}
                             disabled={countdown > 0}
                           >
-                            {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                            {countdown > 0 ? `${countdown}s` : 'Get Code'}
                           </Button>
                         </Col>
                       </Row>
@@ -294,7 +294,7 @@ export default function LoginPage() {
                         loading={loading}
                         className="h-12 text-sm"
                       >
-                        注 册
+                        Sign Up
                         <ArrowRightOutlined className="ml-1" />
                       </Button>
                     </Form.Item>
@@ -305,7 +305,7 @@ export default function LoginPage() {
           />
 
           <p className="text-center mt-10 text-xs text-gray-400 tracking-wide">
-            SmartATS · 智能招聘管理系统
+            SmartATS · Intelligent Recruitment Management System
           </p>
         </div>
       </motion.div>

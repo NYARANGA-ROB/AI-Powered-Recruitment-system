@@ -4,10 +4,10 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MyBatis-Plus 配置类
+ * MyBatis-Plus configuration
  * <p>
- * 将 @MapperScan 从启动类移到此处，保证 @WebMvcTest 切片测试不会加载 Mapper Bean。
- * @WebMvcTest 的 WebMvcTypeExcludeFilter 会排除非 Web 相关的 @Configuration 类。
+ * @MapperScan lives here rather than in the application class so that @WebMvcTest slice tests do not load Mapper beans.
+ * The WebMvcTypeExcludeFilter used by @WebMvcTest excludes @Configuration classes that are not Web related.
  */
 @Configuration
 @MapperScan("com.smartats.module.*.mapper")

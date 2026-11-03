@@ -5,7 +5,7 @@ import com.smartats.module.candidate.entity.Candidate;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 候选人 Mapper
+ * Candidate Mapper
  */
 @Mapper
 public interface CandidateMapper extends BaseMapper<Candidate> {

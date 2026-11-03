@@ -1,4 +1,4 @@
-// ==================== 通用类型 ====================
+// ==================== Common Types ====================
 
 export interface Result<T> {
   code: number;
@@ -15,7 +15,7 @@ export interface Page<T> {
   pages: number;
 }
 
-// ==================== Auth 认证 ====================
+// ==================== Auth ====================
 
 export interface LoginRequest {
   username: string;
@@ -54,7 +54,7 @@ export interface UserInfo {
   todayAiUsed: number;
 }
 
-// ==================== Job 职位 ====================
+// ==================== Job ====================
 
 export interface CreateJobRequest {
   title: string;
@@ -113,7 +113,7 @@ export interface JobQueryParams {
   orderDirection?: 'asc' | 'desc';
 }
 
-// ==================== Resume 简历 ====================
+// ==================== Resume ====================
 
 export interface ResumeUploadResponse {
   taskId: string;
@@ -160,7 +160,7 @@ export interface Resume {
   updatedAt: string;
 }
 
-// ==================== Candidate 候选人 ====================
+// ==================== Candidate ====================
 
 export interface CandidateResponse {
   id: number;
@@ -233,7 +233,7 @@ export interface CandidateQueryParams {
   currentPosition?: string;
 }
 
-// ==================== Smart Search 智能搜索 ====================
+// ==================== Smart Search ====================
 
 export interface SmartSearchRequest {
   query: string;
@@ -259,7 +259,7 @@ export interface MatchedCandidate {
   aiSummary: string;
 }
 
-// ==================== Application 职位申请 ====================
+// ==================== Application ====================
 
 export interface CreateApplicationRequest {
   jobId: number;
@@ -306,7 +306,7 @@ export interface ApplicationQueryParams {
   orderDirection?: 'asc' | 'desc';
 }
 
-// ==================== Interview 面试 ====================
+// ==================== Interview ====================
 
 export type InterviewType = 'PHONE' | 'VIDEO' | 'ONSITE' | 'WRITTEN_TEST';
 export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
@@ -386,7 +386,7 @@ export const WEBHOOK_EVENTS = [
 
 export type WebhookEventType = (typeof WEBHOOK_EVENTS)[number];
 
-// ==================== Audit 审计日志 ====================
+// ==================== Audit Log ====================
 
 export interface AuditLogQueryRequest {
   userId?: number;
@@ -414,11 +414,11 @@ export interface AuditLogResponse {
   requestIp: string;
   status: 'SUCCESS' | 'FAILED';
   errorMessage: string | null;
-  duration: number;          // 执行耗时 ms
+  duration: number;          // Execution duration in ms
   createdAt: string;
 }
 
-// ==================== Analytics 招聘分析 ====================
+// ==================== Recruiting Analytics ====================
 
 export interface AnalyticsQueryRequest {
   jobId?: number;
@@ -427,8 +427,8 @@ export interface AnalyticsQueryRequest {
 }
 
 export interface FunnelStageDTO {
-  stage: string;             // 阶段编码 (ApplicationStatus)
-  stageLabel: string;        // 阶段中文名称
+  stage: string;             // Stage code (ApplicationStatus)
+  stageLabel: string;        // Stage display name (provided by the backend)
   count: number;
   percentage: number;        // 0-100.0
   conversionRate: number;    // 0-100.0
@@ -448,13 +448,13 @@ export interface RecruitmentOverviewDTO {
   applicationTrend: Record<string, number>;   // { "2026-01": 42, ... }
 }
 
-// ==================== Match Score AI 匹配打分 ====================
+// ==================== Match Score (AI Match Scoring) ====================
 
 export interface ScoreBreakdown {
-  semanticScore: number;     // 语义相似度 (权重 30%)
-  skillScore: number;        // 技能匹配   (权重 35%)
-  experienceScore: number;   // 经验匹配   (权重 20%)
-  educationScore: number;    // 学历匹配   (权重 15%)
+  semanticScore: number;     // Semantic similarity (30% weight)
+  skillScore: number;        // Skill match (35% weight)
+  experienceScore: number;   // Experience match (20% weight)
+  educationScore: number;    // Education match (15% weight)
 }
 
 export interface MatchScoreResponse {

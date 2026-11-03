@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Redisson 分布式锁配置
+ * Redisson distributed lock configuration
  */
 @Configuration
 public class RedissonConfig {

@@ -44,12 +44,12 @@ const statusFlow: Record<ApplicationStatus, ApplicationStatus[]> = {
 };
 
 const statusConfig: Record<ApplicationStatus, { color: string; label: string }> = {
-  PENDING: { color: 'default', label: '待处理' },
-  SCREENING: { color: 'processing', label: '筛选中' },
-  INTERVIEW: { color: 'warning', label: '面试中' },
-  OFFER: { color: 'success', label: '已录用' },
-  REJECTED: { color: 'error', label: '已拒绝' },
-  WITHDRAWN: { color: 'default', label: '已撤回' },
+  PENDING: { color: 'default', label: 'Pending' },
+  SCREENING: { color: 'processing', label: 'Screening' },
+  INTERVIEW: { color: 'warning', label: 'Interviewing' },
+  OFFER: { color: 'success', label: 'Hired' },
+  REJECTED: { color: 'error', label: 'Rejected' },
+  WITHDRAWN: { color: 'default', label: 'Withdrawn' },
 };
 
 export default function ApplicationsPage() {
@@ -90,7 +90,7 @@ export default function ApplicationsPage() {
   const handleCreate = async () => {
     const values = await form.validateFields();
     await applicationApi.create(values);
-    message.success('创建成功');
+    message.success('Created successfully');
     setCreateModal(false);
     form.resetFields();
     loadApplications();
@@ -98,7 +98,7 @@ export default function ApplicationsPage() {
 
   const handleStatusChange = async (id: number, newStatus: ApplicationStatus) => {
     await applicationApi.updateStatus(id, { status: newStatus });
-    message.success('状态已更新');
+    message.success('Status updated');
     loadApplications();
   };
 
@@ -109,11 +109,11 @@ export default function ApplicationsPage() {
       if (data.data) {
         setScoreDetail(data.data);
         setScoreDrawer(true);
-        message.success('匹配分数计算完成');
+        message.success('Match score calculated');
         loadApplications();
       }
     } catch {
-      message.error('匹配分数计算失败');
+      message.error('Failed to calculate match score');
     } finally {
       setCalculatingId(null);
     }
@@ -151,7 +151,7 @@ export default function ApplicationsPage() {
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     {
-      title: '职位',
+      title: 'Job',
       dataIndex: 'jobTitle',
       width: 160,
       render: (v: string) => (
@@ -164,7 +164,7 @@ export default function ApplicationsPage() {
       ),
     },
     {
-      title: '候选人',
+      title: 'Candidate',
       dataIndex: 'candidateName',
       width: 120,
       render: (v: string) => (
@@ -175,7 +175,7 @@ export default function ApplicationsPage() {
       ),
     },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'status',
       width: 100,
       render: (status: ApplicationStatus) => (
@@ -183,13 +183,13 @@ export default function ApplicationsPage() {
       ),
     },
     {
-      title: '匹配分数',
+      title: 'Match Score',
       dataIndex: 'matchScore',
       width: 140,
       render: (score: number, record: ApplicationResponse) => {
         if (score === undefined || score === null) {
           return (
-            <Tooltip title="计算 AI 匹配分数">
+            <Tooltip title="Calculate AI match score">
               <Button
                 type="link"
                 size="small"
@@ -197,7 +197,7 @@ export default function ApplicationsPage() {
                 loading={calculatingId === record.id}
                 onClick={() => handleCalculateScore(record.id)}
               >
-                计算
+                Calculate
               </Button>
             </Tooltip>
           );
@@ -209,7 +209,7 @@ export default function ApplicationsPage() {
               ? '#f59e0b'
               : '#ef4444';
         return (
-          <Tooltip title="点击查看匹配详情">
+          <Tooltip title="Click to view match details">
             <span
               className="cursor-pointer hover:opacity-70 transition-opacity"
               onClick={() => handleViewScore(record)}
@@ -226,9 +226,9 @@ export default function ApplicationsPage() {
         );
       },
     },
-    { title: '申请时间', dataIndex: 'createdAt', width: 160 },
+    { title: 'Applied At', dataIndex: 'createdAt', width: 160 },
     {
-      title: '操作',
+      title: 'Actions',
       width: 160,
       render: (_: unknown, record: ApplicationResponse) => {
         const nextStatuses = statusFlow[record.status] || [];
@@ -256,18 +256,18 @@ export default function ApplicationsPage() {
   return (
     <PageTransition>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 m-0">职位申请</h2>
+        <h2 className="text-xl font-semibold text-gray-900 m-0">Job Applications</h2>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setCreateModal(true)}
         >
-          新建申请
+          New Application
         </Button>
       </div>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* 统计卡片 */}
+        {/* Status summary cards */}
         <motion.div variants={staggerItem}>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4 mb-4">
             {Object.entries(statusConfig).map(([key, cfg]) => (
@@ -282,13 +282,13 @@ export default function ApplicationsPage() {
           </div>
         </motion.div>
 
-        {/* 筛选 */}
+        {/* Filters */}
         <motion.div variants={staggerItem}>
           <Card bordered={false} className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div className="md:col-span-3">
                 <Select
-                  placeholder="状态"
+                  placeholder="Status"
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, status: v, pageNum: 1 }))}
@@ -300,7 +300,7 @@ export default function ApplicationsPage() {
               </div>
               <div className="md:col-span-3">
                 <InputNumber
-                  placeholder="职位 ID"
+                  placeholder="Job ID"
                   min={1}
                   className="w-full"
                   onChange={(v) =>
@@ -310,7 +310,7 @@ export default function ApplicationsPage() {
               </div>
               <div className="md:col-span-3">
                 <InputNumber
-                  placeholder="候选人 ID"
+                  placeholder="Candidate ID"
                   min={1}
                   className="w-full"
                   onChange={(v) =>
@@ -322,7 +322,7 @@ export default function ApplicationsPage() {
           </Card>
         </motion.div>
 
-        {/* 表格 */}
+        {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
             <Table
@@ -336,7 +336,7 @@ export default function ApplicationsPage() {
                 pageSize: query.pageSize,
                 total,
                 showSizeChanger: true,
-                showTotal: (t) => `共 ${t} 条`,
+                showTotal: (t) => `${t} records in total`,
                 onChange: (p, s) =>
                   setQuery((q) => ({ ...q, pageNum: p, pageSize: s })),
               }}
@@ -345,35 +345,35 @@ export default function ApplicationsPage() {
         </motion.div>
       </motion.div>
 
-      {/* 新建申请弹窗 */}
+      {/* New application modal */}
       <Modal
-        title="新建职位申请"
+        title="New Job Application"
         open={createModal}
         onCancel={() => setCreateModal(false)}
         onOk={handleCreate}
-        okText="创建"
+        okText="Create"
       >
         <Form form={form} layout="vertical" className="mt-4">
           <Form.Item
             name="jobId"
-            label="职位 ID"
-            rules={[{ required: true, message: '请输入职位 ID' }]}
+            label="Job ID"
+            rules={[{ required: true, message: 'Please enter the job ID' }]}
           >
-            <InputNumber min={1} className="w-full" placeholder="输入职位 ID" />
+            <InputNumber min={1} className="w-full" placeholder="Enter job ID" />
           </Form.Item>
           <Form.Item
             name="candidateId"
-            label="候选人 ID"
-            rules={[{ required: true, message: '请输入候选人 ID' }]}
+            label="Candidate ID"
+            rules={[{ required: true, message: 'Please enter the candidate ID' }]}
           >
-            <InputNumber min={1} className="w-full" placeholder="输入候选人 ID" />
+            <InputNumber min={1} className="w-full" placeholder="Enter candidate ID" />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* 匹配分数详情抽屉 */}
+      {/* Match score detail drawer */}
       <Drawer
-        title="AI 匹配分数详情"
+        title="AI Match Score Details"
         open={scoreDrawer}
         onClose={() => { setScoreDrawer(false); setScoreDetail(null); }}
         width={520}
@@ -384,7 +384,7 @@ export default function ApplicationsPage() {
               loading={calculatingId === scoreDetail.applicationId}
               onClick={() => handleCalculateScore(scoreDetail.applicationId)}
             >
-              重新计算
+              Recalculate
             </Button>
           )
         }
@@ -392,7 +392,7 @@ export default function ApplicationsPage() {
         <Spin spinning={scoreLoading}>
           {scoreDetail && (
             <div className="space-y-6">
-              {/* 综合得分 */}
+              {/* Overall score */}
               <div className="text-center py-4">
                 <Progress
                   type="dashboard"
@@ -405,20 +405,20 @@ export default function ApplicationsPage() {
                   format={(p) => (
                     <div>
                       <div className="text-3xl font-bold">{p}</div>
-                      <div className="text-xs text-gray-500">综合匹配分</div>
+                      <div className="text-xs text-gray-500">Overall Match Score</div>
                     </div>
                   )}
                 />
               </div>
 
-              {/* 维度分解 */}
-              <Card title="多维度评分" bordered={false} className="!shadow-none !bg-gray-50">
+              {/* Score breakdown */}
+              <Card title="Multi-Dimensional Scores" bordered={false} className="!shadow-none !bg-gray-50">
                 <div className="space-y-4">
                   {[
-                    { label: '技能匹配', value: scoreDetail.breakdown.skillScore, weight: '35%', color: '#3b82f6' },
-                    { label: '语义相似度', value: scoreDetail.breakdown.semanticScore, weight: '30%', color: '#8b5cf6' },
-                    { label: '经验匹配', value: scoreDetail.breakdown.experienceScore, weight: '20%', color: '#f59e0b' },
-                    { label: '学历匹配', value: scoreDetail.breakdown.educationScore, weight: '15%', color: '#10b981' },
+                    { label: 'Skill Match', value: scoreDetail.breakdown.skillScore, weight: '35%', color: '#3b82f6' },
+                    { label: 'Semantic Similarity', value: scoreDetail.breakdown.semanticScore, weight: '30%', color: '#8b5cf6' },
+                    { label: 'Experience Match', value: scoreDetail.breakdown.experienceScore, weight: '20%', color: '#f59e0b' },
+                    { label: 'Education Match', value: scoreDetail.breakdown.educationScore, weight: '15%', color: '#10b981' },
                   ].map((dim) => (
                     <div key={dim.label}>
                       <div className="flex justify-between mb-1">
@@ -439,9 +439,9 @@ export default function ApplicationsPage() {
                 </div>
               </Card>
 
-              {/* 匹配理由 */}
+              {/* Match reasons */}
               {scoreDetail.matchReasons?.length > 0 && (
-                <Card title="匹配理由" bordered={false} className="!shadow-none !bg-gray-50">
+                <Card title="Match Reasons" bordered={false} className="!shadow-none !bg-gray-50">
                   <ul className="list-disc pl-4 space-y-1 m-0">
                     {scoreDetail.matchReasons.map((reason, i) => (
                       <li key={i} className="text-sm text-gray-700">{reason}</li>
@@ -450,12 +450,12 @@ export default function ApplicationsPage() {
                 </Card>
               )}
 
-              {/* 基本信息 */}
+              {/* Basic information */}
               <Descriptions column={2} size="small" bordered>
-                <Descriptions.Item label="申请 ID">{scoreDetail.applicationId}</Descriptions.Item>
-                <Descriptions.Item label="职位 ID">{scoreDetail.jobId}</Descriptions.Item>
-                <Descriptions.Item label="候选人 ID">{scoreDetail.candidateId}</Descriptions.Item>
-                <Descriptions.Item label="计算时间">{scoreDetail.calculatedAt || '-'}</Descriptions.Item>
+                <Descriptions.Item label="Application ID">{scoreDetail.applicationId}</Descriptions.Item>
+                <Descriptions.Item label="Job ID">{scoreDetail.jobId}</Descriptions.Item>
+                <Descriptions.Item label="Candidate ID">{scoreDetail.candidateId}</Descriptions.Item>
+                <Descriptions.Item label="Calculated At">{scoreDetail.calculatedAt || '-'}</Descriptions.Item>
               </Descriptions>
             </div>
           )}

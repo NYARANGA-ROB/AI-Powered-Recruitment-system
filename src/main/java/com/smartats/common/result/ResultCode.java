@@ -3,64 +3,64 @@ package com.smartats.common.result;
 import lombok.Getter;
 
 /**
- * 统一错误码定义
+ * Unified error code definitions
  *
- * @Getter 注解：Lombok 自动生成 get 方法
+ * @Getter annotation: Lombok generates the getter methods automatically
  */
 @Getter
 public enum ResultCode {
 
-    // ========== 成功 ==========
-    SUCCESS(200, "操作成功"),
+    // ========== Success ==========
+    SUCCESS(200, "Operation completed successfully"),
 
-    // ========== 通用错误 4xxxx ==========
-    BAD_REQUEST(40001, "参数校验失败"), UNAUTHORIZED(40101, "未登录，请先登录"), FORBIDDEN(40301, "无权限访问"), NOT_FOUND(40401, "资源不存在"),
+    // ========== Generic errors 4xxxx ==========
+    BAD_REQUEST(40001, "Parameter validation failed"), UNAUTHORIZED(40101, "Not authenticated, please sign in first"), FORBIDDEN(40301, "Access denied"), NOT_FOUND(40401, "Resource not found"),
 
-    // ========== 业务错误 5xxxx ==========
-    INTERNAL_ERROR(50001, "系统内部错误"), AI_SERVICE_ERROR(50002, "AI服务不可用"), FILE_UPLOAD_ERROR(50003, "文件上传失败"),
+    // ========== Business errors 5xxxx ==========
+    INTERNAL_ERROR(50001, "Internal server error"), AI_SERVICE_ERROR(50002, "AI service is unavailable"), FILE_UPLOAD_ERROR(50003, "File upload failed"),
 
-    // ========== 认证模块错误 10xxx ==========
-    // 用户相关
-    USER_NOT_FOUND(10001, "用户不存在"), USER_ALREADY_EXISTS(10002, "用户已存在"), USERNAME_ALREADY_EXISTS(10003, "用户名已存在"), EMAIL_ALREADY_EXISTS(10004, "邮箱已被注册"), PASSWORD_ERROR(10005, "密码错误"), INVALID_CREDENTIALS(10006, "用户名或密码错误"), USER_DISABLED(10007, "账号已禁用"), ACCOUNT_DISABLED(10008, "账号已被禁用，请联系管理员"), TOKEN_INVALID(10009, "Token 无效或已过期"), TOKEN_REFRESH_FAILED(10010, "Token 刷新失败"),
+    // ========== Auth module errors 10xxx ==========
+    // User related
+    USER_NOT_FOUND(10001, "User not found"), USER_ALREADY_EXISTS(10002, "User already exists"), USERNAME_ALREADY_EXISTS(10003, "Username already exists"), EMAIL_ALREADY_EXISTS(10004, "Email address is already registered"), PASSWORD_ERROR(10005, "Incorrect password"), INVALID_CREDENTIALS(10006, "Invalid username or password"), USER_DISABLED(10007, "Account is disabled"), ACCOUNT_DISABLED(10008, "Account is disabled, please contact the administrator"), TOKEN_INVALID(10009, "Token is invalid or has expired"), TOKEN_REFRESH_FAILED(10010, "Token refresh failed"),
 
-    // ========== 简历模块错误 20xxx ==========
-    RESUME_NOT_FOUND(20001, "简历不存在"), RESUME_ALREADY_PARSED(20002, "简历已解析，请勿重复提交"), FILE_TYPE_NOT_SUPPORTED(20003, "不支持的文件类型"), FILE_SIZE_EXCEEDED(20004, "文件大小超限"), RESUME_DUPLICATE(20005, "简历文件已存在"),
-    BATCH_UPLOAD_LIMIT_EXCEEDED(20006, "批量上传文件数超限（最多20个）"),
-    UPLOAD_RATE_LIMITED(20007, "上传过于频繁，请稍后再试"),
+    // ========== Resume module errors 20xxx ==========
+    RESUME_NOT_FOUND(20001, "Resume not found"), RESUME_ALREADY_PARSED(20002, "Resume has already been parsed, please do not submit it again"), FILE_TYPE_NOT_SUPPORTED(20003, "Unsupported file type"), FILE_SIZE_EXCEEDED(20004, "File size exceeds the limit"), RESUME_DUPLICATE(20005, "Resume file already exists"),
+    BATCH_UPLOAD_LIMIT_EXCEEDED(20006, "Batch upload file count exceeds the limit (maximum 20)"),
+    UPLOAD_RATE_LIMITED(20007, "Uploading too frequently, please try again later"),
 
-    // ========== AI 相关错误 30xxx ==========
-    AI_QUOTA_EXCEEDED(30001, "AI调用次数超限"),
-    AI_PARSE_FAILED(30002, "简历解析失败"),
+    // ========== AI related errors 30xxx ==========
+    AI_QUOTA_EXCEEDED(30001, "AI call quota exceeded"),
+    AI_PARSE_FAILED(30002, "Resume parsing failed"),
 
-    // ========== 验证码相关错误 11xxx ==========
-    VERIFICATION_CODE_SEND_TOO_FREQUENT(11001, "验证码发送过于频繁，请稍后再试"),
-    VERIFICATION_CODE_SEND_FAILED(11002, "验证码发送失败，请稍后重试"),
-    VERIFICATION_CODE_INVALID(11003, "验证码错误或已过期"),
-    VERIFICATION_CODE_REQUIRED(11004, "请先获取验证码"),
+    // ========== Verification code errors 11xxx ==========
+    VERIFICATION_CODE_SEND_TOO_FREQUENT(11001, "Verification codes are being sent too frequently, please try again later"),
+    VERIFICATION_CODE_SEND_FAILED(11002, "Failed to send the verification code, please try again later"),
+    VERIFICATION_CODE_INVALID(11003, "Verification code is incorrect or has expired"),
+    VERIFICATION_CODE_REQUIRED(11004, "Please request a verification code first"),
 
-    // ========== 职位申请模块错误 42xxx ==========
-    APPLICATION_NOT_FOUND(42001, "申请记录不存在"),
-    APPLICATION_DUPLICATE(42002, "该候选人已申请此职位"),
-    APPLICATION_STATUS_INVALID(42003, "申请状态流转不合法"),
-    APPLICATION_JOB_NOT_PUBLISHED(42004, "职位未发布，无法申请"),
+    // ========== Job application module errors 42xxx ==========
+    APPLICATION_NOT_FOUND(42001, "Application record not found"),
+    APPLICATION_DUPLICATE(42002, "This candidate has already applied for the position"),
+    APPLICATION_STATUS_INVALID(42003, "Invalid application status transition"),
+    APPLICATION_JOB_NOT_PUBLISHED(42004, "The position is not published and cannot be applied for"),
 
-    // ========== 面试模块错误 43xxx ==========
-    INTERVIEW_NOT_FOUND(43001, "面试记录不存在"),
-    INTERVIEW_ALREADY_COMPLETED(43002, "面试已完成，无法修改"),
-    INTERVIEW_ALREADY_CANCELLED(43003, "面试已取消"),
-    INTERVIEW_TIME_CONFLICT(43004, "面试时间冲突");
+    // ========== Interview module errors 43xxx ==========
+    INTERVIEW_NOT_FOUND(43001, "Interview record not found"),
+    INTERVIEW_ALREADY_COMPLETED(43002, "The interview is already completed and can no longer be modified"),
+    INTERVIEW_ALREADY_CANCELLED(43003, "The interview has been cancelled"),
+    INTERVIEW_TIME_CONFLICT(43004, "Interview time conflict");
     /**
-     * 错误码
+     * Error code
      */
     private final int code;
 
     /**
-     * 错误消息
+     * Error message
      */
     private final String message;
 
     /**
-     * 构造函数
+     * Constructor
      */
     ResultCode(int code, String message) {
         this.code = code;

@@ -4,33 +4,33 @@ import com.smartats.common.result.ResultCode;
 import lombok.Getter;
 
 /**
- * 业务异常（已知错误，可恢复）
+ * Business exception (a known, recoverable error)
  * <p>
- * 用法：
+ * Usage:
  * throw new
  * BusinessException(ResultCode.USER_NOT_FOUND);
  * <p>
- * 与系统异常（RuntimeException）的区别：
- * - 业务异常：预计内，可处理（用户不存在、密码错误）
- * - 系统异常：预料外，不可恢复（数据库宕机、NPE）
+ * Difference from a system exception (RuntimeException):
+ * - Business exception: anticipated and handled (user not found, incorrect password)
+ * - System exception: unexpected and unrecoverable (database outage, NPE)
  */
 @Getter
 public class BusinessException extends RuntimeException {
 
     /**
-     * 错误码
+     * Error code
      */
     private final int code;
 
     /**
-     * 错误消息
+     * Error message
      */
     private final String message;
 
     /**
-     * 构造函数 1：使用错误码枚举（使用默认消息）
+     * Constructor 1: use the error code enum (with its default message)
      * <p>
-     * 用法：throw new BusinessException(ResultCode.USER_NOT_FOUND)
+     * Usage: throw new BusinessException(ResultCode.USER_NOT_FOUND)
      */
     public BusinessException(ResultCode resultCode) {
         super(resultCode.getMessage());
@@ -39,11 +39,11 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
-     * 构造函数 2：使用错误码枚举 + 自定义消息
+     * Constructor 2: use the error code enum plus a custom message
      * <p>
-     * 用法：throw new BusinessException(ResultCode.INVALID_CREDENTIALS, "用户名或密码错误")
+     * Usage: throw new BusinessException(ResultCode.INVALID_CREDENTIALS, "Invalid username or password")
      * <p>
-     * 场景：使用 ResultCode 的错误码，但需要自定义返回消息（如统一错误提示）
+     * Scenario: reuse the ResultCode error code while returning a custom message (e.g. a generic error hint)
      */
     public BusinessException(ResultCode resultCode, String customMessage) {
         super(customMessage);
@@ -52,11 +52,11 @@ public class BusinessException extends RuntimeException {
     }
 
     /**
-     * 构造函数 3：完全自定义错误码和消息
+     * Constructor 3: fully custom error code and message
      * <p>
-     * 用法：throw new BusinessException(50001, "系统内部错误")
+     * Usage: throw new BusinessException(50001, "Internal server error")
      * <p>
-     * 场景：需要临时定义错误码，不在 ResultCode 枚举中
+     * Scenario: an ad hoc error code that is not part of the ResultCode enum
      */
     public BusinessException(int code, String message) {
         super(message);

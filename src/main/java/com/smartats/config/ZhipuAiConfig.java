@@ -18,16 +18,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Duration;
 
 /**
- * 智谱 AI 配置（使用 OpenAI 兼容模式）
+ * Zhipu AI configuration (using the OpenAI-compatible mode)
  * <p>
- * 注意：智谱 API 路径与 OpenAI 不同：
- * - OpenAI 默认路径：/v1/chat/completions
- * - 智谱 AI 路径：/chat/completions（baseUrl 已含 /v4）
+ * Note: the Zhipu API path differs from OpenAI's:
+ * - OpenAI default path: /v1/chat/completions
+ * - Zhipu AI path: /chat/completions (the baseUrl already includes /v4)
  * <p>
- * 最终请求 URL = baseUrl + completionsPath
+ * Final request URL = baseUrl + completionsPath
  *   = https://open.bigmodel.cn/api/paas/v4/chat/completions
  * <p>
- * Embedding 模型使用智谱 embedding-3，维度 1024，最大 token 8192。
+ * The embedding model is Zhipu embedding-3, with 1024 dimensions and a maximum of 8192 tokens.
  */
 @Configuration
 public class ZhipuAiConfig {
@@ -48,14 +48,14 @@ public class ZhipuAiConfig {
     private String embeddingModel;
 
     /**
-     * 创建共享的 OpenAiApi 实例（Chat + Embedding 复用同一 API 客户端）
+     * Create the shared OpenAiApi instance (Chat and Embedding reuse the same API client)
      * <p>
-     * 设置合理的超时时间：AI 简历解析通常需要 15-45 秒，
-     * 默认超时太短会导致 "Request timed out" 错误。
+     * Set sensible timeouts: AI resume parsing usually takes 15-45 seconds,
+     * and the default timeout is too short and causes "Request timed out" errors.
      */
     @Bean
     public OpenAiApi openAiApi() {
-        // 配置 HTTP 超时：连接 30 秒，读取 120 秒（AI 生成内容耗时较长）
+        // Configure HTTP timeouts: 30 seconds to connect, 120 seconds to read (AI generation takes a while)
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(Duration.ofSeconds(30));
         requestFactory.setReadTimeout(Duration.ofSeconds(120));
@@ -82,8 +82,8 @@ public class ZhipuAiConfig {
                 .withMaxTokens(4000)
                 .build();
 
-        // 禁用 Spring AI 内部重试（默认 maxAttempts=10, exponentialBackoff 2s~180s）
-        // 我们在 MQ 消费层通过延迟队列实现更合理的指数退避重试（10s/30s/60s）
+        // Disable Spring AI's internal retries (by default maxAttempts=10, exponentialBackoff 2s~180s)
+        // Instead we implement a more sensible exponential backoff at the MQ consumer layer via the delay queue (10s/30s/60s)
         RetryTemplate noRetry = RetryTemplate.builder()
                 .maxAttempts(1)
                 .build();
@@ -92,17 +92,17 @@ public class ZhipuAiConfig {
     }
 
     /**
-     * 智谱 Embedding 模型（embedding-3）
+     * Zhipu embedding model (embedding-3)
      * <p>
-     * 输出维度：1024
-     * 最大输入 Token：8192
-     * 用于候选人简历文本向量化，支持语义搜索
+     * Output dimensions: 1024
+     * Maximum input tokens: 8192
+     * Used to vectorise candidate resume text and enable semantic search
      */
     @Bean
     public OpenAiEmbeddingModel openAiEmbeddingModel(OpenAiApi openAiApi) {
         OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
                 .withModel(embeddingModel)
-                .withDimensions(1024)  // embedding-3 默认 2048 维，指定 1024 与 Milvus schema 一致
+                .withDimensions(1024)  // embedding-3 defaults to 2048 dimensions; 1024 keeps it aligned with the Milvus schema
                 .build();
 
         return new OpenAiEmbeddingModel(openAiApi, MetadataMode.EMBED, options);

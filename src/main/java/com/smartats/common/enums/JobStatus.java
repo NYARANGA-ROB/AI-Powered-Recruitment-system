@@ -3,14 +3,14 @@ package com.smartats.common.enums;
 import lombok.Getter;
 
 /**
- * 职位状态枚举
+ * Job status enum
  */
 @Getter
 public enum JobStatus {
 
-    DRAFT("DRAFT", "草稿"),
-    PUBLISHED("PUBLISHED", "已发布"),
-    CLOSED("CLOSED", "已关闭");
+    DRAFT("DRAFT", "Draft"),
+    PUBLISHED("PUBLISHED", "Published"),
+    CLOSED("CLOSED", "Closed");
 
     private final String code;
     private final String description;
@@ -21,7 +21,7 @@ public enum JobStatus {
     }
 
     /**
-     * 根据 code 获取枚举
+     * Get the enum constant by code
      */
     public static JobStatus fromCode(String code) {
         if (code == null) return null;
@@ -34,7 +34,7 @@ public enum JobStatus {
     }
 
     /**
-     * 获取中文描述，找不到则返回原始值
+     * Get the display description; returns the raw value if not found
      */
     public static String getDescriptionByCode(String code) {
         JobStatus status = fromCode(code);

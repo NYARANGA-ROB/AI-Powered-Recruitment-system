@@ -16,8 +16,8 @@ import java.io.InputStream;
 import java.net.URL;
 
 /**
- * 简历内容提取服务
- * 从 PDF/DOC/DOCX 中提取纯文本
+ * Resume content extraction service
+ * Extracts plain text from PDF/DOC/DOCX
  */
 @Slf4j
 @Service
@@ -25,10 +25,10 @@ import java.net.URL;
 public class ResumeContentExtractor {
 
     /**
-     * 从文件 URL 提取文本内容
+     * Extract text content from a file URL
      */
     public String extractText(String fileUrl, String fileType) {
-        log.info("开始提取文件内容: fileUrl={}, fileType={}", fileUrl, fileType);
+        log.info("Start extracting file content: fileUrl={}, fileType={}", fileUrl, fileType);
 
         try {
             URL url = new URL(fileUrl);
@@ -39,12 +39,12 @@ public class ResumeContentExtractor {
                 case "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         -> extractFromDOCX(inputStream);
                 case "application/msword" -> extractFromDOC(inputStream);
-                default -> throw new BusinessException(ResultCode.BAD_REQUEST, "不支持的文件类型");
+                default -> throw new BusinessException(ResultCode.BAD_REQUEST, "Unsupported file type");
             };
 
             inputStream.close();
 
-            log.info("文件内容提取完成: fileType={}, textLength={}, 前200字符=[{}]",
+            log.info("File content extraction complete: fileType={}, textLength={}, first 200 chars=[{}]",
                     fileType, text.length(),
                     text.trim().substring(0, Math.min(200, text.trim().length())));
 
@@ -53,8 +53,8 @@ public class ResumeContentExtractor {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("文件内容提取失败: fileUrl={}", fileUrl, e);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "文件解析失败");
+            log.error("File content extraction failed: fileUrl={}", fileUrl, e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "File parsing failed");
         }
     }
 

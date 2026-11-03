@@ -10,20 +10,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 分析统计 Mapper
+ * Analytics Mapper
  * <p>
- * 专注于聚合查询，不继承 BaseMapper，避免暴露不必要的 CRUD 方法。
- * 使用 {@code <script>} 动态 SQL 实现可选条件过滤。
+ * Focused on aggregate queries; does not extend BaseMapper to avoid exposing unnecessary CRUD methods.
+ * Uses {@code <script>} dynamic SQL for optional condition filtering.
  */
 @Mapper
 public interface AnalyticsMapper {
 
     /**
-     * 按申请状态分组统计数量
+     * Count applications grouped by status
      *
-     * @param jobId     职位 ID（可选）
-     * @param startDate 起始时间（可选）
-     * @param endDate   截止时间（可选）
+     * @param jobId     job ID (optional)
+     * @param startDate start time (optional)
+     * @param endDate   end time (optional)
      * @return List of {status: String, cnt: Long}
      */
     @Select({"<script>",
@@ -40,7 +40,7 @@ public interface AnalyticsMapper {
                                                   @Param("endDate") LocalDateTime endDate);
 
     /**
-     * 按月统计申请趋势
+     * Count application trend by month
      *
      * @return List of {month: "yyyy-MM", cnt: Long}
      */
@@ -59,7 +59,7 @@ public interface AnalyticsMapper {
                                            @Param("endDate") LocalDateTime endDate);
 
     /**
-     * 计算平均 AI 匹配分数
+     * Compute the average AI match score
      */
     @Select({"<script>",
             "SELECT AVG(match_score) FROM job_applications",
@@ -73,7 +73,7 @@ public interface AnalyticsMapper {
                              @Param("endDate") LocalDateTime endDate);
 
     /**
-     * 计算平均招聘周期（天）：从申请到发出 Offer 的平均天数
+     * Compute the average time-to-hire (days): average days from application to offer
      */
     @Select({"<script>",
             "SELECT AVG(DATEDIFF(updated_at, applied_at)) FROM job_applications",
@@ -87,7 +87,7 @@ public interface AnalyticsMapper {
                           @Param("endDate") LocalDateTime endDate);
 
     /**
-     * 统计已安排的面试总数
+     * Count the total number of scheduled interviews
      */
     @Select({"<script>",
             "SELECT COUNT(*) FROM interview_records",

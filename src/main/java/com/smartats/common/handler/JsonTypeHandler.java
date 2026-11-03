@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * JSON 类型处理器
- * 用于 MyBatis-Plus JSON 字段的序列化/反序列化
+ * JSON type handler
+ * Handles serialization/deserialization of MyBatis-Plus JSON fields
  */
 @Slf4j
 @MappedTypes({List.class, Map.class})
@@ -29,7 +29,7 @@ public class JsonTypeHandler extends BaseTypeHandler<Object> {
         try {
             ps.setString(i, objectMapper.writeValueAsString(parameter));
         } catch (JsonProcessingException e) {
-            log.error("JSON 序列化失败: parameter={}", parameter, e);
+            log.error("Failed to serialize JSON: parameter={}", parameter, e);
             ps.setString(i, "[]");
         }
     }
@@ -60,7 +60,7 @@ public class JsonTypeHandler extends BaseTypeHandler<Object> {
         try {
             return objectMapper.readValue(json, Object.class);
         } catch (JsonProcessingException e) {
-            log.error("JSON 反序列化失败: json={}", json, e);
+            log.error("Failed to deserialize JSON: json={}", json, e);
             return null;
         }
     }

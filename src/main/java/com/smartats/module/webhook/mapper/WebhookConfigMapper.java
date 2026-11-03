@@ -5,7 +5,7 @@ import com.smartats.module.webhook.entity.WebhookConfig;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * Webhook 配置 Mapper
+ * Webhook configuration Mapper
  */
 @Mapper
 public interface WebhookConfigMapper extends BaseMapper<WebhookConfig> {

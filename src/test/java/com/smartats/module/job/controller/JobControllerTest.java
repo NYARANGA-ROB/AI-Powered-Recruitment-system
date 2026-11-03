@@ -39,15 +39,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * JobController 集成测试
+ * JobController integration tests
  * <p>
- * 使用 @WebMvcTest 切片测试，仅加载 Web 层。
- * @Import SecurityConfig 以加载自定义安全规则（permitAll 等）。
- * JwtAuthenticationFilter 被 Mock 为透传，仅测试 Controller + 安全策略。
+ * Uses a @WebMvcTest slice test, loading only the web layer.
+ * @Import SecurityConfig to load the custom security rules (permitAll, etc.).
+ * JwtAuthenticationFilter is mocked to pass requests through; only the controller + security policy are tested.
  */
 @WebMvcTest(JobController.class)
 @Import(SecurityConfig.class)
-@DisplayName("JobController 集成测试")
+@DisplayName("JobController integration tests")
 class JobControllerTest {
 
     @Autowired
@@ -63,8 +63,8 @@ class JobControllerTest {
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
-     * 让 Mock 的 JwtAuthenticationFilter 透传请求到 FilterChain，
-     * 否则 Mockito 默认 void 方法什么都不做，请求会被吞掉。
+     * Make the mocked JwtAuthenticationFilter pass the request through to the FilterChain,
+     * otherwise the Mockito default void method does nothing and the request would be swallowed.
      */
     @BeforeEach
     void configureMockFilter() throws Exception {
@@ -78,10 +78,10 @@ class JobControllerTest {
                 .doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
     }
 
-    // ━━━━━━━━━━━━━━ 工具方法 ━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━ Utility methods ━━━━━━━━━━━━━━
 
     /**
-     * 创建模拟认证（principal=Long userId）
+     * Create a mock authentication (principal=Long userId)
      */
     private static UsernamePasswordAuthenticationToken mockAuth(Long userId) {
         return new UsernamePasswordAuthenticationToken(
@@ -93,10 +93,10 @@ class JobControllerTest {
     private static JobResponse sampleJobResponse() {
         JobResponse resp = new JobResponse();
         resp.setId(1L);
-        resp.setTitle("Java 高级工程师");
-        resp.setDepartment("技术部");
+        resp.setTitle("Senior Java Engineer");
+        resp.setDepartment("Engineering Department");
         resp.setStatus(JobStatus.PUBLISHED.getCode());
-        resp.setStatusDesc("已发布");
+        resp.setStatusDesc("Published");
         resp.setViewCount(100);
         resp.setCreatedAt(LocalDateTime.of(2026, 2, 24, 10, 0, 0));
         resp.setUpdatedAt(LocalDateTime.of(2026, 2, 24, 10, 0, 0));
@@ -104,20 +104,20 @@ class JobControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建职位
+    // Create job
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("POST /jobs - 创建职位")
+    @DisplayName("POST /jobs - create job")
     class CreateJobTests {
 
         @Test
-        @DisplayName("认证用户创建职位 - 200")
+        @DisplayName("Authenticated user creates a job - 200")
         void createJob_authenticated_success() throws Exception {
             CreateJobRequest request = new CreateJobRequest();
-            request.setTitle("Java 高级工程师");
-            request.setDescription("负责核心系统设计与开发");
-            request.setRequirements("5年以上Java经验");
+            request.setTitle("Senior Java Engineer");
+            request.setDescription("Responsible for the design and development of core systems");
+            request.setRequirements("5+ years of Java experience");
             request.setSalaryMin(25);
             request.setSalaryMax(50);
 
@@ -134,12 +134,12 @@ class JobControllerTest {
         }
 
         @Test
-        @DisplayName("未认证创建职位 - 401/403")
+        @DisplayName("Unauthenticated job creation - 401/403")
         void createJob_unauthenticated() throws Exception {
             CreateJobRequest request = new CreateJobRequest();
-            request.setTitle("Java 高级工程师");
-            request.setDescription("负责核心系统设计与开发");
-            request.setRequirements("5年以上Java经验");
+            request.setTitle("Senior Java Engineer");
+            request.setDescription("Responsible for the design and development of core systems");
+            request.setRequirements("5+ years of Java experience");
             request.setSalaryMin(25);
             request.setSalaryMax(50);
 
@@ -151,10 +151,10 @@ class JobControllerTest {
         }
 
         @Test
-        @DisplayName("参数校验失败 - 缺少必填字段")
+        @DisplayName("Validation failure - missing required fields")
         void createJob_validationFail() throws Exception {
             CreateJobRequest request = new CreateJobRequest();
-            // title 和 description 为空，违反 @NotBlank
+            // title and description are empty, violating @NotBlank
 
             mockMvc.perform(post("/jobs")
                             .with(authentication(mockAuth(1L)))
@@ -167,40 +167,40 @@ class JobControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 获取职位详情（公开接口）
+    // Job detail (public endpoint)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("GET /jobs/{id} - 职位详情（公开）")
+    @DisplayName("GET /jobs/{id} - job detail (public)")
     class GetJobDetailTests {
 
         @Test
-        @DisplayName("匿名访问公开职位 - 200")
+        @DisplayName("Anonymous access to a public job - 200")
         void getJobDetail_anonymous_success() throws Exception {
             given(jobService.getJobDetail(1L)).willReturn(sampleJobResponse());
 
             mockMvc.perform(get("/jobs/1"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.title").value("Java 高级工程师"))
+                    .andExpect(jsonPath("$.data.title").value("Senior Java Engineer"))
                     .andExpect(jsonPath("$.data.viewCount").value(100));
         }
 
         @Test
-        @DisplayName("职位不存在 - 业务异常")
+        @DisplayName("Position not found - business exception")
         void getJobDetail_notFound() throws Exception {
             given(jobService.getJobDetail(999L))
-                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "职位不存在"));
+                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "Position not found"));
 
             mockMvc.perform(get("/jobs/999"))
-                    .andExpect(status().isOk())  // GlobalExceptionHandler 返回 200 body
+                    .andExpect(status().isOk())  // GlobalExceptionHandler returns a 200 body
                     .andExpect(jsonPath("$.code").value(ResultCode.NOT_FOUND.getCode()))
-                    .andExpect(jsonPath("$.message").value("职位不存在"));
+                    .andExpect(jsonPath("$.message").value("Position not found"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 发布/关闭/删除职位
+    // Publish/close/delete job
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -208,7 +208,7 @@ class JobControllerTest {
     class StateChangeTests {
 
         @Test
-        @DisplayName("发布职位 - 200")
+        @DisplayName("Publish a job - 200")
         void publishJob_success() throws Exception {
             willDoNothing().given(jobService).publishJob(1L, 1L);
 
@@ -220,7 +220,7 @@ class JobControllerTest {
         }
 
         @Test
-        @DisplayName("关闭职位 - 200")
+        @DisplayName("Close a job - 200")
         void closeJob_success() throws Exception {
             willDoNothing().given(jobService).closeJob(1L, 1L);
 
@@ -232,7 +232,7 @@ class JobControllerTest {
         }
 
         @Test
-        @DisplayName("删除职位 - 200")
+        @DisplayName("Delete a job - 200")
         void deleteJob_success() throws Exception {
             willDoNothing().given(jobService).deleteJob(1L, 1L);
 
@@ -244,29 +244,29 @@ class JobControllerTest {
         }
 
         @Test
-        @DisplayName("无权限发布 - 业务异常")
+        @DisplayName("Publishing without permission - business exception")
         void publishJob_forbidden() throws Exception {
-            willThrow(new BusinessException(ResultCode.FORBIDDEN, "无权限操作此职位"))
+            willThrow(new BusinessException(ResultCode.FORBIDDEN, "No permission to operate on this position"))
                     .given(jobService).publishJob(1L, 1L);
 
             mockMvc.perform(post("/jobs/1/publish")
                             .with(authentication(mockAuth(1L)))
                             .with(csrf()))
-                    .andExpect(status().isOk())  // GlobalExceptionHandler 处理
+                    .andExpect(status().isOk())  // Handled by GlobalExceptionHandler
                     .andExpect(jsonPath("$.code").value(ResultCode.FORBIDDEN.getCode()));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 热门职位（公开接口）
+    // Hot jobs (public endpoint)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("GET /jobs/hot - 热门职位（公开）")
+    @DisplayName("GET /jobs/hot - hot jobs (public)")
     class HotJobsTests {
 
         @Test
-        @DisplayName("匿名获取热门职位 - 200")
+        @DisplayName("Anonymous retrieval of hot jobs - 200")
         void getHotJobs_success() throws Exception {
             given(jobService.getHotJobs(10)).willReturn(List.of(sampleJobResponse()));
 
@@ -274,24 +274,24 @@ class JobControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.data").isArray())
-                    .andExpect(jsonPath("$.data[0].title").value("Java 高级工程师"));
+                    .andExpect(jsonPath("$.data[0].title").value("Senior Java Engineer"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 更新职位
+    // Update job
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("PUT /jobs - 更新职位")
+    @DisplayName("PUT /jobs - update job")
     class UpdateJobTests {
 
         @Test
-        @DisplayName("正常更新 - 200")
+        @DisplayName("Successful update - 200")
         void updateJob_success() throws Exception {
             UpdateJobRequest request = new UpdateJobRequest();
             request.setId(1L);
-            request.setTitle("更新后的标题");
+            request.setTitle("Updated title");
 
             willDoNothing().given(jobService).updateJob(any(UpdateJobRequest.class), eq(1L));
 
@@ -306,15 +306,15 @@ class JobControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 职位列表（公开接口）
+    // Job list (public endpoint)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("GET /jobs - 职位列表（公开）")
+    @DisplayName("GET /jobs - job list (public)")
     class JobListTests {
 
         @Test
-        @DisplayName("匿名分页查询 - 200")
+        @DisplayName("Anonymous paged query - 200")
         void listJobs_success() throws Exception {
             Page<JobResponse> page = new Page<>(1, 10, 1);
             page.setRecords(List.of(sampleJobResponse()));
@@ -326,7 +326,7 @@ class JobControllerTest {
                             .param("pageSize", "10"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.records[0].title").value("Java 高级工程师"));
+                    .andExpect(jsonPath("$.data.records[0].title").value("Senior Java Engineer"));
         }
     }
 }

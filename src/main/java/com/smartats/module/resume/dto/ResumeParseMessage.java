@@ -10,27 +10,27 @@ import lombok.NoArgsConstructor;
 public class ResumeParseMessage {
 
     /**
-     * 任务ID
+     * Task ID
      */
     private String taskId;
 
     /**
-     * 简历ID
+     * Resume ID
      */
     private Long resumeId;
 
     /**
-     * 用户ID
+     * User ID
      */
     private Long userId;
 
     /**
-     * 文件哈希
+     * File hash
      */
     private String fileHash;
 
     /**
-     * 重试次数
+     * Retry count
      */
     private Integer retryCount = 0;
 }

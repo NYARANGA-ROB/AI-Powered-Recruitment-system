@@ -6,9 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 审计日志实体
+ * Audit log entity
  * <p>
- * 记录系统中所有关键业务操作，用于安全审计、问题追踪和合规性要求。
+ * Records all key business operations in the system for security auditing, issue tracing and compliance requirements.
  */
 @Data
 @TableName("audit_logs")
@@ -17,48 +17,48 @@ public class AuditLogEntity {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    /** 操作人用户 ID（未登录则为 null） */
+    /** Operator user ID (null when unauthenticated) */
     private Long userId;
 
-    /** 操作人用户名 */
+    /** Operator username */
     private String username;
 
-    /** 业务模块（如：职位管理、简历管理） */
+    /** Business module (e.g. Job Management, Resume Management) */
     private String module;
 
-    /** 操作类型（如：CREATE、UPDATE、DELETE） */
+    /** Operation type (e.g. CREATE, UPDATE, DELETE) */
     private String operation;
 
-    /** 操作描述 */
+    /** Operation description */
     private String description;
 
-    /** Java 方法签名（类名.方法名） */
+    /** Java method signature (Class.method) */
     private String method;
 
-    /** 请求 URL */
+    /** Request URL */
     private String requestUrl;
 
-    /** HTTP 请求方法（GET / POST / PUT / DELETE） */
+    /** HTTP request method (GET / POST / PUT / DELETE) */
     private String requestMethod;
 
-    /** 请求参数（JSON 格式，脱敏后存储） */
+    /** Request parameters (stored as JSON, masked) */
     private String requestParams;
 
-    /** 请求方 IP 地址 */
+    /** Requesting IP address */
     private String requestIp;
 
-    /** 用户代理（User-Agent） */
+    /** User agent (User-Agent) */
     private String userAgent;
 
-    /** 操作结果状态：SUCCESS / FAILED */
+    /** Operation result status: SUCCESS / FAILED */
     private String status;
 
-    /** 失败时的错误消息 */
+    /** Error message on failure */
     private String errorMessage;
 
-    /** 方法执行耗时（毫秒） */
+    /** Method execution duration (milliseconds) */
     private Long duration;
 
-    /** 操作时间 */
+    /** Operation time */
     private LocalDateTime createdAt;
 }

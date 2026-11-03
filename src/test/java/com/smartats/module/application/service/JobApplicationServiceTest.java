@@ -34,10 +34,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * JobApplicationService 单元测试
+ * JobApplicationService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("JobApplicationService 单元测试")
+@DisplayName("JobApplicationService unit tests")
 class JobApplicationServiceTest {
 
     @InjectMocks
@@ -69,24 +69,24 @@ class JobApplicationServiceTest {
     void setUp() {
         publishedJob = new Job();
         publishedJob.setId(1L);
-        publishedJob.setTitle("Java 高级工程师");
+        publishedJob.setTitle("Senior Java Engineer");
         publishedJob.setStatus(JobStatus.PUBLISHED.getCode());
 
         mockCandidate = new Candidate();
         mockCandidate.setId(10L);
-        mockCandidate.setName("李四");
+        mockCandidate.setName("Li Si");
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建申请测试
+    // Create application tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("创建职位申请")
+    @DisplayName("Create job application")
     class CreateApplicationTests {
 
         @Test
-        @DisplayName("正常创建申请 - 初始状态为 PENDING")
+        @DisplayName("Successful creation of an application - initial status is PENDING")
         void createApplication_success() {
             // Given
             CreateApplicationRequest request = new CreateApplicationRequest();
@@ -95,7 +95,7 @@ class JobApplicationServiceTest {
 
             given(jobMapper.selectById(1L)).willReturn(publishedJob);
             given(candidateMapper.selectById(10L)).willReturn(mockCandidate);
-            given(jobApplicationMapper.selectCount(any())).willReturn(0L); // 无重复
+            given(jobApplicationMapper.selectCount(any())).willReturn(0L); // No duplicate
             given(jobApplicationMapper.insert(any(JobApplication.class))).willAnswer(invocation -> {
                 JobApplication app = invocation.getArgument(0);
                 app.setId(100L);
@@ -116,7 +116,7 @@ class JobApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("职位不存在时抛异常")
+        @DisplayName("Throws exception when the position does not exist")
         void createApplication_jobNotFound() {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(999L);
@@ -126,11 +126,11 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.createApplication(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("职位不存在");
+                    .hasMessageContaining("Position not found");
         }
 
         @Test
-        @DisplayName("职位未发布时抛异常")
+        @DisplayName("Throws exception when the position is not published")
         void createApplication_jobNotPublished() {
             publishedJob.setStatus(JobStatus.DRAFT.getCode());
             CreateApplicationRequest request = new CreateApplicationRequest();
@@ -141,11 +141,11 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.createApplication(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("职位未发布");
+                    .hasMessageContaining("The position is not published");
         }
 
         @Test
-        @DisplayName("候选人不存在时抛异常")
+        @DisplayName("Throws exception when the candidate does not exist")
         void createApplication_candidateNotFound() {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(1L);
@@ -156,11 +156,11 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.createApplication(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("候选人不存在");
+                    .hasMessageContaining("Candidate not found");
         }
 
         @Test
-        @DisplayName("重复申请时抛异常")
+        @DisplayName("Throws exception on duplicate application")
         void createApplication_duplicate() {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(1L);
@@ -168,20 +168,20 @@ class JobApplicationServiceTest {
 
             given(jobMapper.selectById(1L)).willReturn(publishedJob);
             given(candidateMapper.selectById(10L)).willReturn(mockCandidate);
-            given(jobApplicationMapper.selectCount(any())).willReturn(1L); // 存在重复
+            given(jobApplicationMapper.selectCount(any())).willReturn(1L); // Duplicate exists
 
             assertThatThrownBy(() -> jobApplicationService.createApplication(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("已申请");
+                    .hasMessageContaining("already applied");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 状态更新测试
+    // Status update tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("更新申请状态")
+    @DisplayName("Update application status")
     class UpdateStatusTests {
 
         private JobApplication pendingApp;
@@ -198,7 +198,7 @@ class JobApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("合法状态流转：PENDING → SCREENING")
+        @DisplayName("Legal status transition: PENDING → SCREENING")
         void updateStatus_pendingToScreening() {
             given(jobApplicationMapper.selectById(1L)).willReturn(pendingApp);
             given(jobApplicationMapper.updateById(any(JobApplication.class))).willReturn(1);
@@ -214,7 +214,7 @@ class JobApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("合法状态流转：SCREENING → INTERVIEW")
+        @DisplayName("Legal status transition: SCREENING → INTERVIEW")
         void updateStatus_screeningToInterview() {
             pendingApp.setStatus(ApplicationStatus.SCREENING.getCode());
             given(jobApplicationMapper.selectById(1L)).willReturn(pendingApp);
@@ -231,7 +231,7 @@ class JobApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("非法状态流转：PENDING → OFFER（跳过 SCREENING 和 INTERVIEW）")
+        @DisplayName("Illegal status transition: PENDING → OFFER (skipping SCREENING and INTERVIEW)")
         void updateStatus_illegalTransition() {
             given(jobApplicationMapper.selectById(1L)).willReturn(pendingApp);
 
@@ -240,11 +240,11 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.updateStatus(1L, request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("不允许");
+                    .hasMessageContaining("not allowed");
         }
 
         @Test
-        @DisplayName("终态不允许变更：REJECTED → 任何状态")
+        @DisplayName("Terminal status cannot change: REJECTED → any status")
         void updateStatus_rejectedCannotTransition() {
             pendingApp.setStatus(ApplicationStatus.REJECTED.getCode());
             given(jobApplicationMapper.selectById(1L)).willReturn(pendingApp);
@@ -254,11 +254,11 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.updateStatus(1L, request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("不允许");
+                    .hasMessageContaining("not allowed");
         }
 
         @Test
-        @DisplayName("申请不存在时抛异常")
+        @DisplayName("Throws exception when the application does not exist")
         void updateStatus_notFound() {
             given(jobApplicationMapper.selectById(999L)).willReturn(null);
 
@@ -267,16 +267,16 @@ class JobApplicationServiceTest {
 
             assertThatThrownBy(() -> jobApplicationService.updateStatus(999L, request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("申请记录不存在");
+                    .hasMessageContaining("Application record not found");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询测试
+    // Query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("查询申请")
+    @DisplayName("Query applications")
     class QueryTests {
 
         @BeforeEach
@@ -285,7 +285,7 @@ class JobApplicationServiceTest {
         }
 
         @Test
-        @DisplayName("根据 ID 查询 - 缓存未命中时从数据库查询")
+        @DisplayName("Query by ID - queries from the database on cache miss")
         void getById_cacheMiss() throws Exception {
             JobApplication app = new JobApplication();
             app.setId(1L);
@@ -304,23 +304,23 @@ class JobApplicationServiceTest {
             var response = jobApplicationService.getById(1L);
 
             assertThat(response).isNotNull();
-            assertThat(response.getJobTitle()).isEqualTo("Java 高级工程师");
-            assertThat(response.getCandidateName()).isEqualTo("李四");
+            assertThat(response.getJobTitle()).isEqualTo("Senior Java Engineer");
+            assertThat(response.getCandidateName()).isEqualTo("Li Si");
         }
 
         @Test
-        @DisplayName("申请不存在时抛异常")
+        @DisplayName("Throws exception when the application does not exist")
         void getById_notFound() {
             given(valueOperations.get(anyString())).willReturn(null);
             given(jobApplicationMapper.selectById(999L)).willReturn(null);
 
             assertThatThrownBy(() -> jobApplicationService.getById(999L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("申请记录不存在");
+                    .hasMessageContaining("Application record not found");
         }
 
         @Test
-        @DisplayName("按职位查询返回分页结果")
+        @DisplayName("Query by job returns paged results")
         void listByJobId_returnsPaged() {
             Page<JobApplication> emptyPage = new Page<>(1, 10, 0);
             emptyPage.setRecords(java.util.List.of());

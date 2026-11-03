@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Milvus 向量数据库配置
+ * Milvus vector database configuration
  * <p>
- * Milvus Standalone 通过 gRPC 连接，默认端口 19530。
- * 使用 MilvusClientV2（SDK v2 API），对应 Milvus Server 2.4.x。
+ * Milvus Standalone is connected over gRPC, on the default port 19530.
+ * Uses MilvusClientV2 (the SDK v2 API), which matches Milvus Server 2.4.x.
  */
 @Slf4j
 @Configuration
@@ -32,7 +32,7 @@ public class MilvusConfig {
     @Bean(destroyMethod = "close")
     public MilvusClientV2 milvusClient() {
         String uri = "http://" + host + ":" + port;
-        log.info("初始化 Milvus 客户端: uri={}, database={}", uri, database);
+        log.info("Initialising the Milvus client: uri={}, database={}", uri, database);
 
         ConnectConfig config = ConnectConfig.builder()
                 .uri(uri)
@@ -41,7 +41,7 @@ public class MilvusConfig {
                 .build();
 
         MilvusClientV2 client = new MilvusClientV2(config);
-        log.info("Milvus 客户端初始化成功");
+        log.info("Milvus client initialised successfully");
         return client;
     }
 }

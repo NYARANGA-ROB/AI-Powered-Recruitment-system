@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Webhook 管理", description = "Webhook 配置 CRUD、13 种事件类型、HMAC-SHA256 签名、异步发送")
+@Tag(name = "Webhook Management", description = "Webhook configuration CRUD, 13 event types, HMAC-SHA256 signing, asynchronous delivery")
 @Slf4j
 @RestController
 @RequestMapping("/webhooks")
@@ -25,11 +25,11 @@ public class WebhookController {
     private final WebhookService webhookService;
 
     /**
-     * 创建 Webhook 配置
+     * Create Webhook configuration
      * POST /api/v1/webhooks
      */
-    @Operation(summary = "创建 Webhook 配置", description = "自动生成 HMAC 密钥")
-    @AuditLog(module = "Webhook", operation = "CREATE", description = "创建 Webhook 配置")
+    @Operation(summary = "Create Webhook configuration", description = "Automatically generates an HMAC secret")
+    @AuditLog(module = "Webhook", operation = "CREATE", description = "Create Webhook configuration")
     @PostMapping
     public Result<WebhookResponse> createWebhook(
             @Valid @RequestBody WebhookCreateRequest request,
@@ -38,16 +38,16 @@ public class WebhookController {
 
         WebhookResponse response = webhookService.createWebhook(userId, request);
 
-        log.info("创建 Webhook: userId={}, url={}", userId, request.getUrl());
+        log.info("Creating Webhook: userId={}, url={}", userId, request.getUrl());
 
         return Result.success(response);
     }
 
     /**
-     * 获取用户的所有 Webhook 配置
+     * List all Webhook configurations of the user
      * GET /api/v1/webhooks
      */
-    @Operation(summary = "获取用户的所有 Webhook 配置")
+    @Operation(summary = "List all Webhook configurations of the user")
     @GetMapping
     public Result<List<WebhookResponse>> getWebhooks(Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
@@ -58,11 +58,11 @@ public class WebhookController {
     }
 
     /**
-     * 删除 Webhook 配置
+     * Delete Webhook configuration
      * DELETE /api/v1/webhooks/{id}
      */
-    @Operation(summary = "删除 Webhook 配置")
-    @AuditLog(module = "Webhook", operation = "DELETE", description = "删除 Webhook 配置")
+    @Operation(summary = "Delete Webhook configuration")
+    @AuditLog(module = "Webhook", operation = "DELETE", description = "Delete Webhook configuration")
     @DeleteMapping("/{id}")
     public Result<Void> deleteWebhook(
             @PathVariable Long id,
@@ -71,16 +71,16 @@ public class WebhookController {
 
         webhookService.deleteWebhook(userId, id);
 
-        log.info("删除 Webhook: userId={}, webhookId={}", userId, id);
+        log.info("Deleting Webhook: userId={}, webhookId={}", userId, id);
 
         return Result.success();
     }
 
     /**
-     * 测试 Webhook（发送测试事件，同步返回结果）
+     * Test Webhook (sends a test event and returns the result synchronously)
      * POST /api/v1/webhooks/{id}/test
      */
-    @Operation(summary = "测试 Webhook", description = "发送测试事件，同步返回发送结果")
+    @Operation(summary = "Test Webhook", description = "Sends a test event and returns the delivery result synchronously")
     @PostMapping("/{id}/test")
     public Result<Boolean> testWebhook(
             @PathVariable Long id,
@@ -89,7 +89,7 @@ public class WebhookController {
 
         boolean success = webhookService.testWebhook(userId, id);
 
-        log.info("测试 Webhook: userId={}, webhookId={}, success={}", userId, id, success);
+        log.info("Testing Webhook: userId={}, webhookId={}, success={}", userId, id, success);
 
         return Result.success(success);
     }

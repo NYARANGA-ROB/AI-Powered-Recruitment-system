@@ -3,16 +3,16 @@ package com.smartats.common.enums;
 import lombok.Getter;
 
 /**
- * 面试推荐结论枚举
+ * Interview recommendation conclusion enum
  */
 @Getter
 public enum Recommendation {
 
-    STRONG_YES("STRONG_YES", "强烈推荐"),
-    YES("YES", "推荐"),
-    NEUTRAL("NEUTRAL", "中性"),
-    NO("NO", "不推荐"),
-    STRONG_NO("STRONG_NO", "强烈不推荐");
+    STRONG_YES("STRONG_YES", "Strongly recommend"),
+    YES("YES", "Recommend"),
+    NEUTRAL("NEUTRAL", "Neutral"),
+    NO("NO", "Do not recommend"),
+    STRONG_NO("STRONG_NO", "Strongly do not recommend");
 
     private final String code;
     private final String description;

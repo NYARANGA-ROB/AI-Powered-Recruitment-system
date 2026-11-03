@@ -49,7 +49,7 @@ public class ResumeParseConsumer {
     private static final String LOCK_KEY_PREFIX = RedisKeyConstants.RESUME_LOCK_KEY_PREFIX;
 
     /**
-     * 消费简历解析消息
+     * Consume resume parsing messages
      */
     @RabbitListener(queues = RabbitMQConfig.RESUME_PARSE_QUEUE)
     public void consumeResumeParse(
@@ -61,85 +61,85 @@ public class ResumeParseConsumer {
         Long resumeId = message.getResumeId();
         String fileHash = message.getFileHash();
 
-        log.info("收到简历解析消息: taskId={}, resumeId={}", taskId, resumeId);
+        log.info("Received resume parsing message: taskId={}, resumeId={}", taskId, resumeId);
 
-        // 1. 幂等检查（Redis 标记）
+        // 1. Idempotency check (Redis marker)
         String idempotentKey = "idempotent:resume:" + resumeId;
         Boolean alreadyProcessed = redisTemplate.opsForValue()
                 .setIfAbsent(idempotentKey, "1", 1, java.util.concurrent.TimeUnit.HOURS);
 
         if (Boolean.FALSE.equals(alreadyProcessed)) {
-            log.warn("简历已处理过，跳过: resumeId={}", resumeId);
+            log.warn("Resume already processed, skipping: resumeId={}", resumeId);
             channel.basicAck(deliveryTag, false);
             return;
         }
 
-        // 2. 获取分布式锁（防止重复解析）
+        // 2. Acquire the distributed lock (prevents duplicate parsing)
         String lockKey = LOCK_KEY_PREFIX + fileHash;
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // 尝试获取锁，最多等待 10 秒，锁自动释放时间 300 秒
+            // Try to acquire the lock, waiting at most 10 seconds, lock auto-release time 300 seconds
             boolean acquired = lock.tryLock(10, 300, java.util.concurrent.TimeUnit.SECONDS);
             if (!acquired) {
-                log.warn("获取锁失败，可能有其他实例正在处理: resumeId={}", resumeId);
+                log.warn("Failed to acquire the lock, another instance may be processing: resumeId={}", resumeId);
                 channel.basicAck(deliveryTag, false);
                 return;
             }
 
-            log.info("获取锁成功，开始处理: resumeId={}", resumeId);
+            log.info("Lock acquired, starting processing: resumeId={}", resumeId);
 
-            // 3. 更新任务状态为 PROCESSING
+            // 3. Update the task status to PROCESSING
             updateTaskStatus(taskId, "PROCESSING", 10);
 
-            // 4. 查询简历信息
+            // 4. Query the resume information
             Resume resume = resumeMapper.selectById(resumeId);
             if (resume == null) {
-                log.error("简历不存在: resumeId={}", resumeId);
-                updateTaskStatus(taskId, "FAILED", 0, "简历不存在");
+                log.error("Resume not found: resumeId={}", resumeId);
+                updateTaskStatus(taskId, "FAILED", 0, "Resume not found");
                 channel.basicAck(deliveryTag, false);
                 return;
             }
 
-            // 5. 提取文件内容
-            log.info("开始提取文件内容: resumeId={}, fileName={}", resumeId, resume.getFileName());
+            // 5. Extract the file content
+            log.info("Start extracting file content: resumeId={}, fileName={}", resumeId, resume.getFileName());
             String content = contentExtractor.extractText(resume.getFileUrl(), resume.getFileType());
-            log.info("文件内容提取完成: contentLength={}", content.length());
+            log.info("File content extraction complete: contentLength={}", content.length());
             updateTaskStatus(taskId, "PROCESSING", 30);
 
-            // 6. AI 解析
-            log.info("开始 AI 解析: resumeId={}", resumeId);
+            // 6. AI parsing
+            log.info("Start AI parsing: resumeId={}", resumeId);
             ResumeParseService.ParseResult parseResult = parseService.parseResumeWithRaw(content);
             CandidateInfo candidateInfo = parseResult.candidateInfo();
             String rawJson = parseResult.rawResponse();
-            log.info("AI 解析完成: name={}, phone={}", candidateInfo.getName(), candidateInfo.getPhone());
+            log.info("AI parsing complete: name={}, phone={}", candidateInfo.getName(), candidateInfo.getPhone());
             updateTaskStatus(taskId, "PROCESSING", 70);
 
-            // 7. 保存候选人信息
-            log.info("保存候选人信息: resumeId={}", resumeId);
+            // 7. Save the candidate information
+            log.info("Saving candidate information: resumeId={}", resumeId);
             Candidate candidate = candidateService.createCandidate(resumeId, candidateInfo, rawJson);
-            log.info("候选人信息保存成功: candidateId={}", candidate.getId());
+            log.info("Candidate information saved successfully: candidateId={}", candidate.getId());
             updateTaskStatus(taskId, "PROCESSING", 85);
 
-            // 7.5 向量化候选人（生成嵌入并存入 Milvus）
-            log.info("开始向量化候选人: candidateId={}", candidate.getId());
+            // 7.5 Vectorize the candidate (generate embeddings and store them in Milvus)
+            log.info("Start vectorizing candidate: candidateId={}", candidate.getId());
             candidateVectorService.vectorizeCandidate(candidate);
             updateTaskStatus(taskId, "PROCESSING", 95);
 
-            // 8. 更新任务状态为 COMPLETED
+            // 8. Update the task status to COMPLETED
             updateTaskStatus(taskId, "COMPLETED", 100);
 
-            // 9. 更新简历状态（清除可能残留的错误信息）
+            // 9. Update the resume status (clearing any lingering error information)
             resume.setStatus(ResumeStatus.COMPLETED.getCode());
             resume.setErrorMessage(null);
             resumeMapper.updateById(resume);
 
-            log.info("简历解析完成: taskId={}, resumeId={}, candidateId={}", taskId, resumeId, candidate.getId());
+            log.info("Resume parsing complete: taskId={}, resumeId={}, candidateId={}", taskId, resumeId, candidate.getId());
 
-            // 10. 触发 Webhook 事件（传递候选人信息）
+            // 10. Trigger the Webhook event (passing the candidate information)
             triggerWebhookEvent(WebhookEventType.RESUME_PARSE_COMPLETED, resume, taskId, null, candidate.getId());
 
-            // 11. 手动确认消息
+            // 11. Manually acknowledge the message
             channel.basicAck(deliveryTag, false);
 
         } catch (InterruptedException e) {
@@ -147,13 +147,13 @@ public class ResumeParseConsumer {
             redisTemplate.delete(idempotentKey);
 
             if (retryCount < 3) {
-                log.warn("简历解析被中断，准备第 {} 次重试: taskId={}", retryCount + 1, taskId);
+                log.warn("Resume parsing interrupted, preparing retry attempt {}: taskId={}", retryCount + 1, taskId);
                 updateRetryingStatus(taskId, retryCount + 1, 3,
-                        String.format("解析被中断，%d秒后第 %d 次重试", getRetryDelay(retryCount) / 1000, retryCount + 1));
+                        String.format("Parsing interrupted, retrying in %d seconds (attempt %d)", getRetryDelay(retryCount) / 1000, retryCount + 1));
             } else {
-                log.error("简历解析被中断（重试已耗尽）: taskId={}", taskId, e);
-                handleFailedTask(taskId, "解析被中断（已重试3次）");
-                updateResumeStatusToFailed(resumeId, "解析被中断");
+                log.error("Resume parsing interrupted (retries exhausted): taskId={}", taskId, e);
+                handleFailedTask(taskId, "Parsing interrupted (after 3 retries)");
+                updateResumeStatusToFailed(resumeId, "Parsing interrupted");
             }
 
             retryOrReject(channel, deliveryTag, message);
@@ -164,25 +164,25 @@ public class ResumeParseConsumer {
             redisTemplate.delete(idempotentKey);
 
             if (retryCount < 3) {
-                // 还有重试机会 → 标记 RETRYING，不标记最终失败
+                // Retries remain → mark RETRYING, do not mark as finally failed
                 long nextDelay = getRetryDelay(retryCount);
-                log.warn("简历解析失败，准备第 {} 次重试（{}秒后）: taskId={}, error={}",
+                log.warn("Resume parsing failed, preparing retry attempt {} (in {} seconds): taskId={}, error={}",
                         retryCount + 1, nextDelay / 1000, taskId, e.getMessage());
                 updateRetryingStatus(taskId, retryCount + 1, 3,
-                        String.format("第 %d 次尝试失败，%d秒后重试: %s",
+                        String.format("Attempt %d failed, retrying in %d seconds: %s",
                                 retryCount + 1, nextDelay / 1000, e.getMessage()));
-                // DB 保持 PARSING 状态，不更新为 FAILED；不触发失败 Webhook
+                // Keep the DB in PARSING status, do not update to FAILED; do not trigger the failure Webhook
             } else {
-                // 重试已用尽 → 最终失败
-                log.error("简历解析最终失败（已重试3次）: taskId={}", taskId, e);
-                handleFailedTask(taskId, "解析失败（已重试3次）: " + e.getMessage());
+                // Retries exhausted → final failure
+                log.error("Resume parsing finally failed (after 3 retries): taskId={}", taskId, e);
+                handleFailedTask(taskId, "Parsing failed (after 3 retries): " + e.getMessage());
 
                 Resume resume = resumeMapper.selectById(resumeId);
                 if (resume != null) {
                     resume.setStatus(ResumeStatus.FAILED.getCode());
                     resume.setErrorMessage(e.getMessage());
                     resumeMapper.updateById(resume);
-                    log.info("已更新简历数据库状态为 FAILED: resumeId={}", resumeId);
+                    log.info("Updated resume database status to FAILED: resumeId={}", resumeId);
                     triggerWebhookEvent(WebhookEventType.RESUME_PARSE_FAILED, resume, taskId, e.getMessage(), null);
                 }
             }
@@ -190,16 +190,16 @@ public class ResumeParseConsumer {
             retryOrReject(channel, deliveryTag, message);
 
         } finally {
-            // 释放锁（如果当前线程持有锁）
+            // Release the lock (if the current thread holds it)
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.info("释放锁成功: lockKey={}", lockKey);
+                log.info("Lock released successfully: lockKey={}", lockKey);
             }
         }
     }
 
     /**
-     * 触发 Webhook 事件
+     * Trigger a Webhook event
      */
     private void triggerWebhookEvent(WebhookEventType eventType, Resume resume, String taskId, String errorMessage, Long candidateId) {
         try {
@@ -222,12 +222,12 @@ public class ResumeParseConsumer {
 
             webhookService.sendEvent(eventType, data);
         } catch (Exception e) {
-            log.error("触发 Webhook 事件失败: event={}, resumeId={}", eventType.getCode(), resume.getId(), e);
+            log.error("Failed to trigger Webhook event: event={}, resumeId={}", eventType.getCode(), resume.getId(), e);
         }
     }
 
     /**
-     * 更新任务状态
+     * Update the task status
      */
     private void updateTaskStatus(String taskId, String status, int progress) throws Exception {
         updateTaskStatus(taskId, status, progress, null);
@@ -241,26 +241,26 @@ public class ResumeParseConsumer {
         taskStatus.setProgress(progress);
         taskStatus.setErrorMessage(errorMessage);
 
-        // 手动序列化为 JSON 字符串
+        // Manually serialize to a JSON string
         String json = objectMapper.writeValueAsString(taskStatus);
         redisTemplate.opsForValue().set(taskKey, json, 24, java.util.concurrent.TimeUnit.HOURS);
 
-        log.info("更新任务状态: taskId={}, status={}, progress={}", taskId, status, progress);
+        log.info("Task status updated: taskId={}, status={}, progress={}", taskId, status, progress);
     }
 
     /**
-     * 处理失败任务
+     * Handle a failed task
      */
     private void handleFailedTask(String taskId, String errorMessage) {
         try {
             updateTaskStatus(taskId, "FAILED", 0, errorMessage);
         } catch (Exception e) {
-            log.error("更新失败任务状态异常: taskId={}", taskId, e);
+            log.error("Exception updating failed task status: taskId={}", taskId, e);
         }
     }
 
     /**
-     * 更新任务状态为 RETRYING（含重试信息）
+     * Update the task status to RETRYING (with retry information)
      */
     private void updateRetryingStatus(String taskId, int retryCount, int maxRetries, String errorMessage) {
         try {
@@ -274,14 +274,14 @@ public class ResumeParseConsumer {
 
             String json = objectMapper.writeValueAsString(taskStatus);
             redisTemplate.opsForValue().set(taskKey, json, 24, java.util.concurrent.TimeUnit.HOURS);
-            log.info("更新任务状态: taskId={}, status=RETRYING, retry={}/{}", taskId, retryCount, maxRetries);
+            log.info("Task status updated: taskId={}, status=RETRYING, retry={}/{}", taskId, retryCount, maxRetries);
         } catch (Exception e) {
-            log.error("更新 RETRYING 状态失败: taskId={}", taskId, e);
+            log.error("Failed to update RETRYING status: taskId={}", taskId, e);
         }
     }
 
     /**
-     * 更新简历数据库状态为 FAILED（用于中断场景无法获取 resume 对象时）
+     * Update the resume database status to FAILED (for interruption scenarios where the resume object cannot be obtained)
      */
     private void updateResumeStatusToFailed(Long resumeId, String errorMessage) {
         try {
@@ -290,61 +290,61 @@ public class ResumeParseConsumer {
                 resume.setStatus(ResumeStatus.FAILED.getCode());
                 resume.setErrorMessage(errorMessage);
                 resumeMapper.updateById(resume);
-                log.info("已更新简历数据库状态为 FAILED: resumeId={}", resumeId);
+                log.info("Updated resume database status to FAILED: resumeId={}", resumeId);
             }
         } catch (Exception e) {
-            log.error("更新简历数据库状态失败: resumeId={}", resumeId, e);
+            log.error("Failed to update resume database status: resumeId={}", resumeId, e);
         }
     }
 
     /**
-     * 计算指数退避延迟时间（毫秒）
-     * retry 1: 10秒, retry 2: 30秒, retry 3: 60秒
+     * Compute the exponential backoff delay in milliseconds
+     * retry 1: 10 seconds, retry 2: 30 seconds, retry 3: 60 seconds
      */
     private long getRetryDelay(int retryCount) {
         return switch (retryCount) {
-            case 0 -> 10_000L;   // 第1次重试: 10秒
-            case 1 -> 30_000L;   // 第2次重试: 30秒
-            case 2 -> 60_000L;   // 第3次重试: 60秒
+            case 0 -> 10_000L;   // 1st retry: 10 seconds
+            case 1 -> 30_000L;   // 2nd retry: 30 seconds
+            case 2 -> 60_000L;   // 3rd retry: 60 seconds
             default -> 60_000L;
         };
     }
 
     /**
-     * 重试或拒绝消息（使用延迟队列实现指数退避）
+     * Retry or reject the message (uses the delay queue to implement exponential backoff)
      */
     private void retryOrReject(Channel channel, long deliveryTag, ResumeParseMessage message) throws IOException {
         int retryCount = message.getRetryCount() == null ? 0 : message.getRetryCount();
 
         if (retryCount < 3) {
-            // 删除幂等标记，确保重试消息不被跳过
+            // Delete the idempotency marker so the retried message is not skipped
             String idempotentKey = "idempotent:resume:" + message.getResumeId();
             redisTemplate.delete(idempotentKey);
 
             long delay = getRetryDelay(retryCount);
-            log.info("消息重试: retryCount={}, 即将发送第 {} 次重试, 延迟 {}秒", retryCount, retryCount + 1, delay / 1000);
+            log.info("Message retry: retryCount={}, sending retry attempt {}, delay {} seconds", retryCount, retryCount + 1, delay / 1000);
             message.setRetryCount(retryCount + 1);
             try {
-                // 发送到延迟队列，设置 per-message TTL 实现指数退避
-                // 消息过期后会通过 DLX 自动路由回主队列 resume.parse.queue
+                // Send to the delay queue, setting a per-message TTL to implement exponential backoff
+                // Once the message expires it is automatically routed back to the main queue resume.parse.queue via the DLX
                 String json = objectMapper.writeValueAsString(message);
                 channel.basicPublish(
                         RabbitMQConfig.RESUME_EXCHANGE,
                         RabbitMQConfig.RESUME_PARSE_DELAY_ROUTING_KEY,
                         new com.rabbitmq.client.AMQP.BasicProperties.Builder()
                                 .contentType("application/json")
-                                .expiration(String.valueOf(delay))  // per-message TTL（毫秒）
+                                .expiration(String.valueOf(delay))  // per-message TTL (milliseconds)
                                 .build(),
                         json.getBytes(java.nio.charset.StandardCharsets.UTF_8)
                 );
             } catch (Exception e) {
-                log.error("重试消息发送失败，拒绝进入死信队列: retryCount={}", retryCount, e);
+                log.error("Failed to send retry message, rejecting into the dead-letter queue: retryCount={}", retryCount, e);
             }
-            // ACK 原消息，避免重复消费
+            // ACK the original message to avoid duplicate consumption
             channel.basicAck(deliveryTag, false);
         } else {
-            // 拒绝，进入死信队列
-            log.error("消息重试次数超限，进入死信队列: retryCount={}", retryCount);
+            // Reject, entering the dead-letter queue
+            log.error("Message retry limit exceeded, entering the dead-letter queue: retryCount={}", retryCount);
             channel.basicNack(deliveryTag, false, false);
         }
     }

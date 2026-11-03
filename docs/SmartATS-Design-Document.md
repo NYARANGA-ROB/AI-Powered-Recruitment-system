@@ -1,24 +1,24 @@
-# SmartATS - 智能招聘与简历分析系统
+# SmartATS - Intelligent Recruitment and Resume Analysis System
 
-## 📌 项目概述
+## 📌 Project Overview
 
-**SmartATS** 是一个面向 HR 的智能招聘管理系统。系统支持简历批量上传、AI 自动解析提取结构化信息、RAG 语义人才搜索等核心功能。
+**SmartATS** is an intelligent recruitment management system for HR. The system supports core capabilities such as batch resume upload, automatic AI parsing that extracts structured information, and RAG-based semantic talent search.
 
-### 技术栈
+### Technology Stack
 
-| 组件 | 技术选型 | 用途 |
-|------|----------|------|
-| 核心框架 | Spring Boot 3.x | 基础框架 |
-| ORM | MyBatis-Plus | 数据库操作 |
-| 数据库 | MySQL 8.0 | 业务数据存储 |
-| 缓存/限流/锁 | Redis + Redisson | 高性能缓存、分布式锁、限流 |
-| 消息队列 | RabbitMQ | 异步任务解耦 |
-| AI 集成 | Spring AI | LLM 调用、Embedding、RAG |
-| 向量数据库 | Milvus / PgVector | 简历向量存储与检索 |
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Core framework | Spring Boot 3.x | Base framework |
+| ORM | MyBatis-Plus | Database access |
+| Database | MySQL 8.0 | Business data storage |
+| Cache / rate limiting / locks | Redis + Redisson | High-performance caching, distributed locks, rate limiting |
+| Message queue | RabbitMQ | Asynchronous task decoupling |
+| AI integration | Spring AI | LLM calls, embeddings, RAG |
+| Vector database | Milvus / PgVector | Resume vector storage and retrieval |
 
 ---
 
-## 🏗️ 系统架构图
+## 🏗️ System Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -77,9 +77,9 @@
 
 ---
 
-## 📊 数据库设计 (MySQL)
+## 📊 Database Design (MySQL)
 
-### ER 关系图
+### ER Diagram
 
 ```
 ┌──────────────┐       ┌──────────────┐       ┌──────────────────┐
@@ -101,7 +101,7 @@
                   └───▶│ id (PK)      │──────────────┘
                        │ uploader_id  │
                        │ file_path    │
-                       │ file_hash    │ (MD5, 用于去重)
+                       │ file_hash    │ (MD5, used for de-duplication)
                        │ file_name    │
                        │ file_size    │
                        │ status       │ (PENDING/PROCESSING/SUCCESS/FAILED)
@@ -116,7 +116,7 @@
 │ candidate_id (FK)    │       │ job_id (FK)          │
 │ job_id (FK)          │       │ candidate_id (FK)    │
 │ interviewer_id (FK)  │       │ status               │
-│ round                │       │ match_score          │ (AI 计算的匹配度)
+│ round                │       │ match_score          │ (match score computed by AI)
 │ feedback             │       │ applied_at           │
 │ score                │       └──────────────────────┘
 │ status               │
@@ -124,9 +124,9 @@
 └──────────────────────┘
 ```
 
-### 表结构详细定义
+### Detailed Table Definitions
 
-#### 1. users - 用户表
+#### 1. users - User table
 ```sql
 CREATE TABLE `users` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -134,8 +134,8 @@ CREATE TABLE `users` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100) NOT NULL UNIQUE,
     `role` ENUM('ADMIN', 'HR', 'INTERVIEWER') NOT NULL DEFAULT 'HR',
-    `daily_ai_quota` INT NOT NULL DEFAULT 100 COMMENT '每日AI调用配额',
-    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '0-禁用 1-启用',
+    `daily_ai_quota` INT NOT NULL DEFAULT 100 COMMENT 'Daily AI call quota',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '0-disabled, 1-enabled',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_email` (`email`),
@@ -143,20 +143,20 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### 2. jobs - 职位表
+#### 2. jobs - Job table
 ```sql
 CREATE TABLE `jobs` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `title` VARCHAR(100) NOT NULL,
     `department` VARCHAR(50),
-    `description` TEXT NOT NULL COMMENT '职位描述',
-    `requirements` TEXT NOT NULL COMMENT '任职要求',
-    `required_skills` JSON COMMENT '必需技能标签 ["Java", "Spring"]',
-    `salary_min` INT COMMENT '薪资下限(K)',
-    `salary_max` INT COMMENT '薪资上限(K)',
-    `experience_min` INT DEFAULT 0 COMMENT '最低经验年限',
-    `experience_max` INT COMMENT '最高经验年限',
-    `education` ENUM('不限', '大专', '本科', '硕士', '博士') DEFAULT '不限',
+    `description` TEXT NOT NULL COMMENT 'Job description',
+    `requirements` TEXT NOT NULL COMMENT 'Job requirements',
+    `required_skills` JSON COMMENT 'Required skill tags ["Java", "Spring"]',
+    `salary_min` INT COMMENT 'Minimum salary (K)',
+    `salary_max` INT COMMENT 'Maximum salary (K)',
+    `experience_min` INT DEFAULT 0 COMMENT 'Minimum years of experience',
+    `experience_max` INT COMMENT 'Maximum years of experience',
+    `education` ENUM('ANY', 'COLLEGE', 'BACHELOR', 'MASTER', 'DOCTORATE') DEFAULT 'ANY',
     `job_type` ENUM('FULL_TIME', 'PART_TIME', 'INTERN') DEFAULT 'FULL_TIME',
     `status` ENUM('DRAFT', 'PUBLISHED', 'CLOSED') DEFAULT 'DRAFT',
     `creator_id` BIGINT NOT NULL,
@@ -168,49 +168,49 @@ CREATE TABLE `jobs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### 3. resumes - 简历文件表
+#### 3. resumes - Resume file table
 ```sql
 CREATE TABLE `resumes` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `uploader_id` BIGINT NOT NULL COMMENT '上传者ID',
-    `file_name` VARCHAR(255) NOT NULL COMMENT '原始文件名',
-    `file_path` VARCHAR(1024) NOT NULL COMMENT '存储路径',
-    `file_hash` VARCHAR(64) NOT NULL COMMENT 'MD5哈希值，用于去重',
-    `file_size` BIGINT NOT NULL COMMENT '文件大小(bytes)',
+    `uploader_id` BIGINT NOT NULL COMMENT 'Uploader ID',
+    `file_name` VARCHAR(255) NOT NULL COMMENT 'Original file name',
+    `file_path` VARCHAR(1024) NOT NULL COMMENT 'Storage path',
+    `file_hash` VARCHAR(64) NOT NULL COMMENT 'MD5 hash, used for de-duplication',
+    `file_size` BIGINT NOT NULL COMMENT 'File size (bytes)',
     `file_type` VARCHAR(20) NOT NULL COMMENT 'pdf/docx/doc',
     `status` ENUM('PENDING', 'QUEUED', 'PROCESSING', 'SUCCESS', 'FAILED') DEFAULT 'PENDING',
-    `error_message` VARCHAR(500) COMMENT '解析失败原因',
-    `retry_count` INT DEFAULT 0 COMMENT '重试次数',
+    `error_message` VARCHAR(500) COMMENT 'Reason for parsing failure',
+    `retry_count` INT DEFAULT 0 COMMENT 'Number of retries',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `processed_at` DATETIME COMMENT '解析完成时间',
+    `processed_at` DATETIME COMMENT 'Parsing completion time',
     UNIQUE INDEX `uk_file_hash` (`file_hash`),
     INDEX `idx_uploader` (`uploader_id`),
     INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### 4. candidates - 候选人表 (AI提取的结构化数据)
+#### 4. candidates - Candidate table (structured data extracted by AI)
 ```sql
 CREATE TABLE `candidates` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `resume_id` BIGINT NOT NULL UNIQUE COMMENT '关联简历ID',
-    `name` VARCHAR(50) COMMENT '姓名',
-    `phone` VARCHAR(20) COMMENT '手机号',
-    `email` VARCHAR(100) COMMENT '邮箱',
+    `resume_id` BIGINT NOT NULL UNIQUE COMMENT 'Linked resume ID',
+    `name` VARCHAR(50) COMMENT 'Full name',
+    `phone` VARCHAR(20) COMMENT 'Mobile phone number',
+    `email` VARCHAR(100) COMMENT 'Email address',
     `gender` ENUM('MALE', 'FEMALE', 'UNKNOWN') DEFAULT 'UNKNOWN',
-    `birth_year` INT COMMENT '出生年份',
-    `experience_years` INT COMMENT '工作年限',
-    `highest_education` VARCHAR(20) COMMENT '最高学历',
-    `graduate_school` VARCHAR(100) COMMENT '毕业院校',
-    `major` VARCHAR(100) COMMENT '专业',
-    `current_company` VARCHAR(100) COMMENT '当前公司',
-    `current_position` VARCHAR(100) COMMENT '当前职位',
-    `skills` JSON COMMENT '技能标签 ["Java", "Spring Boot", "Redis"]',
-    `work_experiences` JSON COMMENT '工作经历 [{company, position, duration, description}]',
-    `education_history` JSON COMMENT '教育经历',
-    `raw_extracted_json` JSON COMMENT 'AI原始提取结果',
-    `vector_id` VARCHAR(100) COMMENT '向量数据库中的ID',
-    `ai_summary` TEXT COMMENT 'AI生成的候选人摘要',
+    `birth_year` INT COMMENT 'Birth year',
+    `experience_years` INT COMMENT 'Years of experience',
+    `highest_education` VARCHAR(20) COMMENT 'Highest education level',
+    `graduate_school` VARCHAR(100) COMMENT 'Graduated school',
+    `major` VARCHAR(100) COMMENT 'Major',
+    `current_company` VARCHAR(100) COMMENT 'Current company',
+    `current_position` VARCHAR(100) COMMENT 'Current position',
+    `skills` JSON COMMENT 'Skill tags ["Java", "Spring Boot", "Redis"]',
+    `work_experiences` JSON COMMENT 'Work experiences [{company, position, duration, description}]',
+    `education_history` JSON COMMENT 'Education history',
+    `raw_extracted_json` JSON COMMENT 'Raw extraction result from the AI',
+    `vector_id` VARCHAR(100) COMMENT 'ID in the vector database',
+    `ai_summary` TEXT COMMENT 'AI-generated candidate summary',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_resume` (`resume_id`),
@@ -219,17 +219,17 @@ CREATE TABLE `candidates` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### 5. job_applications - 职位申请表
+#### 5. job_applications - Job application table
 ```sql
 CREATE TABLE `job_applications` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
     `job_id` BIGINT NOT NULL,
     `candidate_id` BIGINT NOT NULL,
-    `match_score` DECIMAL(5,2) COMMENT 'AI计算的匹配度 0-100',
-    `match_reasons` JSON COMMENT '匹配原因分析',
-    `match_calculated_at` DATETIME COMMENT '匹配度计算时间',
+    `match_score` DECIMAL(5,2) COMMENT 'Match score computed by AI, 0-100',
+    `match_reasons` JSON COMMENT 'Analysis of the matching reasons',
+    `match_calculated_at` DATETIME COMMENT 'Time the match score was computed',
     `status` ENUM('PENDING', 'SCREENING', 'INTERVIEW', 'OFFER', 'REJECTED', 'WITHDRAWN') DEFAULT 'PENDING',
-    `hr_notes` TEXT COMMENT 'HR备注',
+    `hr_notes` TEXT COMMENT 'HR notes',
     `applied_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX `uk_job_candidate` (`job_id`, `candidate_id`),
@@ -238,19 +238,19 @@ CREATE TABLE `job_applications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### 6. interview_records - 面试记录表
+#### 6. interview_records - Interview record table
 ```sql
 CREATE TABLE `interview_records` (
     `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `application_id` BIGINT NOT NULL COMMENT '关联申请ID',
-    `interviewer_id` BIGINT NOT NULL COMMENT '面试官ID',
-    `round` INT NOT NULL DEFAULT 1 COMMENT '第几轮面试',
+    `application_id` BIGINT NOT NULL COMMENT 'Linked application ID',
+    `interviewer_id` BIGINT NOT NULL COMMENT 'Interviewer ID',
+    `round` INT NOT NULL DEFAULT 1 COMMENT 'Which interview round',
     `interview_type` ENUM('PHONE', 'VIDEO', 'ONSITE', 'WRITTEN_TEST') DEFAULT 'VIDEO',
-    `scheduled_at` DATETIME NOT NULL COMMENT '面试时间',
-    `duration_minutes` INT DEFAULT 60 COMMENT '预计时长',
+    `scheduled_at` DATETIME NOT NULL COMMENT 'Interview time',
+    `duration_minutes` INT DEFAULT 60 COMMENT 'Expected duration',
     `status` ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED', 'NO_SHOW') DEFAULT 'SCHEDULED',
-    `feedback` TEXT COMMENT '面试反馈',
-    `score` INT COMMENT '评分 1-10',
+    `feedback` TEXT COMMENT 'Interview feedback',
+    `score` INT COMMENT 'Rating 1-10',
     `recommendation` ENUM('STRONG_YES', 'YES', 'NEUTRAL', 'NO', 'STRONG_NO'),
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -262,65 +262,66 @@ CREATE TABLE `interview_records` (
 
 ---
 
-## 🔴 Redis 数据结构设计
+## 🔴 Redis Data Structure Design
 
-### Key 命名规范
+### Key Naming Conventions
 
-| Key Pattern | Type | 用途 | TTL |
-|-------------|------|------|-----|
-| `task:resume:{taskId}` | Hash | 简历解析任务状态 | 24h |
-| `rate:ai:{userId}:{date}` | String (Counter) | AI调用次数限流 | 24h |
-| `rate:upload:{userId}` | String | 上传频率限流 | 1min |
-| `lock:resume:{fileHash}` | String | 简历解析分布式锁 | 10min |
-| `lock:application:{jobId}:{candidateId}` | String | 防止重复投递锁 | 5min |
-| `cache:job:{jobId}` | String (JSON) | 职位信息缓存 | 30min |
-| `cache:job:hot` | ZSet | 热门职位排行 | 10min |
-| `cache:candidate:{id}` | String (JSON) | 候选人信息缓存 | 30min |
-| `dedup:resume:{fileHash}` | String | 文件去重标记 | 7d |
+| Key Pattern | Type | Purpose | TTL |
+|-------------|------|---------|-----|
+| `task:resume:{taskId}` | Hash | Resume parsing task status | 24h |
+| `rate:ai:{userId}:{date}` | String (Counter) | Rate limiting of AI call counts | 24h |
+| `rate:upload:{userId}` | String | Rate limiting of upload frequency | 1min |
+| `lock:resume:{fileHash}` | String | Distributed lock for resume parsing | 10min |
+| `lock:application:{jobId}:{candidateId}` | String | Lock that prevents duplicate applications | 5min |
+| `cache:job:{jobId}` | String (JSON) | Job information cache | 30min |
+| `cache:job:hot` | ZSet | Ranking of popular jobs | 10min |
+| `cache:candidate:{id}` | String (JSON) | Candidate information cache | 30min |
+| `dedup:resume:{fileHash}` | String | File de-duplication marker | 7d |
 
-### 详细结构说明
+### Detailed Structure Description
 
-#### 1. 任务状态追踪
+#### 1. Task status tracking
 ```
 Key: task:resume:{taskId}
 Type: Hash
 Fields:
   - status: QUEUED | PROCESSING | SUCCESS | FAILED
-  - progress: 0-100 (解析进度百分比)
-  - resumeId: 关联的简历ID
-  - startTime: 开始处理时间戳
-  - message: 状态描述或错误信息
-TTL: 86400 (24小时)
+  - progress: 0-100 (parsing progress percentage)
+  - resumeId: linked resume ID
+  - startTime: timestamp when processing started
+  - message: status description or error message
+TTL: 86400 (24 hours)
 ```
 
-#### 2. AI限流计数器 (滑动窗口)
+#### 2. AI rate limit counter (sliding window)
 ```
 Key: rate:ai:{userId}:{yyyyMMdd}
 Type: String (Integer)
-Value: 当日已调用次数
-TTL: 86400 (24小时后自动过期)
+Value: number of AI calls made that day
+TTL: 86400 (expires automatically after 24 hours)
 
-# 额外的分钟级限流
+# Additional per-minute rate limiting
 Key: rate:ai:minute:{userId}:{yyyyMMddHHmm}
 Type: String (Integer)
-Value: 当前分钟调用次数
+Value: number of calls in the current minute
 TTL: 60
 ```
 
-#### 3. 分布式锁
+#### 3. Distributed lock
 ```
 Key: lock:resume:{fileHash}
 Type: String
 Value: {uuid}:{threadId}
-TTL: 30s (默认，由Redisson Watchdog自动续期)
-说明: 必须使用Redisson的Watchdog机制，防止解析时间过长导致锁提前释放。
+TTL: 30s (default, renewed automatically by the Redisson Watchdog)
+Note: The Redisson Watchdog mechanism must be used, to prevent the lock from
+being released early when parsing takes too long.
 ```
 
 ---
 
-## 🐰 RabbitMQ 设计
+## 🐰 RabbitMQ Design
 
-### Exchange 与 Queue 拓扑
+### Exchange and Queue Topology
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -338,7 +339,7 @@ TTL: 30s (默认，由Redisson Watchdog自动续期)
 │              ▼                                                  │
 │   ┌──────────────────────┐                                      │
 │   │ resume.parse.queue   │◀─────────┐                           │
-│   │ (主队列)              │          │ x-dead-letter-exchange   │
+│   │ (Main queue)         │          │ x-dead-letter-exchange   │
 │   │ TTL: 30min           │          │ x-dead-letter-routing-key │
 │   └──────────┬───────────┘          │                           │
 │              │                      │                           │
@@ -358,18 +359,18 @@ TTL: 30s (默认，由Redisson Watchdog自动续期)
 │              ▼                                                  │
 │   ┌──────────────────────┐                                      │
 │   │ resume.parse.dlq     │  (Dead Letter Queue)                 │
-│   │ (死信队列，存放失败任务) │                                     │
+│   │ (holds failed tasks) │                                      │
 │   └──────────────────────┘                                      │
 │              │                                                  │
 │              ▼                                                  │
 │   ┌──────────────────────┐                                      │
-│   │  DLQ Consumer        │  (定时任务扫描，人工介入或重试)          │
+│   │  DLQ Consumer        │  (Scheduled scan; manual retry)      │
 │   └──────────────────────┘                                      │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 消息体定义
+### Message Payload Definition
 
 ```json
 // ResumeParseMessage
@@ -384,121 +385,124 @@ TTL: 30s (默认，由Redisson Watchdog自动续期)
 }
 ```
 
-### Queue 配置参数
+### Queue Configuration Parameters
 
-| 参数 | 值 | 说明 |
-|------|-----|------|
-| x-message-ttl | 1800000 | 消息30分钟未消费则进入死信 |
-| x-dead-letter-exchange | smartats.dlx | 死信交换机 |
-| x-dead-letter-routing-key | resume.parse.failed | 死信路由键 |
-| x-max-length | 10000 | 队列最大长度 |
-| durable | true | 持久化 |
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| x-message-ttl | 1800000 | Messages not consumed within 30 minutes go to dead letters |
+| x-dead-letter-exchange | smartats.dlx | Dead letter exchange |
+| x-dead-letter-routing-key | resume.parse.failed | Dead letter routing key |
+| x-max-length | 10000 | Maximum queue length |
+| durable | true | Persistence |
 
 ---
 
-## 🤖 Spring AI 集成设计
+## 🤖 Spring AI Integration Design
 
-### Prompt 模板
+### Prompt Templates
 
-#### 简历信息提取 Prompt
+#### Resume information extraction prompt
 
 ```text
 # System Prompt
-你是一个专业的简历解析助手。你的任务是从简历文本中提取结构化信息。
-请严格按照指定的JSON格式输出，不要添加任何额外的解释或markdown标记。
+You are a professional resume parsing assistant. Your task is to extract structured
+information from resume text.
+Output strictly in the specified JSON format, and do not add any extra explanation
+or markdown markers.
 
-## 输出格式要求
+## Output format requirements
 {
-  "name": "姓名",
-  "phone": "手机号",
-  "email": "邮箱",
+  "name": "full name",
+  "phone": "mobile phone number",
+  "email": "email address",
   "gender": "MALE/FEMALE/UNKNOWN",
   "birthYear": 1990,
   "experienceYears": 5,
-  "highestEducation": "本科/硕士/博士",
-  "graduateSchool": "毕业院校",
-  "major": "专业",
-  "currentCompany": "当前公司",
-  "currentPosition": "当前职位",
+  "highestEducation": "Bachelor/Master/Doctorate",
+  "graduateSchool": "graduated school",
+  "major": "major",
+  "currentCompany": "current company",
+  "currentPosition": "current position",
   "skills": ["Java", "Spring Boot", "MySQL"],
   "workExperiences": [
     {
-      "company": "公司名",
-      "position": "职位",
+      "company": "company name",
+      "position": "position",
       "startDate": "2020-01",
       "endDate": "2023-06",
-      "description": "工作描述"
+      "description": "job description"
     }
   ],
   "educationHistory": [
     {
-      "school": "学校名",
-      "degree": "学位",
-      "major": "专业",
+      "school": "school name",
+      "degree": "degree",
+      "major": "major",
       "startDate": "2015-09",
       "endDate": "2019-06"
     }
   ],
-  "summary": "一句话总结该候选人的核心竞争力"
+  "summary": "one-sentence summary of this candidate's core strengths"
 }
 
-## 注意事项
-1. 如果某字段无法从简历中提取，设为null
-2. skills数组请提取所有技术技能、工具、编程语言
-3. experienceYears请根据工作经历计算，精确到整数
-4. 日期格式统一为 YYYY-MM
+## Notes
+1. If a field cannot be extracted from the resume, set it to null
+2. In the skills array, extract all technical skills, tools and programming languages
+3. Compute experienceYears from the work experience, precise to a whole number
+4. Use a unified date format of YYYY-MM
 
 # User Prompt
-请解析以下简历内容：
+Please parse the following resume content:
 
 ---
 {resumeContent}
 ---
 ```
 
-#### RAG 搜索 Prompt
+#### RAG search prompt
 
 ```text
 # System Prompt
-你是一个智能人才搜索助手。你将收到用户的搜索查询和一些相关的候选人简历片段。
-请根据这些信息，分析每位候选人与查询的匹配程度。
+You are an intelligent talent search assistant. You will receive a user search query
+and some relevant candidate resume fragments.
+Based on this information, analyze how well each candidate matches the query.
 
-## 你的任务
-1. 理解用户的招聘需求
-2. 分析每位候选人的匹配度
-3. 按匹配度从高到低排序
-4. 给出匹配理由
+## Your task
+1. Understand the user's hiring requirement
+2. Analyze each candidate's match score
+3. Sort candidates by match score from high to low
+4. Provide the matching reasons
 
-## 输出格式
+## Output format
 {
-  "analysis": "对用户需求的理解",
+  "analysis": "understanding of the user's requirement",
   "candidates": [
     {
       "candidateId": 123,
       "matchScore": 85,
-      "matchReasons": ["3年Java经验", "熟悉Spring Boot", "有大厂背景"],
-      "concerns": ["缺乏Redis经验"]
+      "matchReasons": ["3 years of Java experience", "proficient in Spring Boot", "background at a large tech company"],
+      "concerns": ["lacks Redis experience"]
     }
   ]
 }
 
 # User Prompt
-## 招聘需求
+## Hiring requirement
 {userQuery}
 
-## 候选人简历
+## Candidate resumes
 {retrievedResumes}
 ```
 
 ---
 
-## 📡 API 接口文档
+## 📡 API Documentation
 
-### 基础规范
+### Basic Conventions
 
 - **Base URL:** `/api/v1`
-- **认证方式:** JWT Bearer Token
-- **统一响应格式:**
+- **Authentication:** JWT Bearer Token
+- **Unified response format:**
 
 ```json
 {
@@ -509,49 +513,49 @@ TTL: 30s (默认，由Redisson Watchdog自动续期)
 }
 ```
 
-- **错误响应格式:**
+- **Error response format:**
 
 ```json
 {
   "code": 40001,
-  "message": "参数校验失败",
+  "message": "Parameter validation failed",
   "errors": [
-    { "field": "email", "message": "邮箱格式不正确" }
+    { "field": "email", "message": "Invalid email format" }
   ],
   "timestamp": 1704067200000
 }
 ```
 
-### 错误码定义
+### Error Code Definitions
 
-| Code | 说明 |
-|------|------|
-| 200 | 成功 |
-| 40001 | 参数校验失败 |
-| 40002 | 文件类型不支持 |
-| 40003 | 文件大小超限 |
-| 40004 | 重复的简历文件 |
-| 40101 | 未登录 |
-| 40301 | 无权限 |
-| 42901 | AI调用次数超限 |
-| 50001 | 系统内部错误 |
-| 50002 | AI服务不可用 |
-| 50003 | 文件存储失败 |
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 40001 | Parameter validation failed |
+| 40002 | Unsupported file type |
+| 40003 | File size exceeds the limit |
+| 40004 | Duplicate resume file |
+| 40101 | Not logged in |
+| 40301 | No permission |
+| 42901 | AI call count exceeds the limit |
+| 50001 | Internal system error |
+| 50002 | AI service unavailable |
+| 50003 | File storage failed |
 
 ---
 
-### 模块一：用户认证 (Auth)
+### Module 1: Authentication (Auth)
 
-#### 1.1 用户注册
+#### 1.1 User registration
 ```
 POST /api/v1/auth/register
 
 Request Body:
 {
-  "username": "string, 4-20字符, 必填",
-  "password": "string, 6-20字符, 必填",
-  "email": "string, 邮箱格式, 必填",
-  "role": "string, 可选, 默认HR, 枚举: HR/INTERVIEWER"
+  "username": "string, 4-20 characters, required",
+  "password": "string, 6-20 characters, required",
+  "email": "string, email format, required",
+  "role": "string, optional, defaults to HR, enum: HR/INTERVIEWER"
 }
 
 Response:
@@ -563,20 +567,20 @@ Response:
   }
 }
 
-后端实现要点:
-- 密码使用BCrypt加密存储
-- 校验用户名和邮箱唯一性
-- 生成默认的每日AI配额
+Backend implementation notes:
+- Store passwords encrypted with BCrypt
+- Validate uniqueness of the username and the email
+- Generate the default daily AI quota
 ```
 
-#### 1.2 用户登录
+#### 1.2 User login
 ```
 POST /api/v1/auth/login
 
 Request Body:
 {
-  "username": "string, 必填",
-  "password": "string, 必填"
+  "username": "string, required",
+  "password": "string, required"
 }
 
 Response:
@@ -596,35 +600,35 @@ Response:
   }
 }
 
-后端实现要点:
-- 校验用户名密码
-- 生成JWT Token (Access Token 2小时, Refresh Token 7天)
-- 【Redis】记录登录态，支持踢人下线
+Backend implementation notes:
+- Validate the username and password
+- Generate JWT tokens (Access Token 2 hours, Refresh Token 7 days)
+- [Redis] Record the login state, so that users can be forced offline
 ```
 
-#### 1.3 刷新Token
+#### 1.3 Refresh token
 ```
 POST /api/v1/auth/refresh
 
 Request Body:
 {
-  "refreshToken": "string, 必填"
+  "refreshToken": "string, required"
 }
 
-Response: 同登录接口
+Response: same as the login endpoint
 ```
 
 ---
 
-### 模块二：简历管理 (Resume)
+### Module 2: Resume Management (Resume)
 
-#### 2.1 上传简历 ⭐ 核心接口
+#### 2.1 Upload resume ⭐ Core endpoint
 ```
 POST /api/v1/resumes/upload
 Content-Type: multipart/form-data
 
 Request:
-- file: 文件, 必填, 支持 pdf/docx/doc, 最大10MB
+- file: file, required, supports pdf/docx/doc, max 10MB
 
 Response:
 {
@@ -632,30 +636,30 @@ Response:
   "data": {
     "taskId": "550e8400-e29b-41d4-a716-446655440000",
     "resumeId": 12345,
-    "fileName": "张三-Java开发.pdf",
+    "fileName": "ZhangSan-Java-Developer.pdf",
     "status": "QUEUED",
-    "message": "文件已上传，正在排队等待解析"
+    "message": "File uploaded, queued and waiting to be parsed"
   }
 }
 
-后端实现要点 (重点！):
-1. 计算文件MD5 Hash
-2. 【Redis】检查 dedup:resume:{hash} 是否存在，存在则返回"重复文件"错误
-3. 保存文件到磁盘/OSS
-4. 写入 resumes 表，status = PENDING
-5. 【Redis】设置 task:resume:{taskId} = {status: QUEUED, resumeId: xxx}
-6. 【Redis】设置 dedup:resume:{hash} = resumeId, TTL 7天
-7. 【RabbitMQ】发送消息到 resume.parse.queue
-8. 立即返回 taskId，不等待解析完成
+Backend implementation notes (the key point!):
+1. Compute the file's MD5 hash
+2. [Redis] Check whether dedup:resume:{hash} exists; if it exists, return a "duplicate file" error
+3. Save the file to disk/OSS
+4. Insert a row into the resumes table with status = PENDING
+5. [Redis] Set task:resume:{taskId} = {status: QUEUED, resumeId: xxx}
+6. [Redis] Set dedup:resume:{hash} = resumeId, TTL 7 days
+7. [RabbitMQ] Send a message to resume.parse.queue
+8. Return the taskId immediately, without waiting for parsing to finish
 ```
 
-#### 2.2 批量上传简历
+#### 2.2 Batch upload resumes
 ```
 POST /api/v1/resumes/batch-upload
 Content-Type: multipart/form-data
 
 Request:
-- files: 文件数组, 必填, 最多20个文件
+- files: array of files, required, at most 20 files
 
 Response:
 {
@@ -665,33 +669,33 @@ Response:
     "successCount": 18,
     "failedCount": 2,
     "tasks": [
-      { "taskId": "xxx", "fileName": "张三.pdf", "status": "QUEUED" },
-      { "taskId": null, "fileName": "重复文件.pdf", "status": "DUPLICATE", "message": "文件已存在" }
+      { "taskId": "xxx", "fileName": "ZhangSan.pdf", "status": "QUEUED" },
+      { "taskId": null, "fileName": "duplicate-file.pdf", "status": "DUPLICATE", "message": "File already exists" }
     ]
   }
 }
 
-后端实现要点:
-- 【Redis】上传频率限流: rate:upload:{userId} 每分钟最多5次批量上传
-- 循环处理每个文件，单个失败不影响其他
+Backend implementation notes:
+- [Redis] Upload frequency rate limiting: rate:upload:{userId}, at most 5 batch uploads per minute
+- Process each file in a loop; a single failure does not affect the others
 ```
 
-#### 2.3 查询解析状态 ⭐ 核心接口
+#### 2.3 Query parsing status ⭐ Core endpoint
 ```
 GET /api/v1/resumes/tasks/{taskId}/status
 
-Response (处理中):
+Response (processing):
 {
   "code": 200,
   "data": {
     "taskId": "550e8400-e29b-41d4-a716-446655440000",
     "status": "PROCESSING",
     "progress": 60,
-    "message": "正在提取简历信息..."
+    "message": "Extracting resume information..."
   }
 }
 
-Response (处理完成):
+Response (completed):
 {
   "code": 200,
   "data": {
@@ -700,25 +704,25 @@ Response (处理完成):
     "progress": 100,
     "resumeId": 12345,
     "candidateId": 67890,
-    "candidateName": "张三",
-    "message": "解析完成"
+    "candidateName": "ZhangSan",
+    "message": "Parsing completed"
   }
 }
 
-后端实现要点:
-- 【Redis】直接从 task:resume:{taskId} 读取，不查数据库
-- 如果Redis中不存在，再fallback查MySQL
+Backend implementation notes:
+- [Redis] Read directly from task:resume:{taskId}; do not query the database
+- If the key does not exist in Redis, fall back to querying MySQL
 ```
 
-#### 2.4 获取简历列表
+#### 2.4 Get resume list
 ```
 GET /api/v1/resumes
 
 Query Parameters:
-- page: int, 默认1
-- size: int, 默认20, 最大100
-- status: string, 可选, 筛选状态
-- keyword: string, 可选, 搜索文件名
+- page: int, default 1
+- size: int, default 20, max 100
+- status: string, optional, filter by status
+- keyword: string, optional, search the file name
 
 Response:
 {
@@ -729,11 +733,11 @@ Response:
     "list": [
       {
         "resumeId": 12345,
-        "fileName": "张三-Java开发.pdf",
+        "fileName": "ZhangSan-Java-Developer.pdf",
         "fileSize": 102400,
         "status": "SUCCESS",
         "candidateId": 67890,
-        "candidateName": "张三",
+        "candidateName": "ZhangSan",
         "uploadTime": "2024-01-01 10:30:00"
       }
     ]
@@ -741,7 +745,7 @@ Response:
 }
 ```
 
-#### 2.5 重新解析简历
+#### 2.5 Reparse a resume
 ```
 POST /api/v1/resumes/{resumeId}/reparse
 
@@ -750,21 +754,21 @@ Response:
   "code": 200,
   "data": {
     "taskId": "new-task-id",
-    "message": "已重新提交解析任务"
+    "message": "Parsing task resubmitted"
   }
 }
 
-后端实现要点:
-- 只允许对 FAILED 状态的简历重新解析
-- 重置 retry_count
-- 重新发送MQ消息
+Backend implementation notes:
+- Only allow reparsing of resumes in FAILED status
+- Reset retry_count
+- Send the MQ message again
 ```
 
 ---
 
-### 模块三：候选人管理 (Candidate)
+### Module 3: Candidate Management (Candidate)
 
-#### 3.1 获取候选人详情
+#### 3.1 Get candidate details
 ```
 GET /api/v1/candidates/{candidateId}
 
@@ -774,51 +778,51 @@ Response:
   "data": {
     "candidateId": 67890,
     "resumeId": 12345,
-    "name": "张三",
+    "name": "ZhangSan",
     "phone": "138****1234",
     "email": "zhang***@gmail.com",
     "experienceYears": 5,
-    "highestEducation": "本科",
-    "graduateSchool": "浙江大学",
-    "currentCompany": "阿里巴巴",
-    "currentPosition": "高级Java工程师",
+    "highestEducation": "Bachelor",
+    "graduateSchool": "Zhejiang University",
+    "currentCompany": "Alibaba",
+    "currentPosition": "Senior Java Engineer",
     "skills": ["Java", "Spring Boot", "MySQL", "Redis", "Kafka"],
-    "aiSummary": "5年Java后端开发经验，精通分布式系统，有大厂背景",
+    "aiSummary": "5 years of Java backend development experience, proficient in distributed systems, background at a large tech company",
     "workExperiences": [...],
     "educationHistory": [...]
   }
 }
 
-后端实现要点:
-- 【Redis】先查 cache:candidate:{id}，缓存30分钟
-- 手机号/邮箱做脱敏处理
+Backend implementation notes:
+- [Redis] Check cache:candidate:{id} first, cached for 30 minutes
+- Mask phone numbers and email addresses
 ```
 
-#### 3.2 获取候选人列表
+#### 3.2 Get candidate list
 ```
 GET /api/v1/candidates
 
 Query Parameters:
 - page: int
 - size: int
-- skills: string, 可选, 逗号分隔的技能筛选
-- experienceMin: int, 可选
-- experienceMax: int, 可选
-- education: string, 可选
+- skills: string, optional, comma-separated skill filter
+- experienceMin: int, optional
+- experienceMax: int, optional
+- education: string, optional
 
-Response: 分页列表
+Response: paginated list
 ```
 
-#### 3.3 AI智能搜索候选人 ⭐ 核心接口
+#### 3.3 AI-powered candidate search ⭐ Core endpoint
 ```
 POST /api/v1/candidates/smart-search
 
 Request Body:
 {
-  "query": "帮我找一个精通Spring Boot和Redis，有3年以上经验的Java开发",
+  "query": "Find me a Java developer proficient in Spring Boot and Redis with 3+ years of experience",
   "filters": {
     "experienceMin": 3,
-    "education": "本科"
+    "education": "Bachelor"
   },
   "topK": 10
 }
@@ -827,59 +831,59 @@ Response:
 {
   "code": 200,
   "data": {
-    "queryAnalysis": "用户需要: Java开发, 核心技能Spring Boot+Redis, 3年+经验",
+    "queryAnalysis": "The user needs: Java developer, core skills Spring Boot + Redis, 3+ years of experience",
     "candidates": [
       {
         "candidateId": 67890,
-        "name": "张三",
+        "name": "ZhangSan",
         "matchScore": 92,
-        "matchReasons": ["5年Java经验", "精通Spring Boot", "3年Redis使用经验"],
+        "matchReasons": ["5 years of Java experience", "proficient in Spring Boot", "3 years of Redis experience"],
         "concerns": [],
         "skills": ["Java", "Spring Boot", "Redis", "MySQL"],
-        "currentPosition": "高级Java工程师"
+        "currentPosition": "Senior Java Engineer"
       },
       {
         "candidateId": 67891,
-        "name": "李四",
+        "name": "LiSi",
         "matchScore": 78,
-        "matchReasons": ["4年Java经验", "熟悉Spring Boot"],
-        "concerns": ["Redis经验较少"],
+        "matchReasons": ["4 years of Java experience", "familiar with Spring Boot"],
+        "concerns": ["limited Redis experience"],
         "skills": ["Java", "Spring Boot", "MySQL"],
-        "currentPosition": "Java开发工程师"
+        "currentPosition": "Java Developer"
       }
     ]
   }
 }
 
-后端实现要点 (最复杂的接口！):
-1. 【Redis限流】检查 rate:ai:{userId}:{date}，超过每日配额返回429错误
-2. 【MySQL】根据filters进行初步筛选，获取候选范围
-3. 【Spring AI】将query转换为向量 (Embedding)
-4. 【向量数据库】执行相似度搜索，获取Top K相似的候选人
-5. 【Spring AI】调用LLM对候选人进行精细排序和理由分析
-6. 【Redis】AI调用成功后，INCR rate:ai:{userId}:{date}
-7. 返回结果
+Backend implementation notes (the most complex endpoint!):
+1. [Redis rate limiting] Check rate:ai:{userId}:{date}; return a 429 error when the daily quota is exceeded
+2. [MySQL] Apply the filters for a first-pass selection to obtain the candidate scope
+3. [Spring AI] Convert the query into a vector (embedding)
+4. [Vector database] Run a similarity search to obtain the Top K most similar candidates
+5. [Spring AI] Call the LLM for fine-grained reranking and reason analysis of the candidates
+6. [Redis] After the AI call succeeds, INCR rate:ai:{userId}:{date}
+7. Return the results
 ```
 
 ---
 
-### 模块四：职位管理 (Job)
+### Module 4: Job Management (Job)
 
-#### 4.1 创建职位
+#### 4.1 Create a job
 ```
 POST /api/v1/jobs
 
 Request Body:
 {
-  "title": "高级Java工程师",
-  "department": "技术部",
-  "description": "负责核心业务系统开发...",
-  "requirements": "1. 5年以上Java开发经验\n2. 精通Spring Boot...",
+  "title": "Senior Java Engineer",
+  "department": "Technology Department",
+  "description": "Responsible for developing core business systems...",
+  "requirements": "1. 5+ years of Java development experience\n2. Proficient in Spring Boot...",
   "requiredSkills": ["Java", "Spring Boot", "MySQL"],
   "salaryMin": 25,
   "salaryMax": 40,
   "experienceMin": 5,
-  "education": "本科"
+  "education": "Bachelor"
 }
 
 Response:
@@ -892,15 +896,15 @@ Response:
 }
 ```
 
-#### 4.2 获取职位详情
+#### 4.2 Get job details
 ```
 GET /api/v1/jobs/{jobId}
 
-后端实现要点:
-- 【Redis】先查 cache:job:{jobId}，缓存30分钟
+Backend implementation notes:
+- [Redis] Check cache:job:{jobId} first, cached for 30 minutes
 ```
 
-#### 4.3 发布/关闭职位
+#### 4.3 Publish / close a job
 ```
 PUT /api/v1/jobs/{jobId}/status
 
@@ -909,24 +913,24 @@ Request Body:
   "status": "PUBLISHED"
 }
 
-后端实现要点:
-- 【Redis】状态变更后删除缓存 cache:job:{jobId}
+Backend implementation notes:
+- [Redis] Delete the cache cache:job:{jobId} after the status changes
 ```
 
-#### 4.4 获取热门职位
+#### 4.4 Get popular jobs
 ```
 GET /api/v1/jobs/hot
 
 Query Parameters:
-- limit: int, 默认10
+- limit: int, default 10
 
-后端实现要点:
-- 【Redis】从 cache:job:hot (ZSet) 获取
-- ZSet存储 jobId，score为热度值（浏览量+申请量）
-- 缓存10分钟
+Backend implementation notes:
+- [Redis] Read from cache:job:hot (ZSet)
+- The ZSet stores jobId, with score as the popularity value (page views + applications)
+- Cached for 10 minutes
 ```
 
-#### 4.5 AI职位匹配推荐
+#### 4.5 AI job matching recommendations
 ```
 POST /api/v1/jobs/{jobId}/match-candidates
 
@@ -939,28 +943,28 @@ Response:
 {
   "code": 200,
   "data": {
-    "jobTitle": "高级Java工程师",
+    "jobTitle": "Senior Java Engineer",
     "matches": [
       {
         "candidateId": 67890,
         "matchScore": 88,
-        "matchReasons": ["技能匹配度高", "经验符合要求"]
+        "matchReasons": ["High skill match", "Experience meets the requirements"]
       }
     ]
   }
 }
 
-后端实现要点:
-- 将职位JD转换为向量
-- 在向量库中搜索最相似的候选人
-- 【Redis限流】同样消耗AI配额
+Backend implementation notes:
+- Convert the job JD into a vector
+- Search the vector store for the most similar candidates
+- [Redis rate limiting] This also consumes the AI quota
 ```
 
 ---
 
-### 模块五：申请与面试 (Application)
+### Module 5: Applications and Interviews (Application)
 
-#### 5.1 投递简历到职位
+#### 5.1 Apply with a resume to a job
 ```
 POST /api/v1/applications
 
@@ -970,32 +974,32 @@ Request Body:
   "candidateId": 67890
 }
 
-后端实现要点:
-- 【Redis分布式锁】lock:application:{jobId}:{candidateId}，防止重复投递
-- 异步计算匹配度 (可选，通过MQ)
+Backend implementation notes:
+- [Redis distributed lock] lock:application:{jobId}:{candidateId}, to prevent duplicate applications
+- Compute the match score asynchronously (optional, via MQ)
 ```
 
-#### 5.2 获取职位的申请列表
+#### 5.2 Get the application list of a job
 ```
 GET /api/v1/jobs/{jobId}/applications
 
 Query Parameters:
-- status: string, 可选
-- sortBy: string, 默认 match_score desc
+- status: string, optional
+- sortBy: string, default match_score desc
 ```
 
-#### 5.3 更新申请状态
+#### 5.3 Update application status
 ```
 PUT /api/v1/applications/{applicationId}/status
 
 Request Body:
 {
   "status": "INTERVIEW",
-  "notes": "简历不错，安排技术面"
+  "notes": "Good resume, schedule a technical interview"
 }
 ```
 
-#### 5.4 创建面试
+#### 5.4 Create an interview
 ```
 POST /api/v1/interviews
 
@@ -1010,13 +1014,13 @@ Request Body:
 }
 ```
 
-#### 5.5 提交面试反馈
+#### 5.5 Submit interview feedback
 ```
 PUT /api/v1/interviews/{interviewId}/feedback
 
 Request Body:
 {
-  "feedback": "技术扎实，沟通能力强...",
+  "feedback": "Solid technical skills, strong communication...",
   "score": 8,
   "recommendation": "YES"
 }
@@ -1024,9 +1028,9 @@ Request Body:
 
 ---
 
-### 模块六：数据统计 (Statistics)
+### Module 6: Statistics (Statistics)
 
-#### 6.1 获取招聘概览
+#### 6.1 Get recruitment overview
 ```
 GET /api/v1/statistics/overview
 
@@ -1044,7 +1048,7 @@ Response:
 }
 ```
 
-#### 6.2 获取AI使用统计
+#### 6.2 Get AI usage statistics
 ```
 GET /api/v1/statistics/ai-usage
 
@@ -1062,23 +1066,23 @@ Response:
   }
 }
 
-后端实现要点:
-- 【Redis】读取 rate:ai:{userId}:{date}
+Backend implementation notes:
+- [Redis] Read rate:ai:{userId}:{date}
 ```
 
 ---
 
-## 🎯 核心代码挑战 (你需要实现的难点)
+## 🎯 Core Coding Challenges (the difficult parts you need to implement)
 
-### 挑战一：Redis Lua 脚本实现滑动窗口限流
+### Challenge 1: Sliding window rate limiting with a Redis Lua script
 
-**需求描述:**
-实现一个 `@RateLimiter` 注解，可以灵活配置限流规则。需要支持:
-- 每分钟限制 N 次
-- 每天限制 M 次
-- 使用 Redis Lua 脚本保证原子性
+**Requirement description:**
+Implement a `@RateLimiter` annotation whose rate limiting rules can be configured flexibly. It needs to support:
+- N calls limited per minute
+- M calls limited per day
+- Using a Redis Lua script to guarantee atomicity
 
-**验收标准:**
+**Acceptance criteria:**
 ```java
 @RateLimiter(key = "ai:search", limit = 5, window = 60, windowUnit = TimeUnit.SECONDS)
 @RateLimiter(key = "ai:daily", limit = 100, window = 1, windowUnit = TimeUnit.DAYS)
@@ -1087,46 +1091,46 @@ public SearchResult smartSearch(SearchRequest request) {
 }
 ```
 
-**提示:**
-- 使用 AOP 切面拦截带注解的方法
-- Lua 脚本需要实现: INCR + EXPIRE 的原子操作
-- 考虑使用滑动窗口算法 (ZSet) 或简单计数器 (String)
+**Hints:**
+- Use an AOP aspect to intercept methods carrying the annotation
+- The Lua script must implement the INCR + EXPIRE operations atomically
+- Consider the sliding window algorithm (ZSet) or a simple counter (String)
 
 ---
 
-### 挑战二：RabbitMQ 消费者幂等性与重试机制
+### Challenge 2: RabbitMQ consumer idempotency and retry mechanism
 
-**需求描述:**
-实现简历解析的 MQ 消费者，需要满足:
-1. **幂等性**: 同一条消息无论消费几次，结果一致
-2. **重试机制**: 解析失败自动重试3次，超过3次进入死信队列
-3. **分布式锁**: 防止多个消费者同时处理同一份简历
+**Requirement description:**
+Implement the MQ consumer for resume parsing, which must satisfy:
+1. **Idempotency**: the same message consumed any number of times yields the same result
+2. **Retry mechanism**: automatically retry a failed parse 3 times; after 3 attempts the message goes to the dead letter queue
+3. **Distributed lock**: prevent multiple consumers from processing the same resume at the same time
 
-**验收标准:**
+**Acceptance criteria:**
 ```java
 @RabbitListener(queues = "resume.parse.queue")
 public void handleResumeParseMessage(ResumeParseMessage message) {
-    // 1. 检查Redis中是否已处理过
-    // 2. 获取Redisson分布式锁
-    // 3. 调用Spring AI解析
-    // 4. 更新数据库和Redis状态
-    // 5. 异常处理与重试逻辑
+    // 1. Check in Redis whether it has already been processed
+    // 2. Acquire the Redisson distributed lock
+    // 3. Call Spring AI to parse
+    // 4. Update the database and the Redis status
+    // 5. Exception handling and retry logic
 }
 ```
 
-**提示:**
-- 使用 `message.getMessageProperties().getDeliveryTag()` 手动ACK
-- 配置 `spring.rabbitmq.listener.simple.retry.*` 实现自动重试
-- 死信队列需要单独配置监听器处理
+**Hints:**
+- Use `message.getMessageProperties().getDeliveryTag()` for manual ACK
+- Configure `spring.rabbitmq.listener.simple.retry.*` to get automatic retries
+- The dead letter queue needs its own listener for processing
 
 ---
 
-### 挑战三：Spring AI 结构化输出与 Prompt Engineering
+### Challenge 3: Spring AI structured output and prompt engineering
 
-**需求描述:**
-设计 Prompt 让 LLM 稳定输出符合 Java Bean 结构的 JSON，用于简历信息提取。
+**Requirement description:**
+Design prompts that make the LLM reliably output JSON matching a Java Bean structure, for resume information extraction.
 
-**验收标准:**
+**Acceptance criteria:**
 ```java
 public record ResumeExtraction(
     String name,
@@ -1137,69 +1141,69 @@ public record ResumeExtraction(
     List<WorkExperience> workExperiences
 ) {}
 
-// 调用示例
+// Example call
 ResumeExtraction result = aiService.extractResumeInfo(pdfContent);
 ```
 
-**提示:**
-- Spring AI 支持 `BeanOutputConverter` 自动解析 JSON 到 Java 对象
-- Prompt 中需要明确 JSON Schema
-- 处理 LLM 输出不稳定的情况（重试、fallback）
+**Hints:**
+- Spring AI supports `BeanOutputConverter` to parse JSON into Java objects automatically
+- The JSON Schema must be stated explicitly in the prompt
+- Handle unstable LLM output (retries, fallback)
 
 ---
 
-### 挑战四：向量搜索与 Metadata Filtering
+### Challenge 4: Vector search and metadata filtering
 
-**需求描述:**
-实现 RAG 搜索时的混合查询:
-1. 向量相似度搜索 (语义匹配)
-2. 元数据过滤 (经验年限 >= 3, 学历 = 本科)
+**Requirement description:**
+Implement hybrid queries during RAG search:
+1. Vector similarity search (semantic matching)
+2. Metadata filtering (years of experience >= 3, education = Bachelor)
 
-**验收标准:**
+**Acceptance criteria:**
 ```java
 public List<Candidate> hybridSearch(String query, SearchFilter filter) {
-    // 1. 将query转换为embedding
-    // 2. 在向量库中执行: 向量相似度 + metadata过滤
-    // 3. 返回Top K结果
+    // 1. Convert the query into an embedding
+    // 2. Execute in the vector store: vector similarity + metadata filtering
+    // 3. Return the Top K results
 }
 ```
 
-**提示:**
-- 如果使用 Milvus: 支持在 search 时传入 `expr` 表达式
-- 如果使用 PgVector: 可以使用 SQL WHERE 条件
-- Spring AI 的 `VectorStore` 接口支持 `FilterExpression`
+**Hints:**
+- With Milvus: you can pass an `expr` expression when searching
+- With PgVector: SQL WHERE conditions can be used
+- Spring AI's `VectorStore` interface supports `FilterExpression`
 
 ---
 
-### 挑战五：文件去重与分布式锁的优雅实现
+### Challenge 5: Elegant file de-duplication with a distributed lock
 
-**需求描述:**
-实现上传时的文件去重检测，要求:
-1. 计算文件 MD5 作为唯一标识
-2. 使用 Redis 检查是否已存在
-3. 使用 Redisson 分布式锁防止并发上传同一文件
+**Requirement description:**
+Implement file de-duplication detection on upload, which must:
+1. Compute the file MD5 as the unique identifier
+2. Use Redis to check whether the file already exists
+3. Use a Redisson distributed lock to prevent concurrent uploads of the same file
 
-**验收标准:**
+**Acceptance criteria:**
 ```java
 public UploadResult uploadResume(MultipartFile file) {
     String fileHash = calculateMD5(file);
     
-    // 1. 检查Redis去重标记
-    // 2. 获取分布式锁
-    // 3. double-check是否存在
-    // 4. 保存文件和数据库记录
-    // 5. 释放锁
+    // 1. Check the Redis de-duplication marker
+    // 2. Acquire the distributed lock
+    // 3. Double-check whether it exists
+    // 4. Save the file and the database record
+    // 5. Release the lock
 }
 ```
 
-**提示:**
-- MD5 计算使用 `DigestUtils.md5DigestAsHex()`
-- Redisson 锁使用 `RLock lock = redissonClient.getLock("lock:resume:" + hash)`
-- 注意锁的超时时间设置，防止死锁
+**Hints:**
+- Compute the MD5 with `DigestUtils.md5DigestAsHex()`
+- For the Redisson lock use `RLock lock = redissonClient.getLock("lock:resume:" + hash)`
+- Pay attention to the lock timeout settings to prevent deadlocks
 
 ---
 
-## 📁 建议的项目结构
+## 📁 Recommended Project Structure
 
 ```
 smartats/
@@ -1231,7 +1235,7 @@ smartats/
 │   │   ├── resume/
 │   │   │   ├── controller/
 │   │   │   ├── service/
-│   │   │   ├── consumer/          # RabbitMQ消费者
+│   │   │   ├── consumer/          # RabbitMQ consumer
 │   │   │   ├── dto/
 │   │   │   └── entity/
 │   │   ├── candidate/
@@ -1268,9 +1272,9 @@ smartats/
 
 ---
 
-## 🐳 部署架构 (Docker Compose)
+## 🐳 Deployment Architecture (Docker Compose)
 
-为了快速搭建开发环境，建议使用 `docker-compose.yml` 管理基础设施依赖。
+To set up the development environment quickly, it is recommended to manage the infrastructure dependencies with `docker-compose.yml`.
 
 ```yaml
 version: '3.8'
@@ -1301,13 +1305,13 @@ services:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
 
-  milvus: # 向量数据库 (可选 PgVector)
+  milvus: # Vector database (PgVector is an alternative)
     image: milvusdb/milvus:v2.3.4
     ports:
       - "19530:19530"
-    # 注意: Milvus 生产环境需要 etcd 和 minio，此处简化
+    # Note: production Milvus requires etcd and MinIO; simplified here
 
-  # 建议增加 MinIO 用于简历文件存储
+  # It is recommended to add MinIO for resume file storage
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -1318,15 +1322,15 @@ services:
 
 ---
 
-## 📚 学习资源
+## 📚 Learning Resources
 
-- [Spring AI 官方文档](https://docs.spring.io/spring-ai/reference/)
-- [Redisson 分布式锁](https://github.com/redisson/redisson/wiki/8.-distributed-locks-and-synchronizers)
-- [RabbitMQ 死信队列](https://www.rabbitmq.com/dlx.html)
-- [MyBatis-Plus 官方文档](https://baomidou.com/)
+- [Spring AI official documentation](https://docs.spring.io/spring-ai/reference/)
+- [Redisson distributed locks](https://github.com/redisson/redisson/wiki/8.-distributed-locks-and-synchronizers)
+- [RabbitMQ dead letter queues](https://www.rabbitmq.com/dlx.html)
+- [MyBatis-Plus official documentation](https://baomidou.com/)
 
 ---
 
-**文档版本:** v1.0  
-**最后更新:** 2026-02-14
-**作者:** AI Copilot
+**Document version:** v1.0  
+**Last updated:** 2026-02-14
+**Author:** AI Copilot

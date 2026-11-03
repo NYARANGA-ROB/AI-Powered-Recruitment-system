@@ -30,10 +30,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * JobService 单元测试
+ * JobService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("JobService 单元测试")
+@DisplayName("JobService unit tests")
 class JobServiceTest {
 
     @InjectMocks
@@ -56,21 +56,21 @@ class JobServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建职位测试
+    // Create job tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("创建职位")
+    @DisplayName("Create job")
     class CreateJobTests {
 
         @Test
-        @DisplayName("正常创建职位 - 初始状态为 DRAFT")
+        @DisplayName("Successful job creation - initial status is DRAFT")
         void createJob_success() {
             // Given
             CreateJobRequest request = new CreateJobRequest();
-            request.setTitle("Java 高级工程师");
-            request.setDepartment("技术部");
-            request.setDescription("负责核心系统开发");
+            request.setTitle("Senior Java Engineer");
+            request.setDepartment("Engineering Department");
+            request.setDescription("Responsible for core system development");
 
             given(jobMapper.insert(any(Job.class))).willAnswer(invocation -> {
                 Job job = invocation.getArgument(0);
@@ -89,15 +89,15 @@ class JobServiceTest {
             Job savedJob = captor.getValue();
             assertThat(savedJob.getStatus()).isEqualTo(JobStatus.DRAFT.getCode());
             assertThat(savedJob.getCreatorId()).isEqualTo(100L);
-            assertThat(savedJob.getTitle()).isEqualTo("Java 高级工程师");
+            assertThat(savedJob.getTitle()).isEqualTo("Senior Java Engineer");
             assertThat(savedJob.getViewCount()).isZero();
         }
 
         @Test
-        @DisplayName("创建职位 - 技能标签序列化")
+        @DisplayName("Create job - skill tag serialization")
         void createJob_withSkills() throws Exception {
             CreateJobRequest request = new CreateJobRequest();
-            request.setTitle("测试职位");
+            request.setTitle("Test Position");
             request.setRequiredSkills(List.of("Java", "Spring", "Redis"));
 
             given(objectMapper.writeValueAsString(anyList())).willReturn("[\"Java\",\"Spring\",\"Redis\"]");
@@ -112,11 +112,11 @@ class JobServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 更新职位测试
+    // Update job tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("更新职位")
+    @DisplayName("Update job")
     class UpdateJobTests {
 
         private Job existingJob;
@@ -125,7 +125,7 @@ class JobServiceTest {
         void setUp() {
             existingJob = new Job();
             existingJob.setId(1L);
-            existingJob.setTitle("原标题");
+            existingJob.setTitle("Original title");
             existingJob.setCreatorId(100L);
             existingJob.setStatus(JobStatus.DRAFT.getCode());
 
@@ -133,24 +133,24 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("正常更新职位 - 延迟双删")
+        @DisplayName("Successful job update - delayed double delete")
         void updateJob_success() {
             UpdateJobRequest request = new UpdateJobRequest();
             request.setId(1L);
-            request.setTitle("新标题");
+            request.setTitle("New title");
 
             given(jobMapper.selectById(1L)).willReturn(existingJob);
             given(jobMapper.updateById(any(Job.class))).willReturn(1);
 
             jobService.updateJob(request, 100L);
 
-            // 验证延迟双删
-            then(redisTemplate).should().delete(anyString()); // 第一次删除
-            then(cacheEvictionService).should().asyncDeleteCache(anyString()); // 延迟双删
+            // Verify the delayed double delete
+            then(redisTemplate).should().delete(anyString()); // First delete
+            then(cacheEvictionService).should().asyncDeleteCache(anyString()); // Delayed double delete
         }
 
         @Test
-        @DisplayName("非创建者无权更新")
+        @DisplayName("Non-creator cannot update")
         void updateJob_forbidden() {
             UpdateJobRequest request = new UpdateJobRequest();
             request.setId(1L);
@@ -159,11 +159,11 @@ class JobServiceTest {
 
             assertThatThrownBy(() -> jobService.updateJob(request, 999L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("无权限");
+                    .hasMessageContaining("No permission");
         }
 
         @Test
-        @DisplayName("职位不存在时抛异常")
+        @DisplayName("Throws exception when the position does not exist")
         void updateJob_notFound() {
             UpdateJobRequest request = new UpdateJobRequest();
             request.setId(999L);
@@ -172,16 +172,16 @@ class JobServiceTest {
 
             assertThatThrownBy(() -> jobService.updateJob(request, 100L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("职位不存在");
+                    .hasMessageContaining("Position not found");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 发布/关闭职位测试
+    // Publish/close job tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("发布/关闭职位")
+    @DisplayName("Publish/close job")
     class PublishCloseTests {
 
         private Job draftJob;
@@ -197,7 +197,7 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("正常发布职位")
+        @DisplayName("Publish a job normally")
         void publishJob_success() {
             given(jobMapper.selectById(1L)).willReturn(draftJob);
             given(jobMapper.updateById(any(Job.class))).willReturn(1);
@@ -210,18 +210,18 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("已发布的职位重复发布抛异常")
+        @DisplayName("Republishing an already published position throws an exception")
         void publishJob_alreadyPublished() {
             draftJob.setStatus(JobStatus.PUBLISHED.getCode());
             given(jobMapper.selectById(1L)).willReturn(draftJob);
 
             assertThatThrownBy(() -> jobService.publishJob(1L, 100L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("已经是发布状态");
+                    .hasMessageContaining("Position is already published");
         }
 
         @Test
-        @DisplayName("正常关闭职位")
+        @DisplayName("Close a job normally")
         void closeJob_success() {
             draftJob.setStatus(JobStatus.PUBLISHED.getCode());
             given(jobMapper.selectById(1L)).willReturn(draftJob);
@@ -235,48 +235,48 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("已关闭的职位重复关闭抛异常")
+        @DisplayName("Reclosing an already closed position throws an exception")
         void closeJob_alreadyClosed() {
             draftJob.setStatus(JobStatus.CLOSED.getCode());
             given(jobMapper.selectById(1L)).willReturn(draftJob);
 
             assertThatThrownBy(() -> jobService.closeJob(1L, 100L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("已经是关闭状态");
+                    .hasMessageContaining("Position is already closed");
         }
 
         @Test
-        @DisplayName("非创建者无权发布")
+        @DisplayName("Non-creator cannot publish")
         void publishJob_forbidden() {
             given(jobMapper.selectById(1L)).willReturn(draftJob);
 
             assertThatThrownBy(() -> jobService.publishJob(1L, 999L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("无权限");
+                    .hasMessageContaining("No permission");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询测试
+    // Query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("查询职位")
+    @DisplayName("Query jobs")
     class QueryTests {
 
         @Test
-        @DisplayName("根据 ID 查询 - 缓存未命中时查库并回填")
+        @DisplayName("Query by ID - queries the database and backfills on cache miss")
         void getJobDetail_cacheMiss() throws Exception {
             Job job = new Job();
             job.setId(1L);
-            job.setTitle("测试职位");
+            job.setTitle("Test Position");
             job.setStatus(JobStatus.PUBLISHED.getCode());
             job.setViewCount(100);
             job.setCreatedAt(LocalDateTime.now());
             job.setUpdatedAt(LocalDateTime.now());
 
             given(valueOperations.increment(anyString())).willReturn(1L);
-            given(valueOperations.get(anyString())).willReturn(null); // 缓存未命中
+            given(valueOperations.get(anyString())).willReturn(null); // Cache miss
             given(jobMapper.selectById(1L)).willReturn(job);
             given(objectMapper.writeValueAsString(any())).willReturn("{}");
 
@@ -287,7 +287,7 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("职位不存在时抛异常")
+        @DisplayName("Throws exception when the position does not exist")
         void getJobDetail_notFound() {
             given(valueOperations.increment(anyString())).willReturn(1L);
             given(valueOperations.get(anyString())).willReturn(null);
@@ -295,11 +295,11 @@ class JobServiceTest {
 
             assertThatThrownBy(() -> jobService.getJobDetail(999L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("职位不存在");
+                    .hasMessageContaining("Position not found");
         }
 
         @Test
-        @DisplayName("热门职位查询 - 默认限制 10 条")
+        @DisplayName("Hot jobs query - default limit of 10")
         void getHotJobs_defaultLimit() {
             Page<Job> emptyPage = new Page<>(1, 10, 0);
             emptyPage.setRecords(List.of());
@@ -311,7 +311,7 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("热门职位查询 - 限制不超过 50")
+        @DisplayName("Hot jobs query - limit does not exceed 50")
         void getHotJobs_maxLimit() {
             Page<Job> emptyPage = new Page<>(1, 50, 0);
             emptyPage.setRecords(List.of());
@@ -320,20 +320,20 @@ class JobServiceTest {
             List<JobResponse> result = jobService.getHotJobs(100);
 
             assertThat(result).isEmpty();
-            // 验证实际查询限制为 50（安全边界）
+            // Verify the actual query limit is 50 (safety boundary)
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 删除职位测试
+    // Delete job tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("删除职位")
+    @DisplayName("Delete job")
     class DeleteJobTests {
 
         @Test
-        @DisplayName("正常删除职位")
+        @DisplayName("Delete a job normally")
         void deleteJob_success() {
             Job job = new Job();
             job.setId(1L);
@@ -350,7 +350,7 @@ class JobServiceTest {
         }
 
         @Test
-        @DisplayName("非创建者无权删除")
+        @DisplayName("Non-creator cannot delete")
         void deleteJob_forbidden() {
             Job job = new Job();
             job.setId(1L);
@@ -360,7 +360,7 @@ class JobServiceTest {
 
             assertThatThrownBy(() -> jobService.deleteJob(1L, 999L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("无权限");
+                    .hasMessageContaining("No permission");
         }
     }
 }

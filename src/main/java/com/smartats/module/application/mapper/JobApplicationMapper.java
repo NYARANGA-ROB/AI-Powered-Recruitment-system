@@ -5,7 +5,7 @@ import com.smartats.module.application.entity.JobApplication;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 职位申请 Mapper
+ * Job application Mapper
  */
 @Mapper
 public interface JobApplicationMapper extends BaseMapper<JobApplication> {

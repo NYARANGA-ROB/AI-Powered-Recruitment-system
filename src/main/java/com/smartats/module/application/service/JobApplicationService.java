@@ -35,13 +35,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 职位申请服务
+ * Job application service
  * <p>
- * 核心业务逻辑：
+ * Core business logic:
  * <ul>
- *   <li>创建申请（防重复、校验职位/候选人）</li>
- *   <li>状态流转（合法性校验 + Webhook 通知）</li>
- *   <li>多维度查询（按职位、按候选人、分页筛选）</li>
+ *   <li>Creating applications (duplicate prevention, job/candidate validation)</li>
+ *   <li>Status transitions (legality checks + Webhook notifications)</li>
+ *   <li>Multi-dimensional queries (by job, by candidate, paged filtering)</li>
  * </ul>
  */
 @Slf4j
@@ -58,42 +58,42 @@ public class JobApplicationService {
     private final MatchScoreService matchScoreService;
     private final ApplicationEventPublisher eventPublisher;
 
-    /** 缓存 TTL（分钟） */
+    /** Cache TTL (minutes) */
     private static final long CACHE_TTL_MINUTES = 30;
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建申请
+    // Create application
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 创建职位申请
+     * Create a job application
      *
-     * @param request 创建请求
-     * @return 新建申请的 ID
+     * @param request creation request
+     * @return ID of the newly created application
      */
     @Transactional(rollbackFor = Exception.class)
     public Long createApplication(CreateApplicationRequest request) {
         Long jobId = request.getJobId();
         Long candidateId = request.getCandidateId();
 
-        log.info("创建职位申请：jobId={}, candidateId={}", jobId, candidateId);
+        log.info("Creating job application: jobId={}, candidateId={}", jobId, candidateId);
 
-        // ① 校验职位是否存在且已发布
+        // ① Validate that the job exists and is published
         Job job = jobMapper.selectById(jobId);
         if (job == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
         if (!JobStatus.PUBLISHED.getCode().equals(job.getStatus())) {
             throw new BusinessException(ResultCode.APPLICATION_JOB_NOT_PUBLISHED);
         }
 
-        // ② 校验候选人是否存在
+        // ② Validate that the candidate exists
         Candidate candidate = candidateMapper.selectById(candidateId);
         if (candidate == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found");
         }
 
-        // ③ 防重复：同一候选人不能重复申请同一职位
+        // ③ Duplicate prevention: the same candidate cannot apply to the same job twice
         LambdaQueryWrapper<JobApplication> dupCheck = new LambdaQueryWrapper<>();
         dupCheck.eq(JobApplication::getJobId, jobId)
                 .eq(JobApplication::getCandidateId, candidateId);
@@ -101,7 +101,7 @@ public class JobApplicationService {
             throw new BusinessException(ResultCode.APPLICATION_DUPLICATE);
         }
 
-        // ④ 创建申请记录
+        // ④ Create the application record
         JobApplication application = new JobApplication();
         application.setJobId(jobId);
         application.setCandidateId(candidateId);
@@ -112,9 +112,9 @@ public class JobApplicationService {
 
         jobApplicationMapper.insert(application);
 
-        log.info("职位申请创建成功：id={}, jobId={}, candidateId={}", application.getId(), jobId, candidateId);
+        log.info("Job application created successfully: id={}, jobId={}, candidateId={}", application.getId(), jobId, candidateId);
 
-        // ⑤ 触发 Webhook 事件
+        // ⑤ Trigger the Webhook event
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("applicationId", application.getId());
         eventData.put("jobId", jobId);
@@ -124,30 +124,30 @@ public class JobApplicationService {
         eventData.put("status", ApplicationStatus.PENDING.getCode());
         webhookService.sendEvent(WebhookEventType.APPLICATION_SUBMITTED, eventData);
 
-        // ⑥ 异步计算 AI 匹配分数（不阻塞创建流程）
+        // ⑥ Asynchronously calculate the AI match score (does not block the creation flow)
         matchScoreService.calculateAndSaveAsync(application.getId());
 
-        // ⑦ 发布分析更新事件（SSE 推送）
+        // ⑦ Publish the analytics update event (SSE push)
         eventPublisher.publishEvent(new AnalyticsUpdateEvent(this,
                 "APPLICATION_CREATED",
-                String.format("新申请：%s 投递 %s", candidate.getName(), job.getTitle())));
+                String.format("New application: %s applied for %s", candidate.getName(), job.getTitle())));
 
         return application.getId();
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 更新状态
+    // Update status
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 更新申请状态
+     * Update the application status
      *
-     * @param id      申请 ID
-     * @param request 状态更新请求
+     * @param id      application ID
+     * @param request status update request
      */
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long id, UpdateApplicationStatusRequest request) {
-        log.info("更新申请状态：id={}, targetStatus={}", id, request.getStatus());
+        log.info("Updating application status: id={}, targetStatus={}", id, request.getStatus());
 
         JobApplication application = jobApplicationMapper.selectById(id);
         if (application == null) {
@@ -157,18 +157,18 @@ public class JobApplicationService {
         String currentStatus = application.getStatus();
         String targetStatus = request.getStatus();
 
-        // 校验状态流转合法性（委托给枚举状态机）
+        // Validate the legality of the status transition (delegated to the enum state machine)
         ApplicationStatus currentEnum = ApplicationStatus.fromCode(currentStatus);
         ApplicationStatus targetEnum = ApplicationStatus.fromCode(targetStatus);
 
         if (currentEnum == null || targetEnum == null || !currentEnum.canTransitionTo(targetEnum)) {
             throw new BusinessException(ResultCode.APPLICATION_STATUS_INVALID,
-                    String.format("不允许从 [%s] 变更为 [%s]，允许的目标状态：%s",
+                    String.format("Transition from [%s] to [%s] is not allowed, allowed target statuses: %s",
                             currentStatus, targetStatus,
                             currentEnum != null ? currentEnum.getAllowedTargets() : "[]"));
         }
 
-        // 更新状态
+        // Update the status
         application.setStatus(targetStatus);
         application.setUpdatedAt(LocalDateTime.now());
         if (StringUtils.hasText(request.getHrNotes())) {
@@ -178,9 +178,9 @@ public class JobApplicationService {
         jobApplicationMapper.updateById(application);
         evictCache(id);
 
-        log.info("申请状态更新成功：id={}, {} → {}", id, currentStatus, targetStatus);
+        log.info("Application status updated successfully: id={}, {} → {}", id, currentStatus, targetStatus);
 
-        // 触发 Webhook 事件
+        // Trigger the Webhook event
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("applicationId", id);
         eventData.put("jobId", application.getJobId());
@@ -190,35 +190,35 @@ public class JobApplicationService {
         eventData.put("hrNotes", application.getHrNotes());
         webhookService.sendEvent(WebhookEventType.APPLICATION_STATUS_CHANGED, eventData);
 
-        // 发布分析更新事件（SSE 推送）
+        // Publish the analytics update event (SSE push)
         eventPublisher.publishEvent(new AnalyticsUpdateEvent(this,
                 "STATUS_CHANGED",
-                String.format("申请 #%d 状态变更：%s → %s", id, currentStatus, targetStatus)));
+                String.format("Application #%d status changed: %s → %s", id, currentStatus, targetStatus)));
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询
+    // Queries
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 获取申请详情（Redis 缓存）
+     * Get application detail (Redis cache)
      */
     public ApplicationResponse getById(Long id) {
-        log.info("查询申请详情：id={}", id);
+        log.info("Querying application detail: id={}", id);
 
         String cacheKey = RedisKeyConstants.CACHE_APPLICATION_KEY_PREFIX + id;
 
-        // 1. 查缓存
+        // 1. Check the cache
         String cached = redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
             try {
                 return objectMapper.readValue(cached, ApplicationResponse.class);
             } catch (JsonProcessingException e) {
-                log.warn("申请缓存反序列化失败，降级查库：id={}", id, e);
+                log.warn("Failed to deserialize application cache, falling back to database: id={}", id, e);
             }
         }
 
-        // 2. 查数据库
+        // 2. Query the database
         JobApplication application = jobApplicationMapper.selectById(id);
         if (application == null) {
             throw new BusinessException(ResultCode.APPLICATION_NOT_FOUND);
@@ -226,7 +226,7 @@ public class JobApplicationService {
 
         ApplicationResponse response = convertToResponse(application);
 
-        // 3. 回填缓存
+        // 3. Backfill the cache
         try {
             redisTemplate.opsForValue().set(
                     cacheKey,
@@ -235,17 +235,17 @@ public class JobApplicationService {
                     TimeUnit.MINUTES
             );
         } catch (JsonProcessingException e) {
-            log.warn("申请写入缓存失败（不影响业务）：id={}", id, e);
+            log.warn("Failed to write application to cache (no business impact): id={}", id, e);
         }
 
         return response;
     }
 
     /**
-     * 按职位 ID 查询申请列表（HR 视角）
+     * List applications by job ID (HR view)
      */
     public Page<ApplicationResponse> listByJobId(Long jobId, Integer pageNum, Integer pageSize) {
-        log.info("查询职位申请列表：jobId={}, page={}", jobId, pageNum);
+        log.info("Querying application list for position: jobId={}, page={}", jobId, pageNum);
 
         Page<JobApplication> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<JobApplication> wrapper = new LambdaQueryWrapper<>();
@@ -257,10 +257,10 @@ public class JobApplicationService {
     }
 
     /**
-     * 按候选人 ID 查询申请列表
+     * List applications by candidate ID
      */
     public Page<ApplicationResponse> listByCandidateId(Long candidateId, Integer pageNum, Integer pageSize) {
-        log.info("查询候选人申请列表：candidateId={}, page={}", candidateId, pageNum);
+        log.info("Querying application list for candidate: candidateId={}, page={}", candidateId, pageNum);
 
         Page<JobApplication> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<JobApplication> wrapper = new LambdaQueryWrapper<>();
@@ -272,10 +272,10 @@ public class JobApplicationService {
     }
 
     /**
-     * 综合查询（支持多维筛选 + 排序 + 分页）
+     * Comprehensive query (supports multi-dimensional filtering + sorting + pagination)
      */
     public Page<ApplicationResponse> listApplications(ApplicationQueryRequest request) {
-        log.info("综合查询申请列表：{}", request);
+        log.info("Comprehensive application list query: {}", request);
 
         int pageNum = Math.max(1, request.getPageNum());
         int pageSize = Math.min(100, Math.max(1, request.getPageSize()));
@@ -283,7 +283,7 @@ public class JobApplicationService {
         Page<JobApplication> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<JobApplication> wrapper = new LambdaQueryWrapper<>();
 
-        // 筛选条件
+        // Filter conditions
         if (request.getJobId() != null) {
             wrapper.eq(JobApplication::getJobId, request.getJobId());
         }
@@ -294,7 +294,7 @@ public class JobApplicationService {
             wrapper.eq(JobApplication::getStatus, request.getStatus());
         }
 
-        // 排序
+        // Sorting
         boolean asc = "asc".equalsIgnoreCase(request.getOrderDirection());
         switch (request.getOrderBy() != null ? request.getOrderBy() : "applied_at") {
             case "match_score" -> {
@@ -316,22 +316,22 @@ public class JobApplicationService {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 私有方法
+    // Private methods
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 将实体转换为响应 DTO，关联查询职位标题和候选人姓名（仅单条查询使用）
+     * Convert the entity to the response DTO, joining the job title and candidate name (used for single-record queries only)
      */
     private ApplicationResponse convertToResponse(JobApplication application) {
         ApplicationResponse response = buildBaseResponse(application);
 
-        // 关联查询职位标题
+        // Join the job title
         Job job = jobMapper.selectById(application.getJobId());
         if (job != null) {
             response.setJobTitle(job.getTitle());
         }
 
-        // 关联查询候选人姓名
+        // Join the candidate name
         Candidate candidate = candidateMapper.selectById(application.getCandidateId());
         if (candidate != null) {
             response.setCandidateName(candidate.getName());
@@ -341,7 +341,7 @@ public class JobApplicationService {
     }
 
     /**
-     * 构建基础响应对象（不包含关联查询，复用于单条和批量转换）
+     * Build the base response object (without joins, reused for single and batch conversion)
      */
     private ApplicationResponse buildBaseResponse(JobApplication application) {
         ApplicationResponse response = new ApplicationResponse();
@@ -356,14 +356,14 @@ public class JobApplicationService {
         response.setAppliedAt(application.getAppliedAt());
         response.setUpdatedAt(application.getUpdatedAt());
 
-        // JSON 反序列化 matchReasons
+        // JSON-deserialize matchReasons
         if (StringUtils.hasText(application.getMatchReasons())) {
             try {
                 List<String> reasons = objectMapper.readValue(
                         application.getMatchReasons(), new TypeReference<>() {});
                 response.setMatchReasons(reasons);
             } catch (JsonProcessingException e) {
-                log.warn("matchReasons 反序列化失败：id={}", application.getId(), e);
+                log.warn("Failed to deserialize matchReasons: id={}", application.getId(), e);
             }
         }
 
@@ -371,7 +371,7 @@ public class JobApplicationService {
     }
 
     /**
-     * 分页结果转换（批量查询关联数据，避免 N+1）
+     * Paged result conversion (batch-loads related data to avoid N+1)
      */
     private Page<ApplicationResponse> convertPage(Page<JobApplication> sourcePage) {
         List<JobApplication> records = sourcePage.getRecords();
@@ -382,17 +382,17 @@ public class JobApplicationService {
             return responsePage;
         }
 
-        // 批量收集所有 jobId 和 candidateId
+        // Collect all jobIds and candidateIds in one pass
         Set<Long> jobIds = records.stream().map(JobApplication::getJobId).collect(Collectors.toSet());
         Set<Long> candidateIds = records.stream().map(JobApplication::getCandidateId).collect(Collectors.toSet());
 
-        // 一次性查询所有关联职位和候选人（避免 N+1）
+        // Query all related jobs and candidates at once (avoids N+1)
         Map<Long, Job> jobMap = jobMapper.selectBatchIds(jobIds).stream()
                 .collect(Collectors.toMap(Job::getId, Function.identity()));
         Map<Long, Candidate> candidateMap = candidateMapper.selectBatchIds(candidateIds).stream()
                 .collect(Collectors.toMap(Candidate::getId, Function.identity()));
 
-        // 使用批量加载的数据转换
+        // Convert using the batch-loaded data
         List<ApplicationResponse> responseList = records.stream()
                 .map(app -> convertToResponseWithMaps(app, jobMap, candidateMap))
                 .toList();
@@ -404,7 +404,7 @@ public class JobApplicationService {
     }
 
     /**
-     * 将实体转换为响应 DTO，使用预加载的 Map 避免额外查询
+     * Convert the entity to the response DTO using pre-loaded Maps to avoid extra queries
      */
     private ApplicationResponse convertToResponseWithMaps(
             JobApplication application, Map<Long, Job> jobMap, Map<Long, Candidate> candidateMap) {
@@ -424,7 +424,7 @@ public class JobApplicationService {
     }
 
     /**
-     * 状态中文描述（委托给枚举）
+     * Status description (delegated to the enum)
      */
     private String getStatusDesc(String status) {
         if (status == null) return "";
@@ -432,10 +432,10 @@ public class JobApplicationService {
     }
 
     /**
-     * 清除申请详情缓存
+     * Evict the application detail cache
      */
     private void evictCache(Long id) {
         redisTemplate.delete(RedisKeyConstants.CACHE_APPLICATION_KEY_PREFIX + id);
-        log.debug("申请缓存已失效：id={}", id);
+        log.debug("Application cache invalidated: id={}", id);
     }
 }

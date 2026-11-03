@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 登录响应
+ * Login response
  */
 @Data
 @NoArgsConstructor
@@ -13,27 +13,27 @@ import lombok.NoArgsConstructor;
 public class LoginResponse {
 
     /**
-     * 访问令牌（2小时有效）
+     * Access token (valid for 2 hours)
      */
     private String accessToken;
 
     /**
-     * 刷新令牌（7天有效）
+     * Refresh token (valid for 7 days)
      */
     private String refreshToken;
 
     /**
-     * 过期时间（秒）
+     * Expiry time (seconds)
      */
     private Long expiresIn;
 
     /**
-     * 用户信息
+     * User information
      */
     private UserInfo userInfo;
 
     /**
-     * 用户信息（嵌套对象）
+     * User information (nested object)
      */
     @Data
     @NoArgsConstructor

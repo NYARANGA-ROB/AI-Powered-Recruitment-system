@@ -16,7 +16,7 @@ public class MessagePublisher {
     private final RabbitTemplate rabbitTemplate;
 
     /**
-     * 发送简历解析消息
+     * Send a resume parsing message
      */
     public void sendResumeParseMessage(Object message) {
         try {
@@ -26,11 +26,11 @@ public class MessagePublisher {
                     message
             );
 
-            log.info("发送简历解析消息成功: {}", message);
+            log.info("Resume parsing message sent successfully: {}", message);
 
         } catch (Exception e) {
-            log.error("发送简历解析消息失败", e);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "消息发送失败");
+            log.error("Failed to send the resume parsing message", e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to send the message");
         }
     }
 }

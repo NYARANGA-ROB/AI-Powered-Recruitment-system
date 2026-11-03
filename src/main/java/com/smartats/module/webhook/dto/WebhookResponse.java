@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Webhook 配置响应
+ * Webhook configuration response
  */
 @Data
 @Builder
@@ -29,7 +29,7 @@ public class WebhookResponse {
     private LocalDateTime updatedAt;
 
     /**
-     * 密钥提示（只显示前 4 位和后 4 位）
+     * Secret hint (only the first 4 and last 4 characters are shown)
      */
     private String secretHint;
 }

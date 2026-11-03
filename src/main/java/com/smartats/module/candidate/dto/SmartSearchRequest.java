@@ -7,40 +7,40 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
- * 语义搜索请求 DTO
+ * Semantic search request DTO
  * <p>
- * 用于 POST /candidates/smart-search 接口。
- * 支持自然语言查询，如：「3年以上 Java 后端，熟悉 Spring Boot 和微服务」。
+ * Used by the POST /candidates/smart-search endpoint.
+ * Supports natural language queries, e.g. "3+ years of Java backend experience, familiar with Spring Boot and microservices".
  */
 @Data
 public class SmartSearchRequest {
 
     /**
-     * 搜索查询文本（自然语言描述）
+     * Search query text (natural language description)
      * <p>
-     * 示例：
-     * - "3年以上 Java 后端开发，熟悉 Spring Boot"
-     * - "有大厂实习经验的应届生，会 Python 和机器学习"
-     * - "资深前端工程师，React + TypeScript"
+     * Examples:
+     * - "3+ years of Java backend development, familiar with Spring Boot"
+     * - "Fresh graduate with an internship at a major tech company, knows Python and machine learning"
+     * - "Senior front-end engineer, React + TypeScript"
      */
-    @NotBlank(message = "搜索查询不能为空")
-    @Size(max = 1000, message = "搜索查询文本最长 1000 字符")
+    @NotBlank(message = "Search query must not be blank")
+    @Size(max = 1000, message = "Search query text must be at most 1000 characters")
     private String query;
 
     /**
-     * 返回最相似的候选人数量（默认 10，最大 50）
+     * Number of most similar candidates to return (defaults to 10, max 50)
      */
-    @Min(value = 1, message = "topK 最小为 1")
-    @Max(value = 50, message = "topK 最大为 50")
+    @Min(value = 1, message = "topK must be at least 1")
+    @Max(value = 50, message = "topK must be at most 50")
     private Integer topK = 10;
 
     /**
-     * 最低相似度阈值（0~1，低于此分数的结果将被过滤）
+     * Minimum similarity threshold (0-1; results below this score are filtered out)
      * <p>
-     * COSINE 相似度：0 = 完全不相关，1 = 完全匹配。
-     * 默认 0.3，过滤明显不相关的结果。
+     * COSINE similarity: 0 = completely irrelevant, 1 = exact match.
+     * Defaults to 0.3 to filter out clearly irrelevant results.
      */
-    @Min(value = 0, message = "最低分数不能小于 0")
-    @Max(value = 1, message = "最低分数不能大于 1")
+    @Min(value = 0, message = "Minimum score must not be less than 0")
+    @Max(value = 1, message = "Minimum score must not be greater than 1")
     private Double minScore = 0.3;
 }

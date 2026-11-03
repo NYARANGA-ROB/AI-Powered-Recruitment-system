@@ -5,11 +5,11 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 /**
- * 统一响应结果包装器
+ * Unified response result wrapper
  *
- * @Data 注解：自动生成 getter/setter/toString/equals
- * @NoArgsConstructor: 自动生成无参构造
- * @AllArgsConstructor: 自动生成全参构造
+ * @Data annotation: generates getter/setter/toString/equals automatically
+ * @NoArgsConstructor: generates the no-arg constructor
+ * @AllArgsConstructor: generates the all-arg constructor
  */
 @Data
 @NoArgsConstructor
@@ -17,50 +17,50 @@ import lombok.AllArgsConstructor;
 public class Result<T> {
 
     /**
-     * 响应码（200=成功，其他=错误码）
+     * Response code (200 = success, others = error code)
      */
     private int code;
 
     /**
-     * 响应消息
+     * Response message
      */
     private String message;
 
     /**
-     * 响应数据（成功时有数据，失败时为 null）
+     * Response data (present on success, null on failure)
      */
     private T data;
 
     /**
-     * 时间戳
+     * Timestamp
      */
     private Long timestamp;
 
-    // ==================== 快速构建方法
+    // ==================== Quick builder methods
 
     /**
-     * 成功响应（有数据）
+     * Success response (with data)
      */
     public static <T> Result<T> success(T data) {
         return new Result<>(200, "success", data, System.currentTimeMillis());
     }
 
     /**
-     * 成功响应（无数据）
+     * Success response (without data)
      */
     public static <T> Result<T> success() {
         return success(null);
     }
 
     /**
-     * 失败响应（使用错误码枚举）
+     * Failure response (using the error code enum)
      */
     public static <T> Result<T> error(ResultCode resultCode) {
         return new Result<>(resultCode.getCode(), resultCode.getMessage(), null, System.currentTimeMillis());
     }
 
     /**
-     * 失败响应（自定义错误）
+     * Failure response (custom error)
      */
     public static <T> Result<T> error(int code, String message) {
         return new Result<>(code, message, null, System.currentTimeMillis());

@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * OpenAPI / Swagger 文档配置
+ * OpenAPI / Swagger documentation configuration
  * <p>
- * 访问地址：
+ * Endpoints:
  * <ul>
  *   <li>Swagger UI: http://localhost:8080/api/v1/swagger-ui.html</li>
  *   <li>OpenAPI JSON: http://localhost:8080/api/v1/v3/api-docs</li>
@@ -28,15 +28,16 @@ public class OpenApiConfig {
     public OpenAPI smartAtsOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("SmartATS 智能招聘管理系统 API")
+                        .title("SmartATS Intelligent Recruitment Management API")
                         .description("""
-                                SmartATS 是一个面向 HR 的智能招聘管理系统，提供简历上传与 AI 解析、
-                                职位管理、候选人管理、申请流程管理、面试安排与反馈、Webhook 事件通知等功能。
+                                SmartATS is an AI-powered recruitment management system for HR teams, offering resume
+                                upload and AI parsing, job management, candidate management, application pipeline
+                                management, interview scheduling and feedback, and Webhook event notifications.
                                 
-                                ## 认证说明
-                                - 登录接口返回 `accessToken`，有效期 2 小时
-                                - 在请求头中添加 `Authorization: Bearer {token}` 进行认证
-                                - Token 过期后使用 `refreshToken` 刷新
+                                ## Authentication
+                                - The login endpoint returns an `accessToken` with a 2-hour validity
+                                - Authenticate by adding `Authorization: Bearer {token}` to the request headers
+                                - Once the token expires, refresh it using the `refreshToken`
                                 """)
                         .version("1.0.0")
                         .contact(new Contact()
@@ -53,6 +54,6 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("输入 JWT Token（不含 Bearer 前缀）")));
+                                        .description("Enter the JWT token (without the Bearer prefix")));
     }
 }

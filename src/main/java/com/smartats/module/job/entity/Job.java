@@ -16,79 +16,79 @@ public class Job {
     private String department;
 
     /**
-     * 职位描述
+     * Job description
      */
     private String description;
 
     /**
-     * 任职要求
+     * Job requirements
      */
     private String requirements;
 
     /**
-     * 必需技能标签 (JSON 格式)
+     * Required skill tags (JSON format)
      */
     private String requiredSkills;
 
     /**
-     * 薪资下限(K)
+     * Minimum salary (K)
      */
     private Integer salaryMin;
 
     /**
-     * 薪资上限(K)
+     * Maximum salary (K)
      */
     private Integer salaryMax;
 
     /**
-     * 最低经验年限
+     * Minimum years of experience
      */
     private Integer experienceMin;
 
     /**
-     * 最高经验年限
+     * Maximum years of experience
      */
     private Integer experienceMax;
 
     /**
-     * 学历要求
+     * Education requirement
      */
     private String education;
 
     /**
-     * 职位类型
+     * Job type
      */
     private String jobType;
 
     /**
-     * 状态：DRAFT-草稿, PUBLISHED-已发布, CLOSED-已关闭
+     * Status: DRAFT - draft, PUBLISHED - published, CLOSED - closed
      */
     private String status;
 
     /**
-     * 创建者ID
+     * Creator ID
      */
     private Long creatorId;
 
     /**
-     * 浏览次数
+     * View count
      */
     private Integer viewCount;
 
     /**
-     * 逻辑删除标记
+     * Logical delete flag
      */
     @TableLogic
     private Integer deleted;
 
     /**
-     * 创建时间
+     * Created at
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Updated at
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedAt;

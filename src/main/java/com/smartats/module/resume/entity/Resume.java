@@ -21,7 +21,7 @@ public class Resume {
     private String fileType;
     private String status;  // PARSING, COMPLETED, FAILED
 
-    @TableField(updateStrategy = FieldStrategy.ALWAYS)  // 允许更新为 null（清除错误信息）
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)  // Allow updating to null (clear the error message)
     private String errorMessage;
 
     @TableField(fill = FieldFill.INSERT)

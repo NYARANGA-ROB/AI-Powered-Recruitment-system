@@ -13,15 +13,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 候选人向量化服务
+ * Candidate vectorization service
  * <p>
- * 职责：
- * 1. 在候选人创建/更新后，生成嵌入向量并存入 Milvus
- * 2. 在候选人删除时，同步删除 Milvus 中的向量
- * 3. 更新 candidates 表的 vector_id 和 ai_summary 字段
+ * Responsibilities:
+ * 1. After a candidate is created/updated, generate the embedding vector and store it in Milvus
+ * 2. When a candidate is deleted, delete the vector in Milvus synchronously
+ * 3. Update the vector_id and ai_summary fields of the candidates table
  * <p>
- * 向量化流程：
- *   Candidate → buildCandidateText → embedding-3 → 1024 维向量 → Milvus upsert
+ * Vectorization flow:
+ *   Candidate → buildCandidateText → embedding-3 → 1024-dimensional vector → Milvus upsert
  */
 @Slf4j
 @Service
@@ -33,28 +33,28 @@ public class CandidateVectorService {
     private final CandidateMapper candidateMapper;
 
     /**
-     * 为候选人生成向量并存入 Milvus（同步调用，用于解析管线中）
+     * Generate a vector for the candidate and store it in Milvus (synchronous call, used within the parsing pipeline)
      *
-     * @param candidate 已持久化的候选人实体
+     * @param candidate the persisted candidate entity
      */
     public void vectorizeCandidate(Candidate candidate) {
-        log.info("开始向量化候选人: candidateId={}, name={}", candidate.getId(), candidate.getName());
+        log.info("Start vectorizing candidate: candidateId={}, name={}", candidate.getId(), candidate.getName());
 
         try {
-            // 1. 构建摘要文本
+            // 1. Build the summary text
             String aiSummary = embeddingService.buildCandidateText(candidate);
 
-            // 2. 生成嵌入向量
+            // 2. Generate the embedding vector
             List<Float> embedding = embeddingService.generateCandidateEmbedding(candidate);
 
-            // 3. 存入 Milvus
+            // 3. Store it in Milvus
             String vectorId = vectorStoreService.upsertVector(
                     candidate.getId(),
                     candidate.getName(),
                     embedding
             );
 
-            // 4. 回写 MySQL（更新 vector_id 和 ai_summary）
+            // 4. Write back to MySQL (update vector_id and ai_summary)
             Candidate update = new Candidate();
             update.setId(candidate.getId());
             update.setVectorId(vectorId);
@@ -62,20 +62,20 @@ public class CandidateVectorService {
             update.setUpdatedAt(LocalDateTime.now());
             candidateMapper.updateById(update);
 
-            log.info("候选人向量化完成: candidateId={}, vectorId={}", candidate.getId(), vectorId);
+            log.info("Candidate vectorization completed: candidateId={}, vectorId={}", candidate.getId(), vectorId);
 
         } catch (Exception e) {
-            // 向量化失败不应阻断主流程，记录错误后跳过
-            log.error("候选人向量化失败（不影响主流程）: candidateId={}", candidate.getId(), e);
+            // Vectorization failure must not block the main flow; log the error and skip
+            log.error("Candidate vectorization failed (no impact on the main flow): candidateId={}", candidate.getId(), e);
         }
     }
 
     /**
-     * 异步向量化（用于候选人手动更新场景）
+     * Asynchronous vectorization (used when a candidate is updated manually)
      * <p>
-     * ⚠ 注意：@Async 方法必须在不同 Bean 中调用才能生效（Spring AOP 代理机制）。
+     * ⚠ Note: @Async methods only take effect when called from a different bean (Spring AOP proxying).
      *
-     * @param candidate 已更新的候选人实体
+     * @param candidate the updated candidate entity
      */
     @Async("asyncExecutor")
     public void vectorizeCandidateAsync(Candidate candidate) {
@@ -83,16 +83,16 @@ public class CandidateVectorService {
     }
 
     /**
-     * 删除候选人向量（同步）
+     * Delete the candidate vector (synchronous)
      *
-     * @param candidateId 候选人 ID
+     * @param candidateId candidate ID
      */
     public void deleteVector(Long candidateId) {
         try {
             vectorStoreService.deleteVector(candidateId);
-            log.info("候选人向量删除成功: candidateId={}", candidateId);
+            log.info("Candidate vector deleted successfully: candidateId={}", candidateId);
         } catch (Exception e) {
-            log.error("候选人向量删除失败（不影响主流程）: candidateId={}", candidateId, e);
+            log.error("Candidate vector deletion failed (no impact on the main flow): candidateId={}", candidateId, e);
         }
     }
 }

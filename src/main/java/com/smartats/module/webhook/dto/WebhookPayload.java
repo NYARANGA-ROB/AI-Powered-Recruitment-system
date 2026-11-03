@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * Webhook 事件负载
- * 发送到用户配置的回调 URL 的数据格式
+ * Webhook event payload
+ * Data format sent to the callback URL configured by the user
  */
 @Data
 @Builder
@@ -21,32 +21,32 @@ import java.util.Map;
 public class WebhookPayload {
 
     /**
-     * 事件 ID（唯一标识）
+     * Event ID (unique identifier)
      */
     private String eventId;
 
     /**
-     * 事件类型（如：resume.uploaded, resume.parse_completed）
+     * Event type (e.g. resume.uploaded, resume.parse_completed)
      */
     private String eventType;
 
     /**
-     * 事件发生时间
+     * Time when the event occurred
      */
     private LocalDateTime timestamp;
 
     /**
-     * 事件数据（具体内容根据事件类型不同而不同）
+     * Event data (content varies by event type)
      */
     private Map<String, Object> data;
 
     /**
-     * 签名（用于验证请求真实性）
+     * Signature (used to verify request authenticity)
      */
     private String signature;
 
     /**
-     * Webhook 版本
+     * Webhook version
      */
     private String version = "1.0";
 }

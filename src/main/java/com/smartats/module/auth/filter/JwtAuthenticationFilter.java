@@ -21,18 +21,18 @@ import java.io.IOException;
 import java.util.Collections;
 
 /**
- * JWT 认证过滤器
+ * JWT authentication filter
  * <p>
- * 功能：
- * 1. 从请求头提取 JWT Token
- * 2. 验证 Token 有效性（签名、过期时间）
- * 3. 验证 Token 是否存在于 Redis（防止已撤销的 Token）
- * 4. 解析用户信息并存入 SecurityContext
+ * Responsibilities:
+ * 1. Extract the JWT token from the request headers
+ * 2. Validate the token (signature, expiry)
+ * 3. Check that the token exists in Redis (to reject revoked tokens)
+ * 4. Parse the user information and store it in the SecurityContext
  * <p>
- * Redis 存储策略：
+ * Redis storage strategy:
  * - Key: jwt:token:{userId}
  * - Value: accessToken
- * - TTL: 与 Token 过期时间一致（2小时）
+ * - TTL: matches the token expiry (2 hours)
  */
 @Slf4j
 @Component
@@ -51,118 +51,118 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 1 步：从请求头提取 Token
+        // Step 1: extract the token from the request headers
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         String authHeader = request.getHeader(AUTHORIZATION_HEADER);
 
-        // 检查 Header 是否存在且以 "Bearer " 开头
+        // Check that the header is present and starts with "Bearer "
         if (!StringUtils.hasText(authHeader) || !authHeader.startsWith(BEARER_PREFIX)) {
-            log.debug("请求未携带有效的 Authorization Header，跳过 JWT 认证");
+            log.debug("The request carries no valid Authorization header; skipping JWT authentication");
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 提取 Token（去掉 "Bearer " 前缀）
+        // Extract the token (strip the "Bearer " prefix)
         String token = authHeader.substring(BEARER_PREFIX.length());
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 2 步：解析 Token 获取用户信息
+        // Step 2: parse the token to obtain the user information
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         try {
-            // 解析 Token Claims
+            // Parse the token claims
             var claims = jwtUtil.parseToken(token);
 
-            // 提取用户信息
+            // Extract the user information
             Long userId = claims.get("userId", Long.class);
             String username = claims.getSubject();
             String role = claims.get("role", String.class);
 
-            log.debug("成功解析 JWT Token: userId={}, username={}, role={}", userId, username, role);
+            log.debug("JWT token parsed successfully: userId={}, username={}, role={}", userId, username, role);
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 3 步：验证 Token 是否存在于 Redis（防止已撤销的 Token）
+            // Step 3: check that the token exists in Redis (to reject revoked tokens)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             String redisKey = RedisKeyConstants.JWT_TOKEN_KEY_PREFIX + userId;
-            log.debug("查询 Redis 中的 Token: key={}", redisKey);
+            log.debug("Looking up the token in Redis: key={}", redisKey);
 
             String storedToken = redisTemplate.opsForValue().get(redisKey);
 
             if (storedToken == null) {
-                log.warn("Token 不存在于 Redis 中，可能已被撤销: userId={}, redisKey={}", userId, redisKey);
+                log.warn("The token is not present in Redis and may have been revoked: userId={}, redisKey={}", userId, redisKey);
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            // 验证 Token 是否匹配（防止 Token 被替换）
+            // Verify that the token matches (prevents token substitution)
             if (!storedToken.equals(token)) {
-                log.warn("Token 与 Redis 中存储的不匹配: userId={}, storedToken={}, requestToken={}",
+                log.warn("The token does not match the one stored in Redis: userId={}, storedToken={}, requestToken={}",
                         userId, storedToken.substring(0, Math.min(20, storedToken.length())) + "...",
                         token.substring(0, Math.min(20, token.length())) + "...");
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            log.debug("Token Redis 验证通过: userId={}", userId);
+            log.debug("Token passed Redis validation: userId={}", userId);
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 4 步：验证 Token 有效性（签名、过期时间）
+            // Step 4: validate the token (signature, expiry)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             if (!jwtUtil.validateToken(token)) {
-                log.warn("Token 验证失败（无效或已过期）: userId={}", userId);
+                log.warn("Token validation failed (invalid or expired): userId={}", userId);
                 filterChain.doFilter(request, response);
                 return;
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 5 步：检查 SecurityContext 是否已有认证（避免重复认证）
+            // Step 5: check whether the SecurityContext is already authenticated (avoids duplicate authentication)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                log.debug("SecurityContext 已存在认证信息，跳过 JWT 认证");
+                log.debug("The SecurityContext already holds authentication info; skipping JWT authentication");
                 filterChain.doFilter(request, response);
                 return;
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 6 步：创建 Authentication 对象并存入 SecurityContext
+            // Step 6: create the Authentication object and store it in the SecurityContext
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-            // 创建权限列表（此处使用简单实现，后续可扩展为 RBAC）
+            // Build the authority list (a simple implementation for now; it can later be extended to RBAC)
             var authorities = Collections.singletonList(
                     new SimpleGrantedAuthority(RedisKeyConstants.ROLE_PREFIX + role)
             );
 
-            // 创建认证对象
+            // Create the authentication object
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            userId,           // principal：使用 userId 作为主体
-                            null,            // credentials：不需要密码
-                            authorities       // authorities：用户权限
+                            userId,           // principal: use userId as the subject
+                            null,            // credentials: the password is not needed
+                            authorities       // authorities: the user permissions
                     );
 
-            // 设置认证详情（包含 IP、SessionId 等信息）
+            // Set the authentication details (including IP, SessionId and so on)
             authentication.setDetails(
                     new WebAuthenticationDetailsSource().buildDetails(request)
             );
 
-            // 存入 SecurityContext
+            // Store it in the SecurityContext
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            log.info("JWT 认证成功: userId={}, username={}, role={}, ip={}",
+            log.info("JWT authentication succeeded: userId={}, username={}, role={}, ip={}",
                     userId, username, role, request.getRemoteAddr());
 
         } catch (Exception e) {
-            log.error("JWT 认证异常: {}", e.getMessage(), e);
-            // 异常情况清除 SecurityContext
+            log.error("JWT authentication error: {}", e.getMessage(), e);
+            // Clear the SecurityContext on failure
             SecurityContextHolder.clearContext();
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 7 步：继续执行后续过滤器
+        // Step 7: continue with the remaining filters
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         filterChain.doFilter(request, response);

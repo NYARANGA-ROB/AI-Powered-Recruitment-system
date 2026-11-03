@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * 审计日志服务
+ * Audit log service
  * <p>
- * 提供异步写入和分页查询能力，确保审计日志的记录不影响主业务性能。
+ * Provides asynchronous writes and paginated queries so audit logging never affects main business performance.
  */
 @Slf4j
 @Service
@@ -30,31 +30,31 @@ public class AuditLogService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
-     * 异步保存审计日志
+     * Save an audit log asynchronously
      * <p>
-     * 使用独立线程池写入，不阻塞主业务流程。
-     * 即使写入失败也不影响业务（仅打印 ERROR 日志）。
+     * Writes via a dedicated thread pool without blocking business flows.
+     * Write failures do not affect business operations (only an ERROR log is printed).
      *
-     * @param entity 审计日志实体
+     * @param entity audit log entity
      */
     @Async("asyncExecutor")
     public void saveAsync(AuditLogEntity entity) {
         try {
             auditLogMapper.insert(entity);
-            log.debug("审计日志写入成功: module={}, operation={}, userId={}",
+            log.debug("Audit log saved successfully: module={}, operation={}, userId={}",
                     entity.getModule(), entity.getOperation(), entity.getUserId());
         } catch (Exception e) {
-            // 审计日志写入失败不应影响业务，仅记录错误
-            log.error("审计日志写入失败: module={}, operation={}, error={}",
+            // Audit log write failures must not affect business; only log the error
+            log.error("Failed to save audit log: module={}, operation={}, error={}",
                     entity.getModule(), entity.getOperation(), e.getMessage(), e);
         }
     }
 
     /**
-     * 分页查询审计日志（支持多维筛选）
+     * Query audit logs with pagination (multi-dimensional filtering)
      *
-     * @param request 查询参数
-     * @return 分页结果
+     * @param request query parameters
+     * @return the paginated result
      */
     public Page<AuditLogResponse> queryAuditLogs(AuditLogQueryRequest request) {
         int pageNum = Math.max(1, request.getPageNum());
@@ -63,7 +63,7 @@ public class AuditLogService {
         Page<AuditLogEntity> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<AuditLogEntity> wrapper = new LambdaQueryWrapper<>();
 
-        // 筛选条件
+        // Filter conditions
         if (request.getUserId() != null) {
             wrapper.eq(AuditLogEntity::getUserId, request.getUserId());
         }
@@ -80,7 +80,7 @@ public class AuditLogService {
             wrapper.like(AuditLogEntity::getDescription, request.getKeyword());
         }
 
-        // 时间范围
+        // Time range
         if (StringUtils.hasText(request.getStartTime())) {
             wrapper.ge(AuditLogEntity::getCreatedAt, LocalDateTime.parse(request.getStartTime(), FORMATTER));
         }
@@ -88,7 +88,7 @@ public class AuditLogService {
             wrapper.le(AuditLogEntity::getCreatedAt, LocalDateTime.parse(request.getEndTime(), FORMATTER));
         }
 
-        // 按时间倒序
+        // Order by time, descending
         wrapper.orderByDesc(AuditLogEntity::getCreatedAt);
 
         Page<AuditLogEntity> resultPage = auditLogMapper.selectPage(page, wrapper);
@@ -96,7 +96,7 @@ public class AuditLogService {
     }
 
     /**
-     * 分页结果转换
+     * Convert the paginated result
      */
     private Page<AuditLogResponse> convertPage(Page<AuditLogEntity> sourcePage) {
         Page<AuditLogResponse> responsePage = new Page<>(
@@ -110,7 +110,7 @@ public class AuditLogService {
     }
 
     /**
-     * 实体 → 响应 DTO
+     * Entity -> response DTO
      */
     private AuditLogResponse convertToResponse(AuditLogEntity entity) {
         AuditLogResponse response = new AuditLogResponse();

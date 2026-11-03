@@ -39,11 +39,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * ResumeController 集成测试
+ * ResumeController integration tests
  */
 @WebMvcTest(ResumeController.class)
 @Import(SecurityConfig.class)
-@DisplayName("ResumeController 集成测试")
+@DisplayName("ResumeController integration tests")
 class ResumeControllerTest {
 
     @Autowired
@@ -75,7 +75,7 @@ class ResumeControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 上传简历
+    // Upload resume
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -83,12 +83,12 @@ class ResumeControllerTest {
     class UploadTests {
 
         @Test
-        @DisplayName("上传成功 - 200")
+        @DisplayName("Successful upload - 200")
         void shouldUploadSuccessfully() throws Exception {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "resume.pdf", "application/pdf", "pdf-content".getBytes());
 
-            ResumeUploadResponse response = new ResumeUploadResponse("task-123", 1L, false, "上传成功");
+            ResumeUploadResponse response = new ResumeUploadResponse("task-123", 1L, false, "Upload successful");
             given(resumeService.uploadResume(any(), eq(1L))).willReturn(response);
 
             mockMvc.perform(multipart("/resumes/upload")
@@ -102,7 +102,7 @@ class ResumeControllerTest {
         }
 
         @Test
-        @DisplayName("未认证 - 401")
+        @DisplayName("Unauthenticated - 401")
         void shouldReturn401WhenNotAuthenticated() throws Exception {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "resume.pdf", "application/pdf", "pdf-content".getBytes());
@@ -115,7 +115,7 @@ class ResumeControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询任务状态
+    // Query task status
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -123,7 +123,7 @@ class ResumeControllerTest {
     class TaskStatusTests {
 
         @Test
-        @DisplayName("查询任务状态成功")
+        @DisplayName("Queries task status successfully")
         void shouldReturnTaskStatus() throws Exception {
             TaskStatusResponse response = new TaskStatusResponse();
             response.setStatus("COMPLETED");
@@ -142,7 +142,7 @@ class ResumeControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 获取简历详情
+    // Get resume detail
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -150,7 +150,7 @@ class ResumeControllerTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("获取简历详情成功")
+        @DisplayName("Gets resume detail successfully")
         void shouldReturnResume() throws Exception {
             Resume resume = new Resume();
             resume.setId(1L);
@@ -168,7 +168,7 @@ class ResumeControllerTest {
         }
 
         @Test
-        @DisplayName("简历不存在 - 业务异常")
+        @DisplayName("Resume not found - business exception")
         void shouldReturnErrorWhenNotFound() throws Exception {
             given(resumeService.getResumeById(eq(999L), eq(1L)))
                     .willThrow(new BusinessException(ResultCode.RESUME_NOT_FOUND));
@@ -181,7 +181,7 @@ class ResumeControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 简历列表
+    // Resume list
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -189,7 +189,7 @@ class ResumeControllerTest {
     class ListTests {
 
         @Test
-        @DisplayName("分页查询成功")
+        @DisplayName("Paged query succeeds")
         void shouldReturnPagedResults() throws Exception {
             Page<Resume> page = new Page<>(1, 10);
             page.setTotal(1);
@@ -210,7 +210,7 @@ class ResumeControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 批量上传
+    // Batch upload
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -218,11 +218,11 @@ class ResumeControllerTest {
     class BatchUploadTests {
 
         @Test
-        @DisplayName("批量上传成功 - 200")
+        @DisplayName("Successful batch upload - 200")
         void shouldBatchUploadSuccessfully() throws Exception {
             BatchUploadResponse response = new BatchUploadResponse(2, 2, 0, List.of(
-                    new BatchUploadItem("task-1", 1L, "resume1.pdf", "QUEUED", "上传成功"),
-                    new BatchUploadItem("task-2", 2L, "resume2.pdf", "QUEUED", "上传成功")
+                    new BatchUploadItem("task-1", 1L, "resume1.pdf", "QUEUED", "Upload successful"),
+                    new BatchUploadItem("task-2", 2L, "resume2.pdf", "QUEUED", "Upload successful")
             ));
             given(resumeService.batchUploadResumes(any(), eq(1L))).willReturn(response);
 
@@ -246,7 +246,7 @@ class ResumeControllerTest {
         }
 
         @Test
-        @DisplayName("未认证 - 403")
+        @DisplayName("Unauthenticated - 403")
         void shouldReturn403WhenNotAuthenticated() throws Exception {
             MockMultipartFile file = new MockMultipartFile(
                     "files", "resume.pdf", "application/pdf", "pdf-content".getBytes());

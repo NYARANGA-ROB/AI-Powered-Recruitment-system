@@ -5,25 +5,25 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 /**
- * 更新申请状态请求 DTO
+ * Update application status request DTO
  */
 @Data
 public class UpdateApplicationStatusRequest {
 
     /**
-     * 目标状态
+     * Target status
      * <p>
-     * 合法值：SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN
+     * Valid values: SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN
      */
-    @NotBlank(message = "目标状态不能为空")
+    @NotBlank(message = "Target status must not be empty")
     @Pattern(
             regexp = "SCREENING|INTERVIEW|OFFER|REJECTED|WITHDRAWN",
-            message = "状态值不合法，允许值：SCREENING, INTERVIEW, OFFER, REJECTED, WITHDRAWN"
+            message = "Invalid status value; allowed values: SCREENING, INTERVIEW, OFFER, REJECTED, WITHDRAWN"
     )
     private String status;
 
     /**
-     * HR 备注（可选，用于记录状态变更原因）
+     * HR notes (optional, used to record the reason for the status change)
      */
     private String hrNotes;
 }

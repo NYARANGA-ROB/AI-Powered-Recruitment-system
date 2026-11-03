@@ -37,10 +37,10 @@ const parseStatusConfig: Record<
   string,
   { color: string; icon: React.ReactNode; label: string }
 > = {
-  PENDING: { color: 'default', icon: <ClockCircleOutlined />, label: '等待解析' },
-  PARSING: { color: 'processing', icon: <SyncOutlined spin />, label: '解析中' },
-  COMPLETED: { color: 'success', icon: <CheckCircleOutlined />, label: '解析完成' },
-  FAILED: { color: 'error', icon: <CloseCircleOutlined />, label: '解析失败' },
+  PENDING: { color: 'default', icon: <ClockCircleOutlined />, label: 'Awaiting Parsing' },
+  PARSING: { color: 'processing', icon: <SyncOutlined spin />, label: 'Parsing' },
+  COMPLETED: { color: 'success', icon: <CheckCircleOutlined />, label: 'Parsed' },
+  FAILED: { color: 'error', icon: <CloseCircleOutlined />, label: 'Parsing Failed' },
 };
 
 const fileIcon = (name: string) => {
@@ -137,7 +137,7 @@ export default function ResumesPage() {
 
   const handleUpload = async () => {
     if (fileList.length === 0) {
-      message.warning('请先选择要上传的文件');
+      message.warning('Please select files to upload first');
       return;
     }
     setUploading(true);
@@ -156,7 +156,7 @@ export default function ResumesPage() {
               progress: 20,
             },
           ]);
-          message.success(`${file.name} 上传成功，开始解析`);
+          message.success(`${file.name} uploaded successfully, parsing started`);
         }
       } else {
         const files = fileList.map((f) => f.originFileObj as File);
@@ -172,16 +172,16 @@ export default function ResumesPage() {
               progress: 20,
             }));
           setTasks((prev) => [...prev, ...newTasks]);
-          message.success(`${resp.successCount} 个文件上传成功`);
+          message.success(`${resp.successCount} files uploaded successfully`);
           if (resp.failedCount > 0)
-            message.warning(`${resp.failedCount} 个文件上传失败`);
+            message.warning(`${resp.failedCount} files failed to upload`);
         }
       }
-      // 成功后关闭弹窗并清空文件列表
+      // Close the modal and clear the file list on success
       setUploadModalOpen(false);
       setFileList([]);
     } catch (err: unknown) {
-      message.error(err instanceof Error ? err.message : '上传失败');
+      message.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -189,7 +189,7 @@ export default function ResumesPage() {
 
   const columns = [
     {
-      title: '文件名',
+      title: 'File Name',
       dataIndex: 'originalFilename',
       width: 240,
       render: (name: string) => (
@@ -202,7 +202,7 @@ export default function ResumesPage() {
       ),
     },
     {
-      title: '大小',
+      title: 'Size',
       dataIndex: 'fileSize',
       width: 90,
       render: (size: number) => {
@@ -213,7 +213,7 @@ export default function ResumesPage() {
       },
     },
     {
-      title: '解析状态',
+      title: 'Parse Status',
       dataIndex: 'parseStatus',
       width: 110,
       render: (status: string) => {
@@ -221,8 +221,8 @@ export default function ResumesPage() {
         return <Tag icon={cfg.icon} color={cfg.color}>{cfg.label}</Tag>;
       },
     },
-    { title: '上传者', dataIndex: 'uploaderName', width: 100 },
-    { title: '上传时间', dataIndex: 'createdAt', width: 160 },
+    { title: 'Uploaded By', dataIndex: 'uploaderName', width: 100 },
+    { title: 'Upload Time', dataIndex: 'createdAt', width: 160 },
   ];
 
   return (
@@ -230,13 +230,13 @@ export default function ResumesPage() {
       {/* Page Header */}
       <div className="mb-6">
         <Title level={2} className="m-0 text-gray-900">
-          简历管理
+          Resume Management
         </Title>
-        <p className="text-gray-500 mt-1">上传简历，AI 自动解析候选人信息</p>
+        <p className="text-gray-500 mt-1">Upload resumes and let AI parse candidate information automatically</p>
       </div>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* 解析任务进度 */}
+        {/* Parsing task progress */}
         {tasks.length > 0 && (
           <motion.div variants={staggerItem}>
             <Card
@@ -253,7 +253,7 @@ export default function ResumesPage() {
                     )}
                     className="text-cyan-600"
                   />
-                  <span className="font-medium text-gray-700">解析任务</span>
+                  <span className="font-medium text-gray-700">Parsing Tasks</span>
                   <Badge
                     count={
                       tasks.filter(
@@ -274,7 +274,7 @@ export default function ResumesPage() {
                   )}
                   className="!text-gray-500 hover:!text-gray-700"
                 >
-                  清除
+                  Clear
                 </Button>
               }
             >
@@ -322,18 +322,18 @@ export default function ResumesPage() {
           </motion.div>
         )}
 
-        {/* 主内容区 - 左侧列表，右侧上传 */}
+        {/* Main content - list on the left, upload on the right */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-          {/* 简历列表 */}
+          {/* Resume list */}
           <motion.div variants={staggerItem} className="xl:col-span-3">
             <Card
               bordered={false}
               className="!border-0 !shadow-sm h-full"
               title={
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">简历列表</span>
+                  <span className="font-medium text-gray-700">Resume List</span>
                   <Text type="secondary" className="text-sm">
-                    共 {total} 份
+                    {total} in total
                   </Text>
                 </div>
               }
@@ -349,7 +349,7 @@ export default function ResumesPage() {
                   pageSize,
                   total,
                   showSizeChanger: true,
-                  showTotal: (t) => `共 ${t} 条`,
+                  showTotal: (t) => `${t} records in total`,
                   onChange: (p, s) => {
                     setPageNum(p);
                     setPageSize(s);
@@ -359,15 +359,15 @@ export default function ResumesPage() {
             </Card>
           </motion.div>
 
-          {/* 上传区域 */}
+          {/* Upload area */}
           <motion.div variants={staggerItem} className="xl:col-span-1">
             <Card
               bordered={false}
               className="!border-0 !shadow-sm"
-              title={<span className="font-medium text-gray-700">快速上传</span>}
+              title={<span className="font-medium text-gray-700">Quick Upload</span>}
             >
               <div className="space-y-4">
-                {/* 上传按钮 */}
+                {/* Upload button */}
                 <Upload.Dragger
                   accept=".pdf,.doc,.docx"
                   multiple
@@ -379,14 +379,14 @@ export default function ResumesPage() {
                 >
                   <div className="py-6">
                     <CloudUploadOutlined className="text-4xl text-cyan-600 mb-3" />
-                    <p className="text-gray-700 font-medium mb-1">点击或拖拽上传</p>
+                    <p className="text-gray-700 font-medium mb-1">Click or drag files to upload</p>
                     <p className="text-gray-400 text-xs">
-                      PDF / DOC / DOCX，单文件最大 10MB
+                      PDF / DOC / DOCX, up to 10MB per file
                     </p>
                   </div>
                 </Upload.Dragger>
 
-                {/* 操作按钮 */}
+                {/* Action buttons */}
                 <Space className="w-full" direction="vertical" className="!w-full">
                   <Button
                     type="primary"
@@ -398,7 +398,7 @@ export default function ResumesPage() {
                     size="large"
                     className="!h-12"
                   >
-                    {fileList.length > 0 ? `上传 ${fileList.length} 个文件` : '上传简历'}
+                    {fileList.length > 0 ? `Upload ${fileList.length} Files` : 'Upload Resumes'}
                   </Button>
                   {fileList.length > 0 && (
                     <Button
@@ -407,16 +407,16 @@ export default function ResumesPage() {
                       disabled={uploading}
                       block
                     >
-                      清空选择
+                      Clear Selection
                     </Button>
                   )}
                 </Space>
 
-                {/* 说明文字 */}
+                {/* Helper notes */}
                 <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500 space-y-1">
-                  <p>• AI 自动提取候选人信息</p>
-                  <p>• 支持批量上传，最多 20 个文件</p>
-                  <p>• 上传后自动开始解析</p>
+                  <p>• AI automatically extracts candidate information</p>
+                  <p>• Batch upload supported, up to 20 files</p>
+                  <p>• Parsing starts automatically after upload</p>
                 </div>
               </div>
             </Card>

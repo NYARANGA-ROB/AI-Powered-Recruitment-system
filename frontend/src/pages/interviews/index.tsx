@@ -41,25 +41,25 @@ const statusConfig: Record<
   InterviewStatus,
   { color: string; label: string; icon: React.ReactNode }
 > = {
-  SCHEDULED: { color: 'processing', label: '已安排', icon: <ClockCircleOutlined /> },
-  COMPLETED: { color: 'success', label: '已完成', icon: <CheckCircleOutlined /> },
-  CANCELLED: { color: 'error', label: '已取消', icon: <CloseCircleOutlined /> },
-  NO_SHOW: { color: 'warning', label: '未出席', icon: <ExclamationCircleOutlined /> },
+  SCHEDULED: { color: 'processing', label: 'Scheduled', icon: <ClockCircleOutlined /> },
+  COMPLETED: { color: 'success', label: 'Completed', icon: <CheckCircleOutlined /> },
+  CANCELLED: { color: 'error', label: 'Cancelled', icon: <CloseCircleOutlined /> },
+  NO_SHOW: { color: 'warning', label: 'No-show', icon: <ExclamationCircleOutlined /> },
 };
 
 const typeConfig: Record<InterviewType, string> = {
-  PHONE: '电话面试',
-  VIDEO: '视频面试',
-  ONSITE: '现场面试',
-  WRITTEN_TEST: '笔试',
+  PHONE: 'Phone Screen',
+  VIDEO: 'Video Interview',
+  ONSITE: 'Onsite Interview',
+  WRITTEN_TEST: 'Written Test',
 };
 
 const recommendConfig: Record<Recommendation, { color: string; label: string }> = {
-  STRONG_YES: { color: '#10b981', label: '强烈推荐' },
-  YES: { color: '#22c55e', label: '推荐录用' },
-  NEUTRAL: { color: '#f59e0b', label: '中立' },
-  NO: { color: '#ef4444', label: '不推荐' },
-  STRONG_NO: { color: '#dc2626', label: '强烈不推荐' },
+  STRONG_YES: { color: '#10b981', label: 'Strong Hire' },
+  YES: { color: '#22c55e', label: 'Hire' },
+  NEUTRAL: { color: '#f59e0b', label: 'Neutral' },
+  NO: { color: '#ef4444', label: 'No Hire' },
+  STRONG_NO: { color: '#dc2626', label: 'Strong No Hire' },
 };
 
 export default function InterviewsPage() {
@@ -93,7 +93,7 @@ export default function InterviewsPage() {
       scheduledAt: values.scheduledAt.format('YYYY-MM-DD HH:mm:ss'),
     };
     await interviewApi.schedule(payload);
-    message.success('面试已安排');
+    message.success('Interview scheduled');
     setScheduleModal(false);
     form.resetFields();
     if (applicationIdFilter) loadByApplication(applicationIdFilter);
@@ -102,7 +102,7 @@ export default function InterviewsPage() {
   const handleFeedback = async () => {
     const values = await feedbackForm.validateFields();
     await interviewApi.submitFeedback(feedbackModal!.id, values);
-    message.success('反馈已提交');
+    message.success('Feedback submitted');
     setFeedbackModal(null);
     feedbackForm.resetFields();
     if (applicationIdFilter) loadByApplication(applicationIdFilter);
@@ -110,28 +110,28 @@ export default function InterviewsPage() {
 
   const handleCancel = async (id: number) => {
     await interviewApi.cancel(id);
-    message.success('面试已取消');
+    message.success('Interview cancelled');
     if (applicationIdFilter) loadByApplication(applicationIdFilter);
   };
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
-    { title: '申请 ID', dataIndex: 'applicationId', width: 80 },
+    { title: 'Application ID', dataIndex: 'applicationId', width: 80 },
     {
-      title: '轮次',
+      title: 'Round',
       dataIndex: 'round',
       width: 70,
-      render: (v: number) => `第 ${v} 轮`,
+      render: (v: number) => `Round ${v}`,
     },
     {
-      title: '类型',
+      title: 'Type',
       dataIndex: 'interviewType',
       width: 100,
       render: (type: InterviewType) => typeConfig[type] || type,
     },
-    { title: '面试官', dataIndex: 'interviewerName', width: 100 },
+    { title: 'Interviewer', dataIndex: 'interviewerName', width: 100 },
     {
-      title: '面试时间',
+      title: 'Scheduled At',
       dataIndex: 'scheduledAt',
       width: 160,
       render: (v: string) => (
@@ -142,7 +142,7 @@ export default function InterviewsPage() {
       ),
     },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'status',
       width: 100,
       render: (status: InterviewStatus) => {
@@ -157,18 +157,18 @@ export default function InterviewsPage() {
       },
     },
     {
-      title: '评分',
+      title: 'Score',
       dataIndex: 'score',
       width: 80,
       render: (score: number) =>
         score !== undefined && score !== null ? (
-          <span className="font-semibold">{score} 分</span>
+          <span className="font-semibold">{score} pts</span>
         ) : (
           '-'
         ),
     },
     {
-      title: '推荐',
+      title: 'Recommendation',
       dataIndex: 'recommendation',
       width: 120,
       render: (rec: Recommendation) => {
@@ -184,7 +184,7 @@ export default function InterviewsPage() {
       },
     },
     {
-      title: '操作',
+      title: 'Actions',
       width: 160,
       render: (_: unknown, record: InterviewResponse) => (
         <Space size={4} wrap>
@@ -194,7 +194,7 @@ export default function InterviewsPage() {
             icon={<EyeOutlined />}
             onClick={() => setDetailDrawer(record)}
           >
-            详情
+            Details
           </Button>
           {record.status === 'SCHEDULED' && (
             <>
@@ -207,14 +207,14 @@ export default function InterviewsPage() {
                   feedbackForm.resetFields();
                 }}
               >
-                反馈
+                Feedback
               </Button>
               <Popconfirm
-                title="确定取消面试？"
+                title="Are you sure you want to cancel this interview?"
                 onConfirm={() => handleCancel(record.id)}
               >
                 <Button type="link" size="small" icon={<StopOutlined />} danger>
-                  取消
+                  Cancel
                 </Button>
               </Popconfirm>
             </>
@@ -227,23 +227,23 @@ export default function InterviewsPage() {
   return (
     <PageTransition>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 m-0">面试管理</h2>
+        <h2 className="text-xl font-semibold text-gray-900 m-0">Interview Management</h2>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setScheduleModal(true)}
         >
-          安排面试
+          Schedule Interview
         </Button>
       </div>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* 筛选 */}
+        {/* Filters */}
         <motion.div variants={staggerItem}>
           <Card bordered={false} className="mb-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <InputNumber
-                placeholder="输入申请 ID 查询面试记录"
+                placeholder="Enter application ID to look up interviews"
                 min={1}
                 className="w-full sm:w-64"
                 value={applicationIdFilter}
@@ -255,13 +255,13 @@ export default function InterviewsPage() {
                   applicationIdFilter && loadByApplication(applicationIdFilter)
                 }
               >
-                查询
+                Search
               </Button>
             </div>
           </Card>
         </motion.div>
 
-        {/* 表格 */}
+        {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
             {applicationIdFilter ? (
@@ -276,69 +276,69 @@ export default function InterviewsPage() {
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <CalendarOutlined className="text-5xl mb-4 block" />
-                <p>请输入申请 ID 查询面试记录</p>
+                <p>Enter an application ID to look up interview records</p>
               </div>
             )}
           </Card>
         </motion.div>
       </motion.div>
 
-      {/* 安排面试弹窗 */}
+      {/* Schedule interview modal */}
       <Modal
-        title="安排面试"
+        title="Schedule Interview"
         open={scheduleModal}
         onCancel={() => setScheduleModal(false)}
         onOk={handleSchedule}
-        okText="确认安排"
+        okText="Confirm"
         width={520}
       >
         <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="applicationId" label="申请 ID" rules={[{ required: true }]}>
-            <InputNumber min={1} className="w-full" placeholder="职位申请 ID" />
+          <Form.Item name="applicationId" label="Application ID" rules={[{ required: true }]}>
+            <InputNumber min={1} className="w-full" placeholder="Job application ID" />
           </Form.Item>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="round" label="面试轮次" rules={[{ required: true }]}>
+            <Form.Item name="round" label="Interview Round" rules={[{ required: true }]}>
               <InputNumber min={1} max={10} className="w-full" />
             </Form.Item>
-            <Form.Item name="interviewType" label="面试类型" rules={[{ required: true }]}>
+            <Form.Item name="interviewType" label="Interview Type" rules={[{ required: true }]}>
               <Select
                 options={[
-                  { value: 'PHONE', label: '电话面试' },
-                  { value: 'VIDEO', label: '视频面试' },
-                  { value: 'ONSITE', label: '现场面试' },
-                  { value: 'WRITTEN_TEST', label: '笔试' },
+                  { value: 'PHONE', label: 'Phone Screen' },
+                  { value: 'VIDEO', label: 'Video Interview' },
+                  { value: 'ONSITE', label: 'Onsite Interview' },
+                  { value: 'WRITTEN_TEST', label: 'Written Test' },
                 ]}
               />
             </Form.Item>
           </div>
-          <Form.Item name="scheduledAt" label="面试时间" rules={[{ required: true }]}>
+          <Form.Item name="scheduledAt" label="Interview Time" rules={[{ required: true }]}>
             <DatePicker showTime className="w-full" />
           </Form.Item>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="interviewerId" label="面试官 ID" rules={[{ required: true }]}>
+            <Form.Item name="interviewerId" label="Interviewer ID" rules={[{ required: true }]}>
               <InputNumber min={1} className="w-full" />
             </Form.Item>
-            <Form.Item name="durationMinutes" label="时长（分钟）">
-              <InputNumber min={15} max={480} className="w-full" placeholder="如：60" />
+            <Form.Item name="durationMinutes" label="Duration (minutes)">
+              <InputNumber min={15} max={480} className="w-full" placeholder="e.g. 60" />
             </Form.Item>
           </div>
         </Form>
       </Modal>
 
-      {/* 反馈弹窗 */}
+      {/* Feedback modal */}
       <Modal
-        title={`提交面试反馈 - 第 ${feedbackModal?.round || ''} 轮`}
+        title={`Submit Interview Feedback - Round ${feedbackModal?.round || ''}`}
         open={!!feedbackModal}
         onCancel={() => setFeedbackModal(null)}
         onOk={handleFeedback}
-        okText="提交反馈"
+        okText="Submit Feedback"
         width={520}
       >
         <Form form={feedbackForm} layout="vertical" className="mt-4">
-          <Form.Item name="score" label="面试评分 (1-100)" rules={[{ required: true }]}>
+          <Form.Item name="score" label="Interview Score (1-100)" rules={[{ required: true }]}>
             <InputNumber min={1} max={100} className="w-full" />
           </Form.Item>
-          <Form.Item name="recommendation" label="推荐意见" rules={[{ required: true }]}>
+          <Form.Item name="recommendation" label="Recommendation" rules={[{ required: true }]}>
             <Select
               options={Object.entries(recommendConfig).map(([k, v]) => ({
                 value: k,
@@ -346,15 +346,15 @@ export default function InterviewsPage() {
               }))}
             />
           </Form.Item>
-          <Form.Item name="feedback" label="详细反馈" rules={[{ required: true }]}>
-            <Input.TextArea rows={4} placeholder="请描述面试评价..." />
+          <Form.Item name="feedback" label="Detailed Feedback" rules={[{ required: true }]}>
+            <Input.TextArea rows={4} placeholder="Describe your interview assessment..." />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* 详情抽屉 */}
+      {/* Detail drawer */}
       <Drawer
-        title={`面试详情 #${detailDrawer?.id || ''}`}
+        title={`Interview Details #${detailDrawer?.id || ''}`}
         open={!!detailDrawer}
         onClose={() => setDetailDrawer(null)}
         width={480}
@@ -362,27 +362,27 @@ export default function InterviewsPage() {
         {detailDrawer && (
           <div className="space-y-6">
             <Descriptions column={2}>
-              <Descriptions.Item label="申请 ID">
+              <Descriptions.Item label="Application ID">
                 {detailDrawer.applicationId}
               </Descriptions.Item>
-              <Descriptions.Item label="轮次">
-                第 {detailDrawer.round} 轮
+              <Descriptions.Item label="Round">
+                Round {detailDrawer.round}
               </Descriptions.Item>
-              <Descriptions.Item label="类型">
+              <Descriptions.Item label="Type">
                 {typeConfig[detailDrawer.interviewType]}
               </Descriptions.Item>
-              <Descriptions.Item label="面试官">
+              <Descriptions.Item label="Interviewer">
                 {detailDrawer.interviewerName || '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="时间">
+              <Descriptions.Item label="Time">
                 {detailDrawer.scheduledAt}
               </Descriptions.Item>
-              <Descriptions.Item label="时长">
+              <Descriptions.Item label="Duration">
                 {detailDrawer.durationMinutes
-                  ? `${detailDrawer.durationMinutes} 分钟`
+                  ? `${detailDrawer.durationMinutes} min`
                   : '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="状态" span={2}>
+              <Descriptions.Item label="Status" span={2}>
                 <Tag color={statusConfig[detailDrawer.status]?.color}>
                   {statusConfig[detailDrawer.status]?.label}
                 </Tag>
@@ -393,13 +393,13 @@ export default function InterviewsPage() {
               detailDrawer.score !== null && (
               <>
                 <Divider className="my-3" />
-                <h4 className="font-semibold text-gray-900 mb-3">面试反馈</h4>
+                <h4 className="font-semibold text-gray-900 mb-3">Interview Feedback</h4>
                 <Descriptions column={2}>
-                  <Descriptions.Item label="评分">
+                  <Descriptions.Item label="Score">
                     <span className="text-lg font-semibold">{detailDrawer.score}</span>{' '}
                     / 100
                   </Descriptions.Item>
-                  <Descriptions.Item label="推荐">
+                  <Descriptions.Item label="Recommendation">
                     {detailDrawer.recommendation && (
                       <span
                         style={{
@@ -415,7 +415,7 @@ export default function InterviewsPage() {
                 </Descriptions>
                 {detailDrawer.feedback && (
                   <div>
-                    <p className="font-semibold text-gray-900 mb-2">详细反馈</p>
+                    <p className="font-semibold text-gray-900 mb-2">Detailed Feedback</p>
                     <Paragraph className="whitespace-pre-wrap text-gray-600">
                       {detailDrawer.feedback}
                     </Paragraph>

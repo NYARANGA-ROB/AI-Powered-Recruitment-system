@@ -66,37 +66,36 @@ export default function DashboardPage() {
 
   const greetingTime = () => {
     const h = new Date().getHours();
-    if (h < 6) return '凌晨好';
-    if (h < 12) return '早上好';
-    if (h < 14) return '中午好';
-    if (h < 18) return '下午好';
-    return '晚上好';
+    if (h < 6) return 'Good night';
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
+    return 'Good evening';
   };
 
   const statCards = [
     {
-      title: '职位总数',
+      title: 'Total Jobs',
       value: stats.jobs,
       icon: <FileTextOutlined />,
       color: 'text-cyan-600',
       bg: 'bg-cyan-50',
     },
     {
-      title: '候选人',
+      title: 'Candidates',
       value: stats.candidates,
       icon: <TeamOutlined />,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
     },
     {
-      title: '申请数',
+      title: 'Applications',
       value: stats.applications,
       icon: <SolutionOutlined />,
       color: 'text-amber-600',
       bg: 'bg-amber-50',
     },
     {
-      title: 'AI 额度',
+      title: 'AI Quota',
       value: `${userInfo?.todayAiUsed || 0}/${userInfo?.dailyAiQuota || 0}`,
       icon: <RiseOutlined />,
       color: 'text-violet-600',
@@ -105,10 +104,10 @@ export default function DashboardPage() {
   ];
 
   const quickActions = [
-    { icon: <FileTextOutlined />, label: '发布职位', desc: '创建新职位', path: '/jobs' },
-    { icon: <CloudUploadOutlined />, label: '上传简历', desc: 'AI 解析信息', path: '/resumes' },
-    { icon: <SearchOutlined />, label: '智能搜索', desc: 'RAG 语义匹配', path: '/candidates/search' },
-    { icon: <SettingOutlined />, label: '系统设置', desc: 'Webhook 配置', path: '/settings' },
+    { icon: <FileTextOutlined />, label: 'Post a Job', desc: 'Create a new job', path: '/jobs' },
+    { icon: <CloudUploadOutlined />, label: 'Upload Resume', desc: 'AI-powered parsing', path: '/resumes' },
+    { icon: <SearchOutlined />, label: 'Smart Search', desc: 'RAG semantic matching', path: '/candidates/search' },
+    { icon: <SettingOutlined />, label: 'System Settings', desc: 'Webhook configuration', path: '/settings' },
   ];
 
   return (
@@ -116,9 +115,9 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          {greetingTime()}，{userInfo?.username}
+          {greetingTime()}, {userInfo?.username}
         </h1>
-        <p className="text-gray-500 mt-1">这是你的招聘工作台，实时掌控招聘进展</p>
+        <p className="text-gray-500 mt-1">This is your recruiting workspace — track hiring progress in real time</p>
       </div>
 
       {/* Stat cards */}
@@ -174,7 +173,7 @@ export default function DashboardPage() {
           <Card
             bordered={false}
             className="!border-0 !shadow-sm h-full"
-            title={<span className="font-medium text-gray-700">热门职位</span>}
+            title={<span className="font-medium text-gray-700">Popular Jobs</span>}
             loading={loading}
           >
             <List
@@ -200,7 +199,7 @@ export default function DashboardPage() {
                     }
                     description={
                       <span className="text-gray-400 text-sm">
-                        {job.department || '-'} · {job.jobType || '全职'} · {job.education || '不限'}
+                        {job.department || '-'} · {job.jobType || 'Full-time'} · {job.education || 'Any'}
                       </span>
                     }
                   />
@@ -219,7 +218,7 @@ export default function DashboardPage() {
           <Card
             bordered={false}
             className="!border-0 !shadow-sm h-full"
-            title={<span className="font-medium text-gray-700">最新申请</span>}
+            title={<span className="font-medium text-gray-700">Latest Applications</span>}
             loading={loading}
           >
             <List
@@ -240,7 +239,7 @@ export default function DashboardPage() {
                         <span className="text-gray-400">{app.jobTitle || '-'}</span>
                         {app.matchScore && (
                           <span className="text-cyan-600 font-medium text-sm">
-                            {app.matchScore}% 匹配
+                            {app.matchScore}% match
                           </span>
                         )}
                       </div>
@@ -260,7 +259,7 @@ export default function DashboardPage() {
         transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 30 }}
         className="mt-5"
       >
-        <Card bordered={false} className="!border-0 !shadow-sm" title={<span className="font-medium text-gray-700">快捷操作</span>}>
+        <Card bordered={false} className="!border-0 !shadow-sm" title={<span className="font-medium text-gray-700">Quick Actions</span>}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {quickActions.map((item) => (
               <button

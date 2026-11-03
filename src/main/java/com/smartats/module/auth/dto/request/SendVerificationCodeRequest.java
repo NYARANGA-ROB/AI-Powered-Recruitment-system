@@ -5,15 +5,15 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * 发送验证码请求
+ * Send verification code request
  */
 @Data
 public class SendVerificationCodeRequest {
 
     /**
-     * 邮箱地址
+     * The email address
      */
-    @NotBlank(message = "邮箱不能为空")
-    @Email(message = "邮箱格式不正确")
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     private String email;
 }

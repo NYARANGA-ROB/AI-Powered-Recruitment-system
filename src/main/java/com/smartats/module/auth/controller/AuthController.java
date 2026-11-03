@@ -17,9 +17,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 认证控制器
+ * Authentication controller
  */
-@Tag(name = "认证管理", description = "用户注册、登录、Token 刷新、邮箱验证码")
+@Tag(name = "Auth Management", description = "User registration, login, token refresh and email verification codes")
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -28,11 +28,11 @@ public class AuthController {
     private final UserService userService;
     private final VerificationCodeService verificationCodeService;
     /**
-     * 用户注册
+     * User registration
      * POST /api/v1/auth/register
      */
-    @Operation(summary = "用户注册", description = "注册新用户，需要邮箱验证码，BCrypt 加密存储密码")
-    @AuditLog(module = "认证管理", operation = "REGISTER", description = "用户注册", saveParams = false)
+    @Operation(summary = "Register a user", description = "Register a new user; an email verification code is required and the password is stored BCrypt-encrypted")
+    @AuditLog(module = "Auth Management", operation = "REGISTER", description = "Register a user", saveParams = false)
     @PostMapping("/register")
     public Result<Void> register(@Valid @RequestBody RegisterRequest request) {
         userService.register(request);
@@ -40,11 +40,11 @@ public class AuthController {
     }
 
     /**
-     * 用户登录
+     * User login
      * POST /api/v1/auth/login
      */
-    @Operation(summary = "用户登录", description = "返回 accessToken(2h) + refreshToken(7d)")
-    @AuditLog(module = "认证管理", operation = "LOGIN", description = "用户登录", saveParams = false)
+    @Operation(summary = "Log in", description = "Returns accessToken(2h) + refreshToken(7d)")
+    @AuditLog(module = "Auth Management", operation = "LOGIN", description = "User login", saveParams = false)
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.login(request);
@@ -52,11 +52,11 @@ public class AuthController {
     }
 
     /**
-     * 发送验证码
+     * Send a verification code
      * <p>
      * POST /api/v1/auth/send-verification-code
      */
-    @Operation(summary = "发送邮箱验证码", description = "60秒发送限流，5分钟有效")
+    @Operation(summary = "Send an email verification code", description = "Rate limited to one send per 60 seconds; the code is valid for 5 minutes")
     @PostMapping("/send-verification-code")
     public Result<Void> sendVerificationCode(@Valid @RequestBody SendVerificationCodeRequest request) {
         verificationCodeService.sendVerificationCode(request.getEmail());
@@ -64,13 +64,13 @@ public class AuthController {
     }
 
     /**
-     * 刺新 Access Token
+     * Refresh the access token
      * <p>
      * POST /api/v1/auth/refresh
      * <p>
-     * 使用登录时返回的 refreshToken 换取新的 accessToken
+     * Exchange the refreshToken returned at login for a new accessToken
      */
-    @Operation(summary = "刷新 Token", description = "使用 refreshToken 换取新的 accessToken")
+    @Operation(summary = "Refresh the token", description = "Exchange the refreshToken for a new accessToken")
     @PostMapping("/refresh")
     public Result<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         LoginResponse response = userService.refreshToken(request.getRefreshToken());
@@ -78,26 +78,26 @@ public class AuthController {
     }
 
     /**
-     * 测试 JWT 认证接口
+     * Test the JWT authentication endpoint
      * <p>
      * GET /api/v1/auth/test
      * <p>
-     * 需要携带有效的 JWT Token 才能访问
+     * Requires a valid JWT token to access
      * <p>
-     * 用于验证 JWT 认证过滤器是否正常工作
+     * Used to verify that the JWT authentication filter works as expected
      */
-    @Operation(summary = "测试 JWT 认证", description = "验证 JWT Token 是否有效")
+    @Operation(summary = "Test JWT authentication", description = "Check whether the JWT token is valid")
     @GetMapping("/test")
     public Result<Object> testAuthentication(Authentication authentication) {
         return Result.success(new TestAuthResponse(
                 (Long) authentication.getPrincipal(),
                 authentication.getAuthorities(),
-                "JWT 认证成功！"
+                "JWT authentication succeeded!"
         ));
     }
 
     /**
-     * 测试认证响应对象
+     * Test authentication response object
      */
     private record TestAuthResponse(
             Long userId,

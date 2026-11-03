@@ -7,31 +7,31 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 /**
- * 提交面试反馈请求 DTO
+ * Interview feedback submission request DTO
  */
 @Data
 public class SubmitFeedbackRequest {
 
     /**
-     * 面试评分（1-10 分）
+     * Interview score (1-10)
      */
-    @Min(value = 1, message = "评分最低为 1")
-    @Max(value = 10, message = "评分最高为 10")
+    @Min(value = 1, message = "Score must be at least 1")
+    @Max(value = 10, message = "Score must be at most 10")
     private Integer score;
 
     /**
-     * 面试反馈评语
+     * Interview feedback comments
      */
-    @NotBlank(message = "面试反馈不能为空")
+    @NotBlank(message = "Interview feedback must not be blank")
     private String feedback;
 
     /**
-     * 推荐结论
+     * Recommendation
      */
-    @NotBlank(message = "推荐结论不能为空")
+    @NotBlank(message = "Recommendation must not be blank")
     @Pattern(
             regexp = "STRONG_YES|YES|NEUTRAL|NO|STRONG_NO",
-            message = "推荐结论不合法，允许值：STRONG_YES, YES, NEUTRAL, NO, STRONG_NO"
+            message = "Invalid recommendation; allowed values: STRONG_YES, YES, NEUTRAL, NO, STRONG_NO"
     )
     private String recommendation;
 }

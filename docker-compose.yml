@@ -1,5 +1,5 @@
 services:
-  # MySQL 数据库
+  # MySQL database
   mysql:
     image: mysql:8.0
     container_name: smartats-mysql
@@ -10,7 +10,7 @@ services:
       MYSQL_PASSWORD: smartats123
       TZ: Asia/Shanghai
     ports:
-      - "3307:3306"  # 映射到宿主机 3307 端口，避免与本地 MySQL 冲突
+      - "3307:3306"  # Mapped to host port 3307 to avoid clashing with a local MySQL instance
     volumes:
       - ./data/mysql:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
@@ -26,7 +26,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis 缓存
+  # Redis cache
   redis:
     image: redis:7.0-alpine
     container_name: smartats-redis
@@ -43,7 +43,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # RabbitMQ 消息队列
+  # RabbitMQ message queue
   rabbitmq:
     image: rabbitmq:3.12-management
     container_name: smartats-rabbitmq
@@ -52,8 +52,8 @@ services:
       RABBITMQ_DEFAULT_PASS: admin123
       RABBITMQ_DEFAULT_VHOST: smartats
     ports:
-      - "5672:5672"    # AMQP 协议端口
-      - "15672:15672"  # 管理界面端口
+      - "5672:5672"    # AMQP protocol port
+      - "15672:15672"  # Management UI port
     volumes:
       - ./data/rabbitmq:/var/lib/rabbitmq
     networks:
@@ -64,7 +64,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # MinIO 对象存储（用于简历文件存储）
+  # MinIO object storage (used for resume file storage)
   minio:
     image: minio/minio:latest
     container_name: smartats-minio
@@ -73,8 +73,8 @@ services:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: admin123456
     ports:
-      - "9000:9000"    # API 端口
-      - "9001:9001"    # 控制台端口
+      - "9000:9000"    # API port
+      - "9001:9001"    # Console port
     volumes:
       - ./data/minio:/data
     networks:
@@ -85,9 +85,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # ==================== Milvus 向量数据库 ====================
+  # ==================== Milvus vector database ====================
 
-  # etcd — Milvus 元数据存储
+  # etcd — Milvus metadata storage
   etcd:
     image: quay.io/coreos/etcd:v3.5.16
     container_name: smartats-etcd
@@ -107,7 +107,7 @@ services:
       timeout: 20s
       retries: 3
 
-  # Milvus Standalone — 向量数据库
+  # Milvus Standalone — vector database
   milvus:
     image: milvusdb/milvus:v2.4.17
     container_name: smartats-milvus
@@ -120,8 +120,8 @@ services:
       MINIO_ACCESS_KEY_ID: admin
       MINIO_SECRET_ACCESS_KEY: admin123456
     ports:
-      - "19530:19530"   # gRPC 端口
-      - "9091:9091"     # 健康检查端口
+      - "19530:19530"   # gRPC port
+      - "9091:9091"     # Health check port
     volumes:
       - ./data/milvus:/var/lib/milvus
     depends_on:

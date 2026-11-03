@@ -69,20 +69,20 @@ export default function CandidatesPage() {
       ? values.skills.split(/[,，]/).map((s: string) => s.trim()).filter(Boolean)
       : undefined;
     await candidateApi.update(editModal!.id, { ...values, skills });
-    message.success('更新成功');
+    message.success('Updated successfully');
     setEditModal(null);
     loadCandidates();
   };
 
   const handleDelete = async (id: number) => {
     await candidateApi.delete(id);
-    message.success('已删除');
+    message.success('Deleted');
     loadCandidates();
   };
 
   const columns = [
     {
-      title: '姓名',
+      title: 'Name',
       dataIndex: 'name',
       width: 120,
       render: (name: string, record: CandidateResponse) => (
@@ -98,26 +98,26 @@ export default function CandidatesPage() {
       ),
     },
     {
-      title: '邮箱',
+      title: 'Email',
       dataIndex: 'email',
       width: 160,
       render: (v: string) => <span className="text-gray-500">{v || '-'}</span>,
     },
     {
-      title: '电话',
+      title: 'Phone',
       dataIndex: 'phone',
       width: 140,
       render: (v: string) => <span className="text-gray-500">{v || '-'}</span>,
     },
-    { title: '学历', dataIndex: 'education', width: 90, render: (v: string) => v || '-' },
+    { title: 'Education', dataIndex: 'education', width: 90, render: (v: string) => v || '-' },
     {
-      title: '工作年限',
+      title: 'Years of Experience',
       dataIndex: 'workYears',
       width: 90,
-      render: (v: number) => (v !== undefined && v !== null ? `${v} 年` : '-'),
+      render: (v: number) => (v !== undefined && v !== null ? `${v} yrs` : '-'),
     },
     {
-      title: '技能',
+      title: 'Skills',
       dataIndex: 'skills',
       width: 200,
       render: (skills: string[]) =>
@@ -134,9 +134,9 @@ export default function CandidatesPage() {
           '-'
         ),
     },
-    { title: '创建时间', dataIndex: 'createdAt', width: 160 },
+    { title: 'Created At', dataIndex: 'createdAt', width: 160 },
     {
-      title: '操作',
+      title: 'Actions',
       width: 160,
       render: (_: unknown, record: CandidateResponse) => (
         <Space size={4}>
@@ -146,7 +146,7 @@ export default function CandidatesPage() {
             icon={<EyeOutlined />}
             onClick={() => setDetailDrawer(record)}
           >
-            查看
+            View
           </Button>
           <Button
             type="link"
@@ -154,11 +154,11 @@ export default function CandidatesPage() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            编辑
+            Edit
           </Button>
-          <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)}>
+          <Popconfirm title="Are you sure you want to delete this candidate?" onConfirm={() => handleDelete(record.id)}>
             <Button type="link" size="small" icon={<DeleteOutlined />} danger>
-              删除
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -168,16 +168,16 @@ export default function CandidatesPage() {
 
   return (
     <PageTransition>
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">候选人管理</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">Candidate Management</h2>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* 搜索筛选 */}
+        {/* Search filters */}
         <motion.div variants={staggerItem}>
           <Card bordered={false} className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div className="md:col-span-3">
                 <Input
-                  placeholder="搜索姓名"
+                  placeholder="Search by name"
                   prefix={<SearchOutlined className="text-gray-400" />}
                   allowClear
                   onChange={(e) => setQuery((q) => ({ ...q, keyword: e.target.value, page: 1 }))}
@@ -185,21 +185,21 @@ export default function CandidatesPage() {
               </div>
               <div className="md:col-span-2">
                 <Select
-                  placeholder="学历"
+                  placeholder="Education"
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, education: v, page: 1 }))}
                   options={[
-                    { value: '大专', label: '大专' },
-                    { value: '本科', label: '本科' },
-                    { value: '硕士', label: '硕士' },
-                    { value: '博士', label: '博士' },
+                    { value: '大专', label: 'Associate' },
+                    { value: '本科', label: "Bachelor's" },
+                    { value: '硕士', label: "Master's" },
+                    { value: '博士', label: 'PhD' },
                   ]}
                 />
               </div>
               <div className="md:col-span-3">
                 <Input
-                  placeholder="技能关键词"
+                  placeholder="Skill keyword"
                   allowClear
                   onChange={(e) =>
                     setQuery((q) => ({ ...q, skill: e.target.value, page: 1 }))
@@ -208,7 +208,7 @@ export default function CandidatesPage() {
               </div>
               <div className="md:col-span-2">
                 <InputNumber
-                  placeholder="最少工作年限"
+                  placeholder="Min years of experience"
                   min={0}
                   className="w-full"
                   onChange={(v) =>
@@ -218,7 +218,7 @@ export default function CandidatesPage() {
               </div>
               <div className="md:col-span-2">
                 <InputNumber
-                  placeholder="最多工作年限"
+                  placeholder="Max years of experience"
                   min={0}
                   className="w-full"
                   onChange={(v) =>
@@ -230,7 +230,7 @@ export default function CandidatesPage() {
           </Card>
         </motion.div>
 
-        {/* 表格 */}
+        {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
             <Table
@@ -244,7 +244,7 @@ export default function CandidatesPage() {
                 pageSize: query.pageSize,
                 total,
                 showSizeChanger: true,
-                showTotal: (t) => `共 ${t} 条`,
+                showTotal: (t) => `${t} records in total`,
                 onChange: (p, s) => setQuery((q) => ({ ...q, page: p, pageSize: s })),
               }}
             />
@@ -252,16 +252,16 @@ export default function CandidatesPage() {
         </motion.div>
       </motion.div>
 
-      {/* 详情抽屉 */}
+      {/* Detail drawer */}
       <Drawer
-        title={detailDrawer ? `${detailDrawer.name} - 候选人详情` : ''}
+        title={detailDrawer ? `${detailDrawer.name} - Candidate Details` : ''}
         open={!!detailDrawer}
         onClose={() => setDetailDrawer(null)}
         width={560}
       >
         {detailDrawer && (
           <div className="space-y-6">
-            {/* 头部信息卡 */}
+            {/* Header info card */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-gray-50 to-cyan-50/50">
               <div className="w-14 h-14 rounded-full bg-gray-900 text-white flex items-center justify-center text-xl font-semibold shrink-0">
                 {detailDrawer.name?.charAt(0)}
@@ -288,16 +288,16 @@ export default function CandidatesPage() {
             </div>
 
             <Descriptions column={2} size="small">
-              <Descriptions.Item label="学历">
+              <Descriptions.Item label="Education">
                 {detailDrawer.education || '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="工作年限">
-                {detailDrawer.workYears ?? '-'} 年
+              <Descriptions.Item label="Years of Experience">
+                {detailDrawer.workYears ?? '-'} yrs
               </Descriptions.Item>
-              <Descriptions.Item label="创建时间">
+              <Descriptions.Item label="Created At">
                 {detailDrawer.createdAt}
               </Descriptions.Item>
-              <Descriptions.Item label="更新时间">
+              <Descriptions.Item label="Updated At">
                 {detailDrawer.updatedAt}
               </Descriptions.Item>
             </Descriptions>
@@ -306,7 +306,7 @@ export default function CandidatesPage() {
               <>
                 <Divider className="my-3" />
                 <div>
-                  <p className="font-semibold text-gray-900 mb-2">技能标签</p>
+                  <p className="font-semibold text-gray-900 mb-2">Skill Tags</p>
                   <div className="flex flex-wrap gap-1.5">
                     {detailDrawer.skills.map((s) => (
                       <Tag color="blue" key={s}>
@@ -322,7 +322,7 @@ export default function CandidatesPage() {
               <>
                 <Divider className="my-3" />
                 <div>
-                  <p className="font-semibold text-gray-900 mb-2">工作经历</p>
+                  <p className="font-semibold text-gray-900 mb-2">Work Experience</p>
                   {detailDrawer.workExperience.map(
                     (exp: WorkExperienceItem, idx: number) => (
                       <div
@@ -335,7 +335,7 @@ export default function CandidatesPage() {
                         </Text>
                         <br />
                         <Text type="secondary" className="text-xs">
-                          {exp.startDate} - {exp.endDate || '至今'}
+                          {exp.startDate} - {exp.endDate || 'Present'}
                         </Text>
                         {exp.description && (
                           <Paragraph className="mt-1 mb-0 text-sm text-gray-600">
@@ -353,7 +353,7 @@ export default function CandidatesPage() {
               <>
                 <Divider className="my-3" />
                 <div>
-                  <p className="font-semibold text-gray-900 mb-2">AI 摘要</p>
+                  <p className="font-semibold text-gray-900 mb-2">AI Summary</p>
                   <Paragraph className="text-gray-600">
                     {detailDrawer.aiSummary}
                   </Paragraph>
@@ -364,47 +364,47 @@ export default function CandidatesPage() {
         )}
       </Drawer>
 
-      {/* 编辑弹窗 */}
+      {/* Edit modal */}
       <Modal
-        title="编辑候选人"
+        title="Edit Candidate"
         open={!!editModal}
         onCancel={() => setEditModal(null)}
         onOk={handleUpdate}
-        okText="保存"
+        okText="Save"
         width={560}
       >
         <Form form={form} layout="vertical" className="mt-4">
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="name" label="姓名" rules={[{ required: true }]}>
+            <Form.Item name="name" label="Name" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
-            <Form.Item name="phone" label="电话">
+            <Form.Item name="phone" label="Phone">
               <Input />
             </Form.Item>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="email" label="邮箱">
+            <Form.Item name="email" label="Email">
               <Input />
             </Form.Item>
-            <Form.Item name="education" label="学历">
+            <Form.Item name="education" label="Education">
               <Select
                 allowClear
                 options={[
-                  { value: '大专', label: '大专' },
-                  { value: '本科', label: '本科' },
-                  { value: '硕士', label: '硕士' },
-                  { value: '博士', label: '博士' },
+                  { value: '大专', label: 'Associate' },
+                  { value: '本科', label: "Bachelor's" },
+                  { value: '硕士', label: "Master's" },
+                  { value: '博士', label: 'PhD' },
                 ]}
               />
             </Form.Item>
           </div>
-          <Form.Item name="workYears" label="工作年限">
+          <Form.Item name="workYears" label="Years of Experience">
             <InputNumber min={0} className="w-full" />
           </Form.Item>
-          <Form.Item name="skills" label="技能标签（逗号分隔）">
-            <Input placeholder="如：Java, Python, React" />
+          <Form.Item name="skills" label="Skill Tags (comma-separated)">
+            <Input placeholder="e.g. Java, Python, React" />
           </Form.Item>
-          <Form.Item name="summary" label="个人摘要">
+          <Form.Item name="summary" label="Personal Summary">
             <Input.TextArea rows={3} />
           </Form.Item>
         </Form>

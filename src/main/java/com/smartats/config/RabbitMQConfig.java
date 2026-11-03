@@ -11,28 +11,28 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    // 交换机
+    // Exchange
     public static final String RESUME_EXCHANGE = "smartats.exchange";
 
-    // 队列
+    // Queue
     public static final String RESUME_PARSE_QUEUE = "resume.parse.queue";
 
-    // 死信队列
+    // Dead letter queue
     public static final String RESUME_PARSE_DLQ = "resume.parse.dlq";
 
-    // 死信交换机
+    // Dead letter exchange
     public static final String DEAD_LETTER_EXCHANGE = "smartats.dlx";
 
-    // 延迟重试队列（消息过期后自动路由回主队列）
+    // Delayed retry queue (once a message expires it is routed back to the main queue automatically)
     public static final String RESUME_PARSE_DELAY_QUEUE = "resume.parse.delay";
     public static final String RESUME_PARSE_DELAY_ROUTING_KEY = "resume.parse.delay";
 
-    // 路由键
+    // Routing keys
     public static final String RESUME_PARSE_ROUTING_KEY = "resume.parse";
     public static final String DEAD_LETTER_ROUTING_KEY = "resume.parse.dlq";
 
     /**
-     * JSON 消息转换器
+     * JSON message converter
      */
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -40,7 +40,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 配置 RabbitTemplate
+     * Configure the RabbitTemplate
      */
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
@@ -50,7 +50,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 主交换机
+     * Main exchange
      */
     @Bean
     public DirectExchange resumeExchange() {
@@ -58,7 +58,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 死信交换机
+     * Dead letter exchange
      */
     @Bean
     public DirectExchange deadLetterExchange() {
@@ -66,19 +66,19 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 主队列（带死信配置）
+     * Main queue (with dead letter configuration)
      */
     @Bean
     public Queue resumeParseQueue() {
         return QueueBuilder.durable(RESUME_PARSE_QUEUE)
                 .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", DEAD_LETTER_ROUTING_KEY)
-                .withArgument("x-max-retries", 3)  // 最大重试次数
+                .withArgument("x-max-retries", 3)  // Maximum number of retries
                 .build();
     }
 
     /**
-     * 延迟重试队列（消息 TTL 过期后通过 DLX 路由回主队列，实现指数退避）
+     * Delayed retry queue (when the message TTL expires it is routed back to the main queue via the DLX, giving exponential backoff)
      */
     @Bean
     public Queue resumeParseDelayQueue() {
@@ -89,7 +89,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 死信队列
+     * Dead letter queue
      */
     @Bean
     public Queue resumeParseDLQ() {
@@ -97,7 +97,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 绑定主队列到主交换机
+     * Bind the main queue to the main exchange
      */
     @Bean
     public Binding resumeParseBinding() {
@@ -108,7 +108,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 绑定延迟重试队列到主交换机
+     * Bind the delayed retry queue to the main exchange
      */
     @Bean
     public Binding delayQueueBinding() {
@@ -119,7 +119,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * 绑定死信队列到死信交换机
+     * Bind the dead letter queue to the dead letter exchange
      */
     @Bean
     public Binding deadLetterBinding() {

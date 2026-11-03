@@ -10,22 +10,22 @@ import lombok.NoArgsConstructor;
 public class ResumeUploadResponse {
 
     /**
-     * 任务ID（前端用于轮询状态）
+     * Task ID (used by the frontend to poll status)
      */
     private String taskId;
 
     /**
-     * 简历ID
+     * Resume ID
      */
     private Long resumeId;
 
     /**
-     * 文件是否已存在（去重）
+     * Whether the file already exists (deduplication)
      */
     private Boolean duplicated;
 
     /**
-     * 提示信息
+     * Hint message
      */
     private String message;
 }

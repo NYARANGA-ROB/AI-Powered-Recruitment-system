@@ -16,14 +16,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 职位浏览量定时同步任务
+ * Scheduled job for syncing job view counts
  * <p>
- * 将 Redis 中的浏览量计数器批量同步到 MySQL 数据库
+ * Batch-syncs the view-count counters in Redis to the MySQL database
  * <p>
- * 优化策略：
- * - 使用 Redis 原子计数器（INCR）实时累加浏览量
- * - 定时批量同步到 MySQL（减少数据库写压力）
- * - 最终一致性（允许分钟级延迟）
+ * Optimization strategy:
+ * - Use Redis atomic counters (INCR) to accumulate view counts in real time
+ * - Batch-sync to MySQL on a schedule (reduces database write pressure)
+ * - Eventual consistency (minute-level delay is acceptable)
  */
 @Slf4j
 @Component
@@ -34,28 +34,28 @@ public class JobViewCountSyncScheduler {
     private final JobMapper jobMapper;
 
     /**
-     * 定时同步 Redis 浏览量计数器到数据库
+     * Periodically sync the Redis view counters to the database
      * <p>
-     * 执行频率：每 10 分钟执行一次
+     * Execution frequency: once every 10 minutes
      * <p>
-     * 执行逻辑：
-     * 1. 扫描所有 counter:job:view:* 键
-     * 2. 原子性读取并删除计数器（GETDEL 避免丢失增量）
-     * 3. 批量更新对应的 jobs 表记录
+     * Execution logic:
+     * 1. Scan all counter:job:view:* keys
+     * 2. Atomically read and delete each counter (GETDEL avoids losing increments)
+     * 3. Batch-update the corresponding jobs table records
      */
-    @Scheduled(fixedRate = 600000)  // 10 分钟执行一次
+    @Scheduled(fixedRate = 600000)  // Runs once every 10 minutes
     public void syncViewCountToDatabase() {
         long startTime = System.currentTimeMillis();
-        log.info("开始同步职位浏览量：Redis → MySQL");
+        log.info("Start syncing job view counts: Redis → MySQL");
 
         try {
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 1 步：扫描所有职位浏览量计数器
+            // Step 1: Scan all job view counters
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             String scanPattern = RedisKeyConstants.COUNTER_JOB_VIEW_PREFIX + "*";
 
-            // 使用 SCAN 命令避免阻塞（cursor 方式遍历）
+            // Use the SCAN command to avoid blocking (cursor-based traversal)
             List<String> counterKeys = redisTemplate.execute((RedisCallback<List<String>>) connection -> {
                 List<String> keys = new ArrayList<>();
                 ScanOptions options = ScanOptions.scanOptions()
@@ -68,31 +68,31 @@ public class JobViewCountSyncScheduler {
                         keys.add(new String(cursor.next()));
                     }
                 } catch (Exception e) {
-                    log.error("SCAN 扫描失败", e);
+                    log.error("SCAN failed", e);
                 }
                 return keys;
             });
 
             if (counterKeys == null || counterKeys.isEmpty()) {
-                log.debug("没有需要同步的浏览量计数器");
+                log.debug("No view counters need to be synced");
                 return;
             }
 
-            log.info("发现 {} 个职位浏览量计数器", counterKeys.size());
+            log.info("Found {} job view counters", counterKeys.size());
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 2 步：批量读取 Redis 计数器值
+            // Step 2: Batch-read the Redis counter values
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             List<JobUpdateBatch> updateBatches = new ArrayList<>();
 
             for (String counterKey : counterKeys) {
-                // 从 key 中提取 jobId（格式：counter:job:view:{jobId}）
+                // Extract jobId from the key (format: counter:job:view:{jobId})
                 String jobIdStr = counterKey.substring(RedisKeyConstants.COUNTER_JOB_VIEW_PREFIX.length());
 
                 try {
                     Long jobId = Long.parseLong(jobIdStr);
-                    // 使用 GETDEL 原子性读取并删除，避免 GET+DELETE 之间的增量丢失
+                    // Use GETDEL to atomically read and delete, avoiding increments lost between GET+DELETE
                     String countStr = redisTemplate.opsForValue().getAndDelete(counterKey);
 
                     if (countStr != null) {
@@ -100,17 +100,17 @@ public class JobViewCountSyncScheduler {
                         updateBatches.add(new JobUpdateBatch(jobId, increment, counterKey));
                     }
                 } catch (NumberFormatException e) {
-                    log.warn("无效的 jobId：key={}", counterKey);
+                    log.warn("Invalid jobId: key={}", counterKey);
                 }
             }
 
             if (updateBatches.isEmpty()) {
-                log.debug("没有有效的浏览量数据需要同步");
+                log.debug("No valid view-count data to sync");
                 return;
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // 第 3 步：批量更新数据库
+            // Step 3: Batch-update the database
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             int successCount = 0;
@@ -125,29 +125,29 @@ public class JobViewCountSyncScheduler {
                         jobMapper.updateById(job);
                         successCount++;
                     } else {
-                        log.warn("职位不存在，跳过同步：jobId={}", batch.jobId());
+                        log.warn("Position not found, skipping sync: jobId={}", batch.jobId());
                     }
                 } catch (Exception e) {
-                    log.error("同步失败：jobId={}, increment={}", batch.jobId(), batch.increment(), e);
+                    log.error("Sync failed: jobId={}, increment={}", batch.jobId(), batch.increment(), e);
                     failCount++;
                 }
             }
 
             long costTime = System.currentTimeMillis() - startTime;
-            log.info("职位浏览量同步完成：成功 {} 条，失败 {} 条，耗时 {} ms",
+            log.info("Job view count sync complete: {} succeeded, {} failed, took {} ms",
                 successCount, failCount, costTime);
 
         } catch (Exception e) {
-            log.error("职位浏览量同步异常", e);
+            log.error("Job view count sync error", e);
         }
     }
 
     /**
-     * 批量更新数据结构
+     * Batch update data structure
      *
-     * @param jobId    职位 ID
-     * @param increment 浏览量增量
-     * @param counterKey Redis 计数器 Key
+     * @param jobId      job ID
+     * @param increment  view-count increment
+     * @param counterKey Redis counter Key
      */
     private record JobUpdateBatch(Long jobId, int increment, String counterKey) {}
 }

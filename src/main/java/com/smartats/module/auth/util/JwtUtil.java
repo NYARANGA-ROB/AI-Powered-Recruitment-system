@@ -64,7 +64,7 @@ public class JwtUtil {
     }
 
     /**
-     * 从 HttpServletRequest 中提取用户 ID
+     * Extract the user ID from an HttpServletRequest
      */
     public Long getUserIdFromToken(HttpServletRequest request) {
         String token = extractTokenFromRequest(request);
@@ -76,7 +76,7 @@ public class JwtUtil {
     }
 
     /**
-     * 从请求中提取 Token
+     * Extract the token from the request
      */
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -91,7 +91,7 @@ public class JwtUtil {
             Claims claims = parseToken(token);
             return claims.getExpiration().before(new Date());
         } catch (Exception e) {
-            // 解析异常视为已过期（安全优先）
+            // Treat a parsing failure as expired (security first)
             return true;
         }
     }

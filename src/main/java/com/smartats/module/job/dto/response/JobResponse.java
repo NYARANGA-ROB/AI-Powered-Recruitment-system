@@ -7,109 +7,109 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 职位响应
+ * Job response
  */
 @Data
 public class JobResponse {
 
     /**
-     * 职位ID
+     * Job ID
      */
     private Long id;
 
     /**
-     * 职位标题
+     * Job title
      */
     private String title;
 
     /**
-     * 部门
+     * Department
      */
     private String department;
 
     /**
-     * 职位描述
+     * Job description
      */
     private String description;
 
     /**
-     * 任职要求
+     * Job requirements
      */
     private String requirements;
 
     /**
-     * 必需技能标签
+     * Required skill tags
      */
     private List<String> requiredSkills;
 
     /**
-     * 薪资下限(K)
+     * Minimum salary (K)
      */
     private Integer salaryMin;
 
     /**
-     * 薪资上限(K)
+     * Maximum salary (K)
      */
     private Integer salaryMax;
 
     /**
-     * 薪资范围（格式化显示）
+     * Salary range (formatted for display)
      */
     private String salaryRange;
 
     /**
-     * 最低经验年限
+     * Minimum years of experience
      */
     private Integer experienceMin;
 
     /**
-     * 最高经验年限
+     * Maximum years of experience
      */
     private Integer experienceMax;
 
     /**
-     * 经验要求（格式化显示）
+     * Experience requirement (formatted for display)
      */
     private String experienceRange;
 
     /**
-     * 学历要求
+     * Education requirement
      */
     private String education;
 
     /**
-     * 职位类型
+     * Job type
      */
     private String jobType;
 
     /**
-     * 状态
+     * Status
      */
     private String status;
 
     /**
-     * 状态描述
+     * Status description
      */
     private String statusDesc;
 
     /**
-     * 创建者ID
+     * Creator ID
      */
     private Long creatorId;
 
     /**
-     * 浏览次数
+     * View count
      */
     private Integer viewCount;
 
     /**
-     * 创建时间
+     * Created at
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Updated at
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;

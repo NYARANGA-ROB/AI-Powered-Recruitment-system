@@ -3,14 +3,14 @@ package com.smartats.common.enums;
 import lombok.Getter;
 
 /**
- * 简历解析状态枚举
+ * Resume parsing status enum
  */
 @Getter
 public enum ResumeStatus {
 
-    PARSING("PARSING", "解析中"),
-    COMPLETED("COMPLETED", "已完成"),
-    FAILED("FAILED", "解析失败");
+    PARSING("PARSING", "Parsing"),
+    COMPLETED("COMPLETED", "Completed"),
+    FAILED("FAILED", "Parsing failed");
 
     private final String code;
     private final String description;

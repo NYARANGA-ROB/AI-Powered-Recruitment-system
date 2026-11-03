@@ -39,51 +39,51 @@ const menuItems: MenuProps['items'] = [
   {
     key: '/dashboard',
     icon: <DashboardOutlined />,
-    label: '工作台',
+    label: 'Dashboard',
   },
   {
     key: '/jobs',
     icon: <FileTextOutlined />,
-    label: '职位管理',
+    label: 'Jobs',
   },
   {
     key: '/resumes',
     icon: <CloudUploadOutlined />,
-    label: '简历管理',
+    label: 'Resumes',
   },
   {
     key: 'candidates-group',
     icon: <TeamOutlined />,
-    label: '候选人',
+    label: 'Candidates',
     children: [
-      { key: '/candidates', label: '候选人列表' },
-      { key: '/candidates/search', icon: <SearchOutlined />, label: '智能搜索' },
+      { key: '/candidates', label: 'Candidate List' },
+      { key: '/candidates/search', icon: <SearchOutlined />, label: 'Smart Search' },
     ],
   },
   {
     key: '/applications',
     icon: <SolutionOutlined />,
-    label: '职位申请',
+    label: 'Applications',
   },
   {
     key: '/interviews',
     icon: <CalendarOutlined />,
-    label: '面试管理',
+    label: 'Interviews',
   },
   {
     key: '/analytics',
     icon: <FundOutlined />,
-    label: '招聘分析',
+    label: 'Recruiting Analytics',
   },
   {
     key: '/audit-logs',
     icon: <AuditOutlined />,
-    label: '审计日志',
+    label: 'Audit Logs',
   },
   {
     key: '/settings',
     icon: <SettingOutlined />,
-    label: '系统设置',
+    label: 'System Settings',
   },
 ];
 
@@ -133,25 +133,25 @@ export default function AppLayout() {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: userInfo?.username || '用户',
+      label: userInfo?.username || 'User',
       disabled: true,
     },
     { type: 'divider' },
     {
       key: 'role',
-      label: `角色: ${userInfo?.role || '-'}`,
+      label: `Role: ${userInfo?.role || '-'}`,
       disabled: true,
     },
     {
       key: 'ai-quota',
-      label: `AI 额度: ${userInfo?.todayAiUsed || 0}/${userInfo?.dailyAiQuota || 0}`,
+      label: `AI Quota: ${userInfo?.todayAiUsed || 0}/${userInfo?.dailyAiQuota || 0}`,
       disabled: true,
     },
     { type: 'divider' },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: 'Sign Out',
       danger: true,
       onClick: handleLogout,
     },
@@ -262,7 +262,7 @@ export default function AppLayout() {
           <button
             onClick={handleToggleSidebar}
             className="text-lg text-gray-600 hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-gray-100"
-            aria-label={collapsed ? '展开菜单' : '收起菜单'}
+            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
           >
             {isMobile ? (
               mobileMenuOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />

@@ -35,11 +35,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * SmartSearchController 集成测试
+ * SmartSearchController integration tests
  */
 @WebMvcTest(SmartSearchController.class)
 @Import(SecurityConfig.class)
-@DisplayName("SmartSearchController 集成测试")
+@DisplayName("SmartSearchController integration tests")
 class SmartSearchControllerTest {
 
     @Autowired
@@ -73,7 +73,7 @@ class SmartSearchControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 正常搜索
+    // Normal search
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -81,25 +81,25 @@ class SmartSearchControllerTest {
     class SmartSearchTests {
 
         @Test
-        @DisplayName("成功返回搜索结果")
+        @DisplayName("Returns search results successfully")
         void shouldReturnSearchResults() throws Exception {
             // Given
             SmartSearchResponse response = new SmartSearchResponse();
-            response.setQuery("Java后端开发");
+            response.setQuery("Java backend developer");
             response.setTotalMatches(1);
 
             MatchedCandidate mc = new MatchedCandidate();
             mc.setCandidateId(1L);
-            mc.setName("张三");
+            mc.setName("Zhang San");
             mc.setMatchScore(0.85);
-            mc.setCurrentPosition("高级后端工程师");
+            mc.setCurrentPosition("Senior backend engineer");
             mc.setSkills(List.of("Java", "Spring Boot"));
             response.setCandidates(List.of(mc));
 
             given(smartSearchService.search(any(SmartSearchRequest.class))).willReturn(response);
 
             SmartSearchRequest request = new SmartSearchRequest();
-            request.setQuery("Java后端开发");
+            request.setQuery("Java backend developer");
             request.setTopK(10);
 
             // When & Then
@@ -110,15 +110,15 @@ class SmartSearchControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.query").value("Java后端开发"))
+                    .andExpect(jsonPath("$.data.query").value("Java backend developer"))
                     .andExpect(jsonPath("$.data.totalMatches").value(1))
                     .andExpect(jsonPath("$.data.candidates[0].candidateId").value(1))
-                    .andExpect(jsonPath("$.data.candidates[0].name").value("张三"))
+                    .andExpect(jsonPath("$.data.candidates[0].name").value("Zhang San"))
                     .andExpect(jsonPath("$.data.candidates[0].matchScore").value(0.85));
         }
 
         @Test
-        @DisplayName("空查询返回400")
+        @DisplayName("Empty query returns 400")
         void shouldReturn400WhenQueryEmpty() throws Exception {
             SmartSearchRequest request = new SmartSearchRequest();
             request.setQuery("");
@@ -132,10 +132,10 @@ class SmartSearchControllerTest {
         }
 
         @Test
-        @DisplayName("未认证返回403")
+        @DisplayName("Unauthenticated returns 403")
         void shouldReturn403WhenNotAuthenticated() throws Exception {
             SmartSearchRequest request = new SmartSearchRequest();
-            request.setQuery("Java开发");
+            request.setQuery("Java development");
 
             mockMvc.perform(post("/candidates/smart-search")
                             .with(csrf())
@@ -145,35 +145,35 @@ class SmartSearchControllerTest {
         }
 
         @Test
-        @DisplayName("AI 服务异常返回错误")
+        @DisplayName("AI service failure returns an error")
         void shouldReturnErrorWhenAiServiceFails() throws Exception {
             given(smartSearchService.search(any(SmartSearchRequest.class)))
-                    .willThrow(new BusinessException(ResultCode.AI_SERVICE_ERROR, "AI 向量化服务不可用"));
+                    .willThrow(new BusinessException(ResultCode.AI_SERVICE_ERROR, "AI vectorization service unavailable"));
 
             SmartSearchRequest request = new SmartSearchRequest();
-            request.setQuery("Python数据分析");
+            request.setQuery("Python data analysis");
 
             mockMvc.perform(post("/candidates/smart-search")
                             .with(authentication(hrAuth()))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())  // BusinessException 由 GlobalExceptionHandler 处理
+                    .andExpect(status().isOk())  // BusinessException is handled by GlobalExceptionHandler
                     .andExpect(jsonPath("$.code").value(ResultCode.AI_SERVICE_ERROR.getCode()));
         }
 
         @Test
-        @DisplayName("搜索无结果时返回空列表")
+        @DisplayName("Returns an empty list when nothing matches")
         void shouldReturnEmptyList() throws Exception {
             SmartSearchResponse emptyResponse = new SmartSearchResponse();
-            emptyResponse.setQuery("区块链工程师");
+            emptyResponse.setQuery("blockchain engineer");
             emptyResponse.setTotalMatches(0);
             emptyResponse.setCandidates(List.of());
 
             given(smartSearchService.search(any(SmartSearchRequest.class))).willReturn(emptyResponse);
 
             SmartSearchRequest request = new SmartSearchRequest();
-            request.setQuery("区块链工程师");
+            request.setQuery("blockchain engineer");
 
             mockMvc.perform(post("/candidates/smart-search")
                             .with(authentication(hrAuth()))

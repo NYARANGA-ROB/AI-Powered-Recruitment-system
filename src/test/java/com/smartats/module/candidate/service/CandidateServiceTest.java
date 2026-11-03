@@ -29,10 +29,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * CandidateService 单元测试
+ * CandidateService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CandidateService 单元测试")
+@DisplayName("CandidateService unit tests")
 class CandidateServiceTest {
 
     @InjectMocks
@@ -57,38 +57,38 @@ class CandidateServiceTest {
         testCandidate = new Candidate();
         testCandidate.setId(1L);
         testCandidate.setResumeId(100L);
-        testCandidate.setName("张三");
+        testCandidate.setName("Zhang San");
         testCandidate.setPhone("13800138000");
         testCandidate.setEmail("zhangsan@test.com");
         testCandidate.setGender("MALE");
         testCandidate.setAge(28);
-        testCandidate.setEducation("本科");
-        testCandidate.setSchool("清华大学");
-        testCandidate.setMajor("计算机科学");
+        testCandidate.setEducation("Bachelor");
+        testCandidate.setSchool("Tsinghua University");
+        testCandidate.setMajor("Computer Science");
         testCandidate.setWorkYears(5);
-        testCandidate.setCurrentCompany("阿里巴巴");
-        testCandidate.setCurrentPosition("高级工程师");
+        testCandidate.setCurrentCompany("Alibaba");
+        testCandidate.setCurrentPosition("Senior Engineer");
         testCandidate.setSkills(List.of("Java", "Spring", "MySQL"));
         testCandidate.setCreatedAt(LocalDateTime.now());
         testCandidate.setUpdatedAt(LocalDateTime.now());
 
         testCandidateInfo = new CandidateInfo();
-        testCandidateInfo.setName("张三");
+        testCandidateInfo.setName("Zhang San");
         testCandidateInfo.setPhone("13800138000");
         testCandidateInfo.setEmail("zhangsan@test.com");
         testCandidateInfo.setGender("男");
         testCandidateInfo.setAge(28);
-        testCandidateInfo.setEducation("本科");
-        testCandidateInfo.setSchool("清华大学");
-        testCandidateInfo.setMajor("计算机科学");
+        testCandidateInfo.setEducation("Bachelor");
+        testCandidateInfo.setSchool("Tsinghua University");
+        testCandidateInfo.setMajor("Computer Science");
         testCandidateInfo.setWorkYears(5);
-        testCandidateInfo.setCurrentCompany("阿里巴巴");
-        testCandidateInfo.setCurrentPosition("高级工程师");
+        testCandidateInfo.setCurrentCompany("Alibaba");
+        testCandidateInfo.setCurrentPosition("Senior Engineer");
         testCandidateInfo.setSkills(List.of("Java", "Spring", "MySQL"));
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建候选人
+    // Create candidate
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -96,7 +96,7 @@ class CandidateServiceTest {
     class CreateCandidateTests {
 
         @Test
-        @DisplayName("新建候选人成功")
+        @DisplayName("Creates a new candidate successfully")
         void shouldCreateNewCandidate() {
             given(candidateMapper.selectOne(any(LambdaQueryWrapper.class))).willReturn(null);
             given(candidateMapper.insert(any(Candidate.class))).willAnswer(invocation -> {
@@ -108,14 +108,14 @@ class CandidateServiceTest {
             Candidate result = candidateService.createCandidate(100L, testCandidateInfo, "{}");
 
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getName()).isEqualTo("张三");
+            assertThat(result.getName()).isEqualTo("Zhang San");
             assertThat(result.getResumeId()).isEqualTo(100L);
             assertThat(result.getGender()).isEqualTo("MALE"); // normalized
             then(candidateMapper).should().insert(any(Candidate.class));
         }
 
         @Test
-        @DisplayName("候选人已存在则更新")
+        @DisplayName("Updates the candidate when one already exists")
         void shouldUpdateWhenAlreadyExists() {
             given(candidateMapper.selectOne(any(LambdaQueryWrapper.class))).willReturn(testCandidate);
             given(candidateMapper.updateById(any(Candidate.class))).willReturn(1);
@@ -131,7 +131,7 @@ class CandidateServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 根据ID查询候选人
+    // Query candidate by ID
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -139,21 +139,21 @@ class CandidateServiceTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("缓存命中时直接返回")
+        @DisplayName("Returns directly on a cache hit")
         void shouldReturnFromCacheWhenHit() throws Exception {
-            String cachedJson = "{\"id\":1,\"name\":\"张三\"}";
+            String cachedJson = "{\"id\":1,\"name\":\"Zhang San\"}";
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(contains("cache:candidate:1"))).willReturn(cachedJson);
             given(objectMapper.readValue(eq(cachedJson), eq(Candidate.class))).willReturn(testCandidate);
 
             Candidate result = candidateService.getById(1L);
 
-            assertThat(result.getName()).isEqualTo("张三");
+            assertThat(result.getName()).isEqualTo("Zhang San");
             then(candidateMapper).should(never()).selectById(anyLong());
         }
 
         @Test
-        @DisplayName("缓存未命中则查库并回填缓存")
+        @DisplayName("Queries the database and fills the cache on a cache miss")
         void shouldQueryDbAndFillCacheWhenMiss() throws Exception {
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn(null);
@@ -162,13 +162,13 @@ class CandidateServiceTest {
 
             Candidate result = candidateService.getById(1L);
 
-            assertThat(result.getName()).isEqualTo("张三");
+            assertThat(result.getName()).isEqualTo("Zhang San");
             then(candidateMapper).should().selectById(1L);
             then(valueOperations).should().set(anyString(), eq("{}"), eq(30L), any());
         }
 
         @Test
-        @DisplayName("数据库也不存在返回null")
+        @DisplayName("Returns null when the record is also missing from the database")
         void shouldReturnNullWhenNotExist() {
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn(null);
@@ -180,7 +180,7 @@ class CandidateServiceTest {
         }
 
         @Test
-        @DisplayName("缓存反序列化失败时优雅降级查库")
+        @DisplayName("Falls back gracefully to the database when cache deserialization fails")
         void shouldFallbackToDbWhenCacheDeserializationFails() throws Exception {
             given(redisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn("invalid-json");
@@ -191,12 +191,12 @@ class CandidateServiceTest {
 
             Candidate result = candidateService.getById(1L);
 
-            assertThat(result.getName()).isEqualTo("张三");
+            assertThat(result.getName()).isEqualTo("Zhang San");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 手动更新候选人 (updateManual)
+    // Manual candidate update (updateManual)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -204,10 +204,10 @@ class CandidateServiceTest {
     class UpdateManualTests {
 
         @Test
-        @DisplayName("部分更新成功")
+        @DisplayName("Partial update succeeds")
         void shouldPartialUpdateSuccessfully() throws Exception {
             CandidateUpdateRequest request = new CandidateUpdateRequest();
-            request.setName("李四");
+            request.setName("Li Si");
             request.setPhone("13900139000");
             // other fields null → not updated
 
@@ -219,22 +219,22 @@ class CandidateServiceTest {
             given(valueOperations.get(anyString())).willReturn(null);
             Candidate updated = new Candidate();
             updated.setId(1L);
-            updated.setName("李四");
+            updated.setName("Li Si");
             updated.setPhone("13900139000");
             given(candidateMapper.selectById(1L)).willReturn(updated);
             given(objectMapper.writeValueAsString(any(Candidate.class))).willReturn("{}");
 
             Candidate result = candidateService.updateManual(1L, request);
 
-            assertThat(result.getName()).isEqualTo("李四");
+            assertThat(result.getName()).isEqualTo("Li Si");
             then(candidateVectorService).should().vectorizeCandidateAsync(any(Candidate.class));
         }
 
         @Test
-        @DisplayName("候选人不存在抛异常")
+        @DisplayName("Throws when the candidate does not exist")
         void shouldThrowWhenNotFound() {
             CandidateUpdateRequest request = new CandidateUpdateRequest();
-            request.setName("李四");
+            request.setName("Li Si");
             given(candidateMapper.selectById(999L)).willReturn(null);
 
             assertThatThrownBy(() -> candidateService.updateManual(999L, request))
@@ -243,7 +243,7 @@ class CandidateServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 删除候选人
+    // Delete candidate
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -251,7 +251,7 @@ class CandidateServiceTest {
     class DeleteByIdTests {
 
         @Test
-        @DisplayName("删除成功同时清缓存和向量")
+        @DisplayName("Delete succeeds and clears both the cache and the vector")
         void shouldDeleteAndEvictCacheAndVector() {
             given(candidateMapper.deleteById(1L)).willReturn(1);
             given(redisTemplate.delete(anyString())).willReturn(true);
@@ -265,7 +265,7 @@ class CandidateServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 分页查询测试
+    // Paged query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -273,7 +273,7 @@ class CandidateServiceTest {
     class ListCandidatesTests {
 
         @Test
-        @DisplayName("无筛选条件分页查询")
+        @DisplayName("Paged query without filters")
         void shouldListWithoutFilters() {
             CandidateQueryRequest request = new CandidateQueryRequest();
             request.setPage(1);
@@ -293,12 +293,12 @@ class CandidateServiceTest {
         }
 
         @Test
-        @DisplayName("关键字筛选查询")
+        @DisplayName("Query with a keyword filter")
         void shouldListWithKeywordFilter() {
             CandidateQueryRequest request = new CandidateQueryRequest();
             request.setPage(1);
             request.setPageSize(10);
-            request.setKeyword("张三");
+            request.setKeyword("Zhang San");
 
             Page<Candidate> page = new Page<>(1, 10);
             page.setTotal(1);
@@ -313,7 +313,7 @@ class CandidateServiceTest {
         }
 
         @Test
-        @DisplayName("pageSize限制在1到100")
+        @DisplayName("pageSize is clamped between 1 and 100")
         void shouldClampPageSize() {
             CandidateQueryRequest request = new CandidateQueryRequest();
             request.setPage(1);
@@ -333,7 +333,7 @@ class CandidateServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 根据resumeId查询
+    // Query by resumeId
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -341,17 +341,17 @@ class CandidateServiceTest {
     class GetByResumeIdTests {
 
         @Test
-        @DisplayName("存在时返回候选人")
+        @DisplayName("Returns the candidate when it exists")
         void shouldReturnCandidate() {
             given(candidateMapper.selectOne(any(LambdaQueryWrapper.class))).willReturn(testCandidate);
 
             Candidate result = candidateService.getByResumeId(100L);
 
-            assertThat(result.getName()).isEqualTo("张三");
+            assertThat(result.getName()).isEqualTo("Zhang San");
         }
 
         @Test
-        @DisplayName("不存在时返回null")
+        @DisplayName("Returns null when it does not exist")
         void shouldReturnNullWhenNotExist() {
             given(candidateMapper.selectOne(any(LambdaQueryWrapper.class))).willReturn(null);
 

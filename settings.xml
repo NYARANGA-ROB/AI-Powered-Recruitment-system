@@ -4,20 +4,20 @@
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                               http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-    <!-- 本地仓库路径 -->
+    <!-- Local repository path -->
     <localRepository>${user.home}/.m2/repository</localRepository>
 
-    <!-- 镜像配置：Spring AI 相关依赖不走阿里云镜像 -->
+    <!-- Mirror configuration: Spring AI related dependencies do not go through the Aliyun mirror -->
     <mirrors>
-        <!-- 阿里云镜像（排除 Spring AI） -->
+        <!-- Aliyun mirror (excluding Spring AI) -->
         <mirror>
             <id>aliyunmaven</id>
-            <name>阿里云公共仓库</name>
+            <name>Aliyun public repository</name>
             <url>https://maven.aliyun.com/repository/public</url>
             <mirrorOf>*,!spring-milestones,!spring-releases</mirrorOf>
         </mirror>
 
-        <!-- Spring Milestone 镜像（直接访问） -->
+        <!-- Spring Milestone mirror (direct access) -->
         <mirror>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
@@ -43,7 +43,7 @@
         </profile>
     </profiles>
 
-    <!-- 激活 profile -->
+    <!-- Active profile -->
     <activeProfiles>
         <activeProfile>spring-ai</activeProfile>
     </activeProfiles>

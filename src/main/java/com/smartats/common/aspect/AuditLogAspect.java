@@ -23,16 +23,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 审计日志 AOP 切面
+ * Audit log AOP aspect
  * <p>
- * 拦截所有标注了 {@link AuditLog} 注解的方法，自动记录操作日志。
+ * Intercepts all methods annotated with {@link AuditLog} and records the operation log automatically.
  * <p>
- * 设计要点：
+ * Key design points:
  * <ul>
- *   <li>使用 @Around 通知，同时捕获成功和失败场景</li>
- *   <li>日志写入异步执行（{@link AuditLogService#saveAsync}），不阻塞主业务</li>
- *   <li>自动提取当前用户、请求信息、执行耗时</li>
- *   <li>敏感参数自动过滤（密码、Token 等）</li>
+ *   <li>Uses @Around advice to capture both success and failure scenarios</li>
+ *   <li>Log persistence runs asynchronously ({@link AuditLogService#saveAsync}) and does not block the main business flow</li>
+ *   <li>Extracts the current user, request details and execution duration automatically</li>
+ *   <li>Sensitive parameters are masked automatically (passwords, tokens, etc.)</li>
  * </ul>
  */
 @Slf4j
@@ -44,20 +44,20 @@ public class AuditLogAspect {
     private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
 
-    /** 请求参数序列化最大长度（防止日志过大） */
+    /** Maximum length of serialized request parameters (keeps logs from growing too large) */
     private static final int MAX_PARAMS_LENGTH = 2000;
 
-    /** 敏感字段名集合（参数名包含这些关键词时脱敏） */
+    /** Set of sensitive field names (masked when a parameter name contains one of these keywords) */
     private static final String[] SENSITIVE_FIELDS = {"password", "secret", "token", "authorization", "credential"};
 
     /**
-     * 切入点：所有标注 @AuditLog 注解的方法
+     * Pointcut: all methods annotated with @AuditLog
      */
     @Around("@annotation(auditLog)")
     public Object around(ProceedingJoinPoint joinPoint, AuditLog auditLog) throws Throwable {
         long startTime = System.currentTimeMillis();
 
-        // 预构建审计日志实体（请求信息在方法执行前采集）
+        // Pre-build the audit log entity (request details are collected before the method runs)
         AuditLogEntity entity = buildAuditLogEntity(joinPoint, auditLog);
 
         Object result;
@@ -67,12 +67,12 @@ public class AuditLogAspect {
         } catch (Throwable e) {
             entity.setStatus("FAILED");
             entity.setErrorMessage(truncate(e.getMessage(), 500));
-            throw e; // 重新抛出，不吞异常
+            throw e; // Re-throw; never swallow the exception
         } finally {
             entity.setDuration(System.currentTimeMillis() - startTime);
             entity.setCreatedAt(LocalDateTime.now());
 
-            // 异步写入数据库
+            // Persist asynchronously
             auditLogService.saveAsync(entity);
         }
 
@@ -80,33 +80,33 @@ public class AuditLogAspect {
     }
 
     /**
-     * 构建审计日志实体
+     * Build the audit log entity
      */
     private AuditLogEntity buildAuditLogEntity(ProceedingJoinPoint joinPoint, AuditLog auditLog) {
         AuditLogEntity entity = new AuditLogEntity();
 
-        // ① 注解元数据
+        // ① Annotation metadata
         entity.setModule(auditLog.module());
         entity.setOperation(auditLog.operation());
         entity.setDescription(auditLog.description());
 
-        // ② 方法签名
+        // ② Method signature
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String className = signature.getDeclaringType().getSimpleName();
         String methodName = signature.getName();
         entity.setMethod(className + "." + methodName);
 
-        // ③ 当前用户信息（从 Spring Security 上下文获取）
+        // ③ Current user info (obtained from the Spring Security context)
         extractCurrentUser(entity);
 
-        // ④ HTTP 请求信息
+        // ④ HTTP request info
         extractRequestInfo(entity, joinPoint, auditLog, signature);
 
         return entity;
     }
 
     /**
-     * 提取当前登录用户信息
+     * Extract the currently authenticated user's info
      */
     private void extractCurrentUser(AuditLogEntity entity) {
         try {
@@ -114,16 +114,16 @@ public class AuditLogAspect {
             if (authentication != null && authentication.isAuthenticated()
                     && authentication.getPrincipal() instanceof Long userId) {
                 entity.setUserId(userId);
-                // username 从 Authentication 的 name 获取（如果有的话）
+                // The username comes from Authentication#getName (when available)
                 entity.setUsername(authentication.getName());
             }
         } catch (Exception e) {
-            log.debug("获取当前用户信息失败（可能是匿名接口）: {}", e.getMessage());
+            log.debug("Failed to get the current user info (possibly an anonymous endpoint): {}", e.getMessage());
         }
     }
 
     /**
-     * 提取 HTTP 请求信息
+     * Extract HTTP request info
      */
     private void extractRequestInfo(AuditLogEntity entity, ProceedingJoinPoint joinPoint,
                                      AuditLog auditLog, MethodSignature signature) {
@@ -140,21 +140,21 @@ public class AuditLogAspect {
             entity.setRequestIp(getClientIp(request));
             entity.setUserAgent(truncate(request.getHeader("User-Agent"), 500));
 
-            // ⑤ 请求参数（根据注解配置决定是否记录）
+            // ⑤ Request parameters (recorded based on the annotation configuration)
             if (auditLog.saveParams()) {
                 String params = extractParams(joinPoint, signature);
                 entity.setRequestParams(truncate(params, MAX_PARAMS_LENGTH));
             }
         } catch (Exception e) {
-            log.debug("提取请求信息失败: {}", e.getMessage());
+            log.debug("Failed to extract request info: {}", e.getMessage());
         }
     }
 
     /**
-     * 提取方法参数为 JSON 字符串
+     * Extract the method parameters as a JSON string
      * <p>
-     * 自动过滤 Authentication、MultipartFile 等不可序列化参数，
-     * 并对敏感字段脱敏处理。
+     * Automatically skips parameters that cannot be serialized, such as Authentication and MultipartFile,
+     * and masks sensitive fields.
      */
     private String extractParams(ProceedingJoinPoint joinPoint, MethodSignature signature) {
         try {
@@ -169,7 +169,7 @@ public class AuditLogAspect {
                 String name = paramNames[i];
                 Object value = paramValues[i];
 
-                // 跳过不可序列化的参数类型
+                // Skip parameter types that cannot be serialized
                 if (value instanceof Authentication
                         || value instanceof HttpServletRequest
                         || value instanceof MultipartFile) {
@@ -180,7 +180,7 @@ public class AuditLogAspect {
                     continue;
                 }
 
-                // 敏感字段脱敏
+                // Mask sensitive fields
                 if (isSensitiveField(name)) {
                     paramsMap.put(name, "******");
                 } else {
@@ -190,13 +190,13 @@ public class AuditLogAspect {
 
             return objectMapper.writeValueAsString(paramsMap);
         } catch (Exception e) {
-            log.debug("序列化请求参数失败: {}", e.getMessage());
+            log.debug("Failed to serialize request parameters: {}", e.getMessage());
             return null;
         }
     }
 
     /**
-     * 判断是否为敏感字段
+     * Determine whether a field is sensitive
      */
     private boolean isSensitiveField(String fieldName) {
         if (fieldName == null) return false;
@@ -210,7 +210,7 @@ public class AuditLogAspect {
     }
 
     /**
-     * 获取客户端真实 IP（兼容反向代理）
+     * Get the real client IP (compatible with reverse proxies)
      */
     private String getClientIp(HttpServletRequest request) {
         String[] headers = {
@@ -223,7 +223,7 @@ public class AuditLogAspect {
         for (String header : headers) {
             String ip = request.getHeader(header);
             if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
-                // X-Forwarded-For 可能包含多个 IP，取第一个
+                // X-Forwarded-For may contain several IPs; take the first one
                 return ip.split(",")[0].trim();
             }
         }
@@ -232,7 +232,7 @@ public class AuditLogAspect {
     }
 
     /**
-     * 字符串截断
+     * Truncate a string
      */
     private String truncate(String str, int maxLength) {
         if (str == null) return null;

@@ -3,13 +3,13 @@ package com.smartats.common.annotation;
 import java.lang.annotation.*;
 
 /**
- * 审计日志注解
+ * Audit log annotation
  * <p>
- * 标记在 Controller / Service 方法上，由 AOP 切面自动记录操作日志。
+ * Applied to Controller / Service methods; the AOP aspect records the operation log automatically.
  * <p>
- * 使用示例：
+ * Example:
  * <pre>
- * {@code @AuditLog(module = "职位管理", operation = "CREATE", description = "创建职位")}
+ * {@code @AuditLog(module = "Job Management", operation = "CREATE", description = "Create a job")}
  * public Result<Long> createJob(...) { ... }
  * </pre>
  */
@@ -19,33 +19,33 @@ import java.lang.annotation.*;
 public @interface AuditLog {
 
     /**
-     * 业务模块名称
+     * Business module name
      * <p>
-     * 例如："职位管理"、"简历管理"、"候选人管理"
+     * For example: "Job Management", "Resume Management", "Candidate Management"
      */
     String module() default "";
 
     /**
-     * 操作类型
+     * Operation type
      * <p>
-     * 建议使用标准动词：CREATE / UPDATE / DELETE / QUERY / UPLOAD / EXPORT / LOGIN / LOGOUT
+     * Prefer the standard verbs: CREATE / UPDATE / DELETE / QUERY / UPLOAD / EXPORT / LOGIN / LOGOUT
      */
     String operation() default "";
 
     /**
-     * 操作描述（可选，更具体的业务说明）
+     * Operation description (optional, a more specific business explanation)
      */
     String description() default "";
 
     /**
-     * 是否记录请求参数（默认 true）
+     * Whether to record the request parameters (default true)
      * <p>
-     * 对于包含敏感信息的接口（如登录），建议设为 false
+     * For endpoints that carry sensitive information (such as login), setting this to false is recommended
      */
     boolean saveParams() default true;
 
     /**
-     * 是否记录响应结果（默认 false，避免日志过大）
+     * Whether to record the response result (default false, to avoid oversized logs)
      */
     boolean saveResult() default false;
 }

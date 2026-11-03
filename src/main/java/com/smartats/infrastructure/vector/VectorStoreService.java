@@ -25,17 +25,17 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * Milvus 向量存储服务
+ * Milvus vector storage service
  * <p>
- * 管理 Milvus Collection 的创建、向量插入、相似度搜索、删除。
+ * Manages Milvus collection creation, vector insertion, similarity search and deletion.
  * <p>
  * Collection Schema: candidate_vectors
- * - candidate_id (INT64, PK) — 候选人 ID
- * - embedding (FLOAT_VECTOR, dim=1024) — 候选人嵌入向量
- * - candidate_name (VARCHAR, max=200) — 冗余姓名字段（用于结果展示）
+ * - candidate_id (INT64, PK) — the candidate ID
+ * - embedding (FLOAT_VECTOR, dim=1024) — the candidate embedding vector
+ * - candidate_name (VARCHAR, max=200) — redundant name field (used when rendering results)
  * <p>
- * Index: IVF_FLAT（适合中小规模数据集 < 100万，召回率高）
- * Metric: COSINE（余弦相似度，适合文本语义匹配）
+ * Index: IVF_FLAT (suited to small and medium datasets < 1 million, with a high recall rate)
+ * Metric: COSINE (cosine similarity, suited to textual semantic matching)
  */
 @Slf4j
 @Service
@@ -45,17 +45,17 @@ public class VectorStoreService {
     private final MilvusClientV2 milvusClient;
     private final Gson gson = new Gson();
 
-    /** Collection 名称 */
+    /** Collection name */
     public static final String COLLECTION_NAME = "candidate_vectors";
 
-    /** 向量维度（与 embedding-3 输出一致） */
+    /** Vector dimension (matches the embedding-3 output) */
     private static final int VECTOR_DIMENSION = EmbeddingService.EMBEDDING_DIMENSION;
 
-    /** IVF_FLAT 聚类数（推荐 4 * sqrt(N)，以 10000 条为基准） */
+    /** IVF_FLAT cluster count (recommended: 4 * sqrt(N), based on a 10,000-row dataset) */
     private static final int NLIST = 128;
 
     /**
-     * 应用启动时初始化 Collection（幂等操作）
+     * Initialise the collection when the application starts (an idempotent operation)
      */
     @PostConstruct
     public void initCollection() {
@@ -67,12 +67,12 @@ public class VectorStoreService {
             );
 
             if (exists) {
-                log.info("Milvus Collection 已存在: {}", COLLECTION_NAME);
+                log.info("Milvus collection already exists: {}", COLLECTION_NAME);
                 loadCollection();
                 return;
             }
 
-            // 定义 Schema（使用 AddFieldReq）
+            // Define the schema (using AddFieldReq)
             CreateCollectionReq.CollectionSchema schema = CreateCollectionReq.CollectionSchema.builder()
                     .build();
 
@@ -95,7 +95,7 @@ public class VectorStoreService {
                     .maxLength(200)
                     .build());
 
-            // 定义索引
+            // Define the index
             IndexParam indexParam = IndexParam.builder()
                     .fieldName("embedding")
                     .indexType(IndexParam.IndexType.IVF_FLAT)
@@ -103,7 +103,7 @@ public class VectorStoreService {
                     .extraParams(Map.of("nlist", NLIST))
                     .build();
 
-            // 创建 Collection
+            // Create the collection
             CreateCollectionReq createReq = CreateCollectionReq.builder()
                     .collectionName(COLLECTION_NAME)
                     .collectionSchema(schema)
@@ -111,26 +111,26 @@ public class VectorStoreService {
                     .build();
 
             milvusClient.createCollection(createReq);
-            log.info("Milvus Collection 创建成功: {}", COLLECTION_NAME);
+            log.info("Milvus collection created successfully: {}", COLLECTION_NAME);
 
             loadCollection();
 
         } catch (Exception e) {
-            log.error("Milvus Collection 初始化失败: {}", COLLECTION_NAME, e);
-            throw new IllegalStateException("Milvus Collection 初始化失败", e);
+            log.error("Failed to initialise the Milvus collection: {}", COLLECTION_NAME, e);
+            throw new IllegalStateException("Failed to initialise the Milvus collection", e);
         }
     }
 
     /**
-     * 插入或更新候选人向量（Upsert 语义）
+     * Insert or update a candidate vector (Upsert semantics)
      *
-     * @param candidateId   候选人 ID
-     * @param candidateName 候选人姓名
-     * @param embedding     1024 维嵌入向量
-     * @return Milvus 内部 ID 字符串
+     * @param candidateId   the candidate ID
+     * @param candidateName the candidate name
+     * @param embedding     the 1024-dimensional embedding vector
+     * @return the Milvus internal ID as a string
      */
     public String upsertVector(Long candidateId, String candidateName, List<Float> embedding) {
-        log.info("Upsert 候选人向量: candidateId={}", candidateId);
+        log.info("Upserting the candidate vector: candidateId={}", candidateId);
 
         JsonObject row = new JsonObject();
         row.addProperty("candidate_id", candidateId);
@@ -142,16 +142,16 @@ public class VectorStoreService {
                 .data(List.of(row))
                 .build());
 
-        log.info("候选人向量 Upsert 成功: candidateId={}, upsertCount={}",
+        log.info("Candidate vector upserted successfully: candidateId={}, upsertCount={}",
                 candidateId, resp.getUpsertCnt());
         return String.valueOf(candidateId);
     }
 
     /**
-     * 批量插入候选人向量
+     * Insert candidate vectors in bulk
      *
-     * @param dataRows 数据行列表（JsonObject），每行包含 candidate_id、embedding、candidate_name
-     * @return 插入数量
+     * @param dataRows the list of data rows (JsonObject), each containing candidate_id, embedding and candidate_name
+     * @return the number of inserted rows
      */
     public int batchInsert(List<JsonObject> dataRows) {
         if (dataRows == null || dataRows.isEmpty()) {
@@ -163,19 +163,19 @@ public class VectorStoreService {
                 .data(dataRows)
                 .build());
 
-        log.info("批量插入向量完成: count={}", resp.getInsertCnt());
+        log.info("Bulk vector insertion finished: count={}", resp.getInsertCnt());
         return (int) resp.getInsertCnt();
     }
 
     /**
-     * 相似度搜索
+     * Similarity search
      *
-     * @param queryEmbedding 查询向量（1024 维）
-     * @param topK           返回最相似的 K 个结果
-     * @return 搜索结果列表（包含 candidateId 和相似度分数）
+     * @param queryEmbedding the query vector (1024 dimensions)
+     * @param topK           return the K most similar results
+     * @return the list of search results (containing the candidateId and the similarity score)
      */
     public List<SearchResult> search(List<Float> queryEmbedding, int topK) {
-        log.info("执行向量搜索: topK={}", topK);
+        log.info("Running a vector search: topK={}", topK);
 
         FloatVec queryVector = new FloatVec(queryEmbedding);
 
@@ -200,46 +200,46 @@ public class VectorStoreService {
             }
         }
 
-        log.info("向量搜索完成: resultCount={}", results.size());
+        log.info("Vector search finished: resultCount={}", results.size());
         return results;
     }
 
     /**
-     * 删除候选人向量
+     * Delete a candidate vector
      *
-     * @param candidateId 候选人 ID
+     * @param candidateId the candidate ID
      */
     public void deleteVector(Long candidateId) {
-        log.info("删除候选人向量: candidateId={}", candidateId);
+        log.info("Deleting the candidate vector: candidateId={}", candidateId);
 
         milvusClient.delete(DeleteReq.builder()
                 .collectionName(COLLECTION_NAME)
                 .ids(List.of(candidateId))
                 .build());
 
-        log.info("候选人向量删除成功: candidateId={}", candidateId);
+        log.info("Candidate vector deleted successfully: candidateId={}", candidateId);
     }
 
     /**
-     * 加载 Collection 到内存（搜索前必须加载）
+     * Load the collection into memory (it must be loaded before searching)
      */
     private void loadCollection() {
         milvusClient.loadCollection(LoadCollectionReq.builder()
                 .collectionName(COLLECTION_NAME)
                 .build());
-        log.info("Milvus Collection 已加载到内存: {}", COLLECTION_NAME);
+        log.info("Milvus collection loaded into memory: {}", COLLECTION_NAME);
     }
 
     /**
-     * 向量搜索结果
+     * Vector search result
      */
     @lombok.Data
     public static class SearchResult {
-        /** 候选人 ID */
+        /** The candidate ID */
         private Long candidateId;
-        /** 候选人姓名（冗余字段） */
+        /** The candidate name (redundant field) */
         private String candidateName;
-        /** 相似度分数（COSINE: 0~1，越接近 1 越相似） */
+        /** Similarity score (COSINE: 0~1, closer to 1 means more similar) */
         private float score;
     }
 }

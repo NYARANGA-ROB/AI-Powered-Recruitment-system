@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 候选人实体
+ * Candidate entity
  */
 @Data
 @TableName("candidates")
@@ -22,72 +22,72 @@ public class Candidate {
     private Long id;
 
     /**
-     * 简历ID（1:1 关系）
+     * Resume ID (1:1 relationship)
      */
     private Long resumeId;
 
-    // ========== 基本信息 ==========
+    // ========== Basic information ==========
     private String name;
     private String phone;
     private String email;
     private String gender;
 
-    /** AI 提取的年龄（存入 birth_year 列） */
+    /** Age extracted by AI (stored in the birth_year column) */
     @TableField("birth_year")
     private Integer age;
 
-    // ========== 教育信息 ==========
-    /** 最高学历 → 对应 DB 列 highest_education */
+    // ========== Education information ==========
+    /** Highest education → DB column highest_education */
     @TableField("highest_education")
     private String education;
 
-    /** 毕业院校 → 对应 DB 列 graduate_school */
+    /** Graduated school → DB column graduate_school */
     @TableField("graduate_school")
     private String school;
 
     private String major;
 
-    /** 毕业年份 → 对应 DB 列 graduation_year（驼峰自动映射） */
+    /** Graduation year → DB column graduation_year (automatic camelCase mapping) */
     private Integer graduationYear;
 
-    // ========== 工作信息 ==========
-    /** 工作年限 → 对应 DB 列 experience_years */
+    // ========== Work information ==========
+    /** Years of experience → DB column experience_years */
     @TableField("experience_years")
     private Integer workYears;
 
     private String currentCompany;
     private String currentPosition;
 
-    // ========== JSON 字段 ==========
+    // ========== JSON fields ==========
     @TableField(typeHandler = JsonTypeHandler.class)
     private List<String> skills;
 
-    /** 工作经历列表 → 对应 DB 列 work_experiences */
+    /** Work experience list → DB column work_experiences */
     @TableField(value = "work_experiences", typeHandler = JsonTypeHandler.class)
     private List<Map<String, Object>> workExperience;
 
-    /** 项目经历列表 → 对应 DB 列 project_experience（驼峰自动映射） */
+    /** Project experience list → DB column project_experience (automatic camelCase mapping) */
     @TableField(typeHandler = JsonTypeHandler.class)
     private List<Map<String, Object>> projectExperience;
 
     private String selfEvaluation;
 
-    // ========== AI 解析元数据 ==========
-    /** AI 原始提取 JSON → 对应 DB 列 raw_extracted_json */
+    // ========== AI parsing metadata ==========
+    /** Raw AI extraction JSON → DB column raw_extracted_json */
     @TableField("raw_extracted_json")
     private String rawJson;
 
     private Double confidenceScore;
     private LocalDateTime parsedAt;
 
-    // ========== 向量搜索相关 ==========
-    /** 向量数据库中的记录 ID → 对应 DB 列 vector_id */
+    // ========== Vector search related ==========
+    /** Record ID in the vector database → DB column vector_id */
     private String vectorId;
 
-    /** AI 生成的候选人摘要（用于嵌入和展示）→ 对应 DB 列 ai_summary */
+    /** AI-generated candidate summary (used for embedding and display) → DB column ai_summary */
     private String aiSummary;
 
-    // ========== 审计字段 ==========
+    // ========== Audit fields ==========
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

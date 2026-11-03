@@ -4,14 +4,14 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * 刷新 Token 请求
+ * Refresh token request
  */
 @Data
 public class RefreshTokenRequest {
 
     /**
-     * 刷新令牌（登录接口返回的 refreshToken）
+     * The refresh token (returned by the login endpoint)
      */
-    @NotBlank(message = "refreshToken 不能为空")
+    @NotBlank(message = "refreshToken is required")
     private String refreshToken;
 }

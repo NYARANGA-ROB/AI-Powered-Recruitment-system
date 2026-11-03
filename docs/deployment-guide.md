@@ -1,121 +1,121 @@
-# SmartATS 生产部署指南
+# SmartATS Production Deployment Guide
 
-## 目录
+## Table of Contents
 
-- [环境要求](#环境要求)
-- [快速部署（Docker Compose）](#快速部署docker-compose)
-- [分步部署](#分步部署)
-- [环境变量配置](#环境变量配置)
-- [数据库初始化](#数据库初始化)
-- [健康检查](#健康检查)
-- [常见问题](#常见问题)
-- [监控与日志](#监控与日志)
-- [备份策略](#备份策略)
+- [Environment Requirements](#environment-requirements)
+- [Quick Deployment (Docker Compose)](#quick-deployment-docker-compose)
+- [Step-by-Step Deployment](#step-by-step-deployment)
+- [Environment Variable Configuration](#environment-variable-configuration)
+- [Database Initialization](#database-initialization)
+- [Health Checks](#health-checks)
+- [FAQ](#faq)
+- [Monitoring and Logging](#monitoring-and-logging)
+- [Backup Strategy](#backup-strategy)
 
 ---
 
-## 环境要求
+## Environment Requirements
 
-| 组件 | 最低版本 | 推荐版本 |
+| Component | Minimum Version | Recommended Version |
 |------|----------|----------|
-| Docker | 24.0+ | 最新稳定版 |
-| Docker Compose | 2.20+ | 最新稳定版 |
-| JDK（源码构建） | 21 | 21 LTS |
-| 内存 | 4 GB | 8 GB+ |
-| 磁盘 | 20 GB | 50 GB+ (含 Milvus 向量数据) |
+| Docker | 24.0+ | Latest stable |
+| Docker Compose | 2.20+ | Latest stable |
+| JDK (building from source) | 21 | 21 LTS |
+| Memory | 4 GB | 8 GB+ |
+| Disk | 20 GB | 50 GB+ (includes Milvus vector data) |
 
-**端口清单（确保未被占用）：**
+**Port list (make sure these are not in use):**
 
-| 服务 | 端口 | 用途 |
+| Service | Port | Purpose |
 |------|------|------|
-| SmartATS App | 8080 | API 服务 |
-| MySQL | 3306 | 数据库 |
-| Redis | 6379 | 缓存 & 分布式锁 |
-| RabbitMQ AMQP | 5672 | 消息队列 |
-| RabbitMQ Management | 15672 | MQ 管理界面 |
-| MinIO API | 9000 | 文件存储 |
-| MinIO Console | 9001 | 文件管理界面 |
-| Milvus | 19530 | 向量数据库 |
-| Milvus Metrics | 9091 | Milvus 健康检查 |
-| etcd | 2379 | Milvus 元数据 |
+| SmartATS App | 8080 | API service |
+| MySQL | 3306 | Database |
+| Redis | 6379 | Caching & distributed locks |
+| RabbitMQ AMQP | 5672 | Message queue |
+| RabbitMQ Management | 15672 | MQ management UI |
+| MinIO API | 9000 | File storage |
+| MinIO Console | 9001 | File management UI |
+| Milvus | 19530 | Vector database |
+| Milvus Metrics | 9091 | Milvus health check |
+| etcd | 2379 | Milvus metadata |
 
 ---
 
-## 快速部署（Docker Compose）
+## Quick Deployment (Docker Compose)
 
-### 1. 克隆项目
+### 1. Clone the Project
 
 ```bash
 git clone https://github.com/NissonCX/SmartATS.git
 cd SmartATS
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
 cp .env.example .env
 vim .env
 ```
 
-编辑 `.env` 文件，设置所有必需的环境变量（详见[环境变量配置](#环境变量配置)）。
+Edit the `.env` file and set every required environment variable (see [Environment Variable Configuration](#environment-variable-configuration)).
 
-### 3. 构建 JAR 包
+### 3. Build the JAR
 
 ```bash
-# 需要 JDK 21 + Maven 3.9+
+# Requires JDK 21 + Maven 3.9+
 mvn clean package -DskipTests
 ```
 
-### 4. 启动所有基础设施服务
+### 4. Start All Infrastructure Services
 
 ```bash
 docker-compose up -d
 ```
 
-### 5. 等待服务就绪
+### 5. Wait for Services to Be Ready
 
 ```bash
-# 检查所有服务状态
+# Check the status of all services
 docker-compose ps
 
-# 等待 MySQL 就绪
+# Wait for MySQL to be ready
 docker-compose exec mysql mysqladmin ping -h localhost -uroot -proot123
 
-# 等待 Milvus 就绪（首次启动需要 90 秒）
+# Wait for Milvus to be ready (first startup takes 90 seconds)
 curl -sf http://localhost:9091/healthz
 ```
 
-### 6. 初始化数据库
+### 6. Initialize the Database
 
 ```bash
-# 执行建表脚本
+# Run the table creation scripts
 mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < docker/mysql/init/01-init-database.sql
 mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < src/main/resources/db/webhook_tables.sql
 ```
 
-### 7. 启动应用
+### 7. Start the Application
 
 ```bash
-# 使用生产配置启动
+# Start with the production profile
 java -jar target/smartats-1.0.0.jar \
   --spring.profiles.active=prod \
   --server.port=8080
 ```
 
-### 8. 验证部署
+### 8. Verify the Deployment
 
 ```bash
-# 健康检查
+# Health check
 curl http://localhost:8080/api/v1/auth/test
 
-# 预期返回：未认证 403（正常，说明服务已启动）
+# Expected response: unauthenticated 403 (normal, it means the service is up)
 ```
 
 ---
 
-## 分步部署
+## Step-by-Step Deployment
 
-如果需要将各组件部署在不同服务器上，按以下顺序操作：
+If you need to deploy the components on different servers, follow this order:
 
 ### Step 1: MySQL
 
@@ -173,7 +173,7 @@ docker run -d \
   server /data --console-address ":9001"
 ```
 
-### Step 5: Milvus (含 etcd)
+### Step 5: Milvus (with etcd)
 
 ```bash
 # etcd
@@ -200,7 +200,7 @@ docker run -d \
   milvus run standalone
 ```
 
-### Step 6: SmartATS 应用
+### Step 6: SmartATS Application
 
 ```bash
 java -jar smartats-1.0.0.jar \
@@ -210,12 +210,12 @@ java -jar smartats-1.0.0.jar \
 
 ---
 
-## 环境变量配置
+## Environment Variable Configuration
 
-### `.env` 文件模板
+### `.env` File Template
 
 ```env
-# ==================== 数据库 ====================
+# ==================== Database ====================
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=smartats
@@ -244,7 +244,7 @@ MILVUS_HOST=localhost
 MILVUS_PORT=19530
 MILVUS_DATABASE=default
 
-# ==================== AI（智谱） ====================
+# ==================== AI (Zhipu) ====================
 ZHIPU_API_KEY=<your_zhipu_api_key>
 ZHIPU_MODEL=glm-4-flash-250414
 AI_EMBEDDING_MODEL=embedding-3
@@ -253,7 +253,7 @@ AI_DAILY_QUOTA=500
 # ==================== JWT ====================
 JWT_SECRET=<random_string_at_least_32_chars>
 
-# ==================== 邮件 ====================
+# ==================== Mail ====================
 MAIL_HOST=smtp.qq.com
 MAIL_PORT=587
 MAIL_USERNAME=<your_email@qq.com>
@@ -262,69 +262,69 @@ MAIL_PASSWORD=<your_smtp_auth_code>
 # ==================== CORS ====================
 CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
 
-# ==================== 服务器 ====================
+# ==================== Server ====================
 SERVER_PORT=8080
 SPRING_PROFILES_ACTIVE=prod
 ```
 
-### 关键配置说明
+### Key Configuration Notes
 
-| 变量 | 必填 | 说明 |
+| Variable | Required | Description |
 |------|:----:|------|
-| `DB_PASSWORD` | ✅ | MySQL 密码，禁止使用默认值 |
-| `REDIS_PASSWORD` | ✅ | Redis 密码 |
-| `ZHIPU_API_KEY` | ✅ | 智谱 AI API Key（[控制台获取](https://open.bigmodel.cn)） |
-| `JWT_SECRET` | ✅ | JWT 签名密钥，≥32 字符随机字符串 |
-| `MAIL_PASSWORD` | ✅ | SMTP 授权码（非邮箱登录密码） |
-| `CORS_ALLOWED_ORIGINS` | ✅ | 前端域名，多个用逗号分隔 |
-| `AI_DAILY_QUOTA` | ❌ | 每日 AI 调用上限，默认 500 |
+| `DB_PASSWORD` | ✅ | MySQL password, never use the default value |
+| `REDIS_PASSWORD` | ✅ | Redis password |
+| `ZHIPU_API_KEY` | ✅ | Zhipu AI API key ([get it from the console](https://open.bigmodel.cn)) |
+| `JWT_SECRET` | ✅ | JWT signing secret, a random string of ≥32 characters |
+| `MAIL_PASSWORD` | ✅ | SMTP authorization code (not the mailbox login password) |
+| `CORS_ALLOWED_ORIGINS` | ✅ | Frontend domains, separated by commas if there are several |
+| `AI_DAILY_QUOTA` | ❌ | Daily AI call limit, defaults to 500 |
 
-> ⚠️ **安全提醒**：`.env` 文件已在 `.gitignore` 中排除，切勿提交到版本库。
+> ⚠️ **Security notice**: the `.env` file is excluded via `.gitignore`; never commit it to version control.
 
 ---
 
-## 数据库初始化
+## Database Initialization
 
-### 首次部署
+### First Deployment
 
-数据库建表脚本在 `docker/mysql/init/01-init-database.sql`，Docker Compose 会在首次启动时自动执行。
+The table creation script lives at `docker/mysql/init/01-init-database.sql`, and Docker Compose runs it automatically on first startup.
 
-如需手动初始化：
+To initialize manually:
 
 ```bash
 mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < docker/mysql/init/01-init-database.sql
 mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < src/main/resources/db/webhook_tables.sql
 ```
 
-### 数据库表概览
+### Database Table Overview
 
-| 表名 | 说明 |
+| Table | Description |
 |------|------|
-| `users` | 用户账号（ADMIN/HR/INTERVIEWER） |
-| `jobs` | 职位信息 |
-| `resumes` | 简历文件（MD5 去重） |
-| `candidates` | AI 提取的候选人结构化数据 |
-| `job_applications` | 职位申请记录 |
-| `interview_records` | 面试记录 |
-| `webhook_configs` | Webhook 配置 |
-| `webhook_logs` | Webhook 投递日志 |
+| `users` | User accounts (ADMIN/HR/INTERVIEWER) |
+| `jobs` | Job postings |
+| `resumes` | Resume files (MD5 deduplication) |
+| `candidates` | Candidate structured data extracted by AI |
+| `job_applications` | Job application records |
+| `interview_records` | Interview records |
+| `webhook_configs` | Webhook configuration |
+| `webhook_logs` | Webhook delivery logs |
 
 ---
 
-## 健康检查
+## Health Checks
 
-### 应用层
+### Application Layer
 
 ```bash
-# 基础连通性（需要认证的接口返回 403 即说明服务正常）
+# Basic connectivity (an authenticated endpoint returning 403 means the service is healthy)
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/jobs
-# 预期：200
+# Expected: 200
 
-# Swagger 文档（仅 dev 环境可用，prod 已禁用）
+# Swagger docs (available in the dev environment only, disabled in prod)
 curl http://localhost:8080/api/v1/swagger-ui.html
 ```
 
-### 基础设施
+### Infrastructure
 
 ```bash
 # MySQL
@@ -345,114 +345,114 @@ curl -sf http://localhost:9091/healthz
 
 ---
 
-## 常见问题
+## FAQ
 
-### 1. Milvus 启动慢
+### 1. Milvus Starts Slowly
 
-Milvus 首次启动需要约 90 秒，`docker-compose.yml` 中已配置 `start_period: 90s`。如果依赖服务未就绪，Milvus 可能反复重启。确保 etcd 和 MinIO 先启动。
+Milvus needs about 90 seconds on first startup, and `docker-compose.yml` already sets `start_period: 90s`. If its dependencies are not ready, Milvus may restart repeatedly. Make sure etcd and MinIO start first.
 
-### 2. RabbitMQ VHost 不存在
+### 2. RabbitMQ VHost Does Not Exist
 
-如果出现 `NOT_ALLOWED - vhost smartats not found` 错误：
+If you see the `NOT_ALLOWED - vhost smartats not found` error:
 
 ```bash
-# 手动创建 VHost
+# Create the VHost manually
 docker exec smartats-rabbitmq rabbitmqctl add_vhost smartats
 docker exec smartats-rabbitmq rabbitmqctl set_permissions -p smartats admin ".*" ".*" ".*"
 ```
 
-### 3. MinIO Bucket 不存在
+### 3. MinIO Bucket Does Not Exist
 
-应用启动时会自动创建 `smartats-resumes` bucket。如需手动创建：
+The application creates the `smartats-resumes` bucket automatically at startup. To create it manually:
 
 ```bash
 docker exec smartats-minio mc alias set local http://localhost:9000 admin <password>
 docker exec smartats-minio mc mb local/smartats-resumes
 ```
 
-### 4. AI 解析失败
+### 4. AI Parsing Fails
 
-检查：
-- `ZHIPU_API_KEY` 是否有效
-- 网络是否能访问 `https://open.bigmodel.cn`
-- AI 配额是否用完（查看 Redis `rate:ai:{userId}:{date}`）
+Check the following:
+- Whether `ZHIPU_API_KEY` is valid
+- Whether the network can reach `https://open.bigmodel.cn`
+- Whether the AI quota is exhausted (inspect the Redis key `rate:ai:{userId}:{date}`)
 
-### 5. 邮件发送失败
+### 5. Email Sending Fails
 
-- QQ 邮箱需要开启 SMTP 服务并获取授权码
-- `MAIL_PASSWORD` 是授权码，不是邮箱登录密码
-- 确保服务器出站 587 端口未被防火墙拦截
+- QQ Mail requires SMTP to be enabled and an authorization code obtained
+- `MAIL_PASSWORD` is the authorization code, not the mailbox login password
+- Make sure the server's outbound port 587 is not blocked by the firewall
 
 ---
 
-## 监控与日志
+## Monitoring and Logging
 
-### 日志配置
+### Logging Configuration
 
-生产环境日志：
-- 输出路径：`logs/smartats.log`
-- 滚动策略：单文件最大 100MB，保留 30 天
-- 日志级别：`root=WARN`，`com.smartats=INFO`
+Production logging:
+- Output path: `logs/smartats.log`
+- Rolling policy: maximum 100MB per file, retained for 30 days
+- Log levels: `root=WARN`, `com.smartats=INFO`
 
 ```bash
-# 实时查看日志
+# Follow the log in real time
 tail -f logs/smartats.log
 
-# 搜索错误
+# Search for errors
 grep ERROR logs/smartats.log
 ```
 
-### RabbitMQ 监控
+### RabbitMQ Monitoring
 
-- 管理界面：`http://<host>:15672`
-- 用户名/密码：以环境变量配置为准
-- 关注：`resume.parse.queue` 消息积压、`resume.parse.dlq` 死信队列
+- Management UI: `http://<host>:15672`
+- Username/password: as defined by your environment variables
+- Watch: message backlog on `resume.parse.queue`, and the `resume.parse.dlq` dead-letter queue
 
-### Redis 监控
+### Redis Monitoring
 
 ```bash
-# 查看内存使用
+# Check memory usage
 redis-cli -a <password> INFO memory
 
-# 查看 key 数量
+# Check the number of keys
 redis-cli -a <password> DBSIZE
 
-# 查看慢查询
+# Check slow queries
 redis-cli -a <password> SLOWLOG GET 10
 ```
 
 ---
 
-## 备份策略
+## Backup Strategy
 
-### MySQL 备份
+### MySQL Backup
 
 ```bash
-# 每日全量备份（建议 cron 定时任务）
+# Daily full backup (recommended as a cron job)
 mysqldump -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> \
   --single-transaction --routines --triggers smartats \
   | gzip > /backup/smartats_$(date +%Y%m%d_%H%M%S).sql.gz
 
-# 保留最近 7 天
+# Keep the last 7 days
 find /backup -name "smartats_*.sql.gz" -mtime +7 -delete
 ```
 
-### MinIO 备份
+### MinIO Backup
 
 ```bash
-# 使用 mc mirror 同步到备份存储
+# Use mc mirror to sync to the backup storage
 mc alias set local http://localhost:9000 admin <password>
 mc alias set backup <backup_endpoint> <access_key> <secret_key>
 mc mirror local/smartats-resumes backup/smartats-resumes
 ```
 
-### Redis 备份
+### Redis Backup
 
-Redis 已开启 AOF 持久化（`appendonly yes`），数据存储在 `./data/redis/` 目录。定期备份该目录即可。
+Redis has AOF persistence enabled (`appendonly yes`) and stores its data in the `./data/redis/` directory. Backing up that directory periodically is enough.
 
 ---
 
-## Nginx 反向代理配置（可选）
+## Nginx Reverse Proxy Configuration (Optional)
 
 ```nginx
 upstream smartats {
@@ -475,7 +475,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # WebSocket（如果需要）
+        # WebSocket (if needed)
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -491,19 +491,19 @@ server {
 
 ---
 
-## 性能调优建议
+## Performance Tuning Recommendations
 
-| 配置项 | 开发环境 | 生产环境建议 |
+| Setting | Development | Production Recommendation |
 |--------|----------|-------------|
-| JVM 堆内存 | 默认 | `-Xms512m -Xmx2g` |
-| HikariCP 连接池 | 20 | 20-50（按并发调整） |
-| Redis 连接池 | 20 | 20-50 |
+| JVM heap | Default | `-Xms512m -Xmx2g` |
+| HikariCP pool | 20 | 20-50 (adjust according to concurrency) |
+| Redis pool | 20 | 20-50 |
 | RabbitMQ prefetch | 1 | 3-10 |
-| AI 每日配额 | 100 | 500+ |
-| 文件上传大小 | 10MB | 10MB |
+| Daily AI quota | 100 | 500+ |
+| File upload size | 10MB | 10MB |
 
 ```bash
-# 生产环境 JVM 启动参数示例
+# Example production JVM startup parameters
 java -Xms512m -Xmx2g \
   -XX:+UseG1GC \
   -XX:MaxGCPauseMillis=200 \

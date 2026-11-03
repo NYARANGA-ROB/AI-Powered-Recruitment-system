@@ -67,14 +67,14 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# ==================== 运行时数据 ====================
+# ==================== Runtime data ====================
 data/
 logs/
 *.log
 *.log.gz
 *.log.zip
 
-# ==================== 数据库 ====================
+# ==================== Databases ====================
 data/mysql/
 data/redis/
 data/rabbitmq/
@@ -83,8 +83,8 @@ data/minio/
 *.sqlite
 *.sqlite3
 
-# ==================== 配置文件（敏感信息） ====================
-# 如果需要提交配置示例，使用 application.yml.example
+# ==================== Configuration files (sensitive information) ====================
+# Commit configuration examples as application.yml.example instead
 application-local.yml
 application-dev.yml
 application-prod.yml
@@ -92,7 +92,7 @@ application-prod.yml
 .env.local
 .env.*.local
 
-# ==================== 临时文件 ====================
+# ==================== Temporary files ====================
 *.tmp
 *.temp
 *.swp
@@ -101,12 +101,12 @@ application-prod.yml
 GET
 POST
 
-# ==================== 测试覆盖率 ====================
+# ==================== Test coverage ====================
 .serail/
 jacoco.exec
 jacoco-ut.exec
 
-# ==================== 其他 ====================
+# ==================== Other ====================
 GITHUB_PROFILE_README.md
 GET
 POST

@@ -6,19 +6,19 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 职位申请状态枚举
+ * Job application status enum
  * <p>
- * 包含合法的状态流转规则（状态机）
+ * Contains the valid status transition rules (state machine)
  */
 @Getter
 public enum ApplicationStatus {
 
-    PENDING("PENDING", "待处理"),
-    SCREENING("SCREENING", "简历筛选中"),
-    INTERVIEW("INTERVIEW", "面试中"),
-    OFFER("OFFER", "已发放 Offer"),
-    REJECTED("REJECTED", "已淘汰"),
-    WITHDRAWN("WITHDRAWN", "已撤回");
+    PENDING("PENDING", "Pending"),
+    SCREENING("SCREENING", "Screening"),
+    INTERVIEW("INTERVIEW", "Interviewing"),
+    OFFER("OFFER", "Offer extended"),
+    REJECTED("REJECTED", "Rejected"),
+    WITHDRAWN("WITHDRAWN", "Withdrawn");
 
     private final String code;
     private final String description;
@@ -29,9 +29,9 @@ public enum ApplicationStatus {
     }
 
     /**
-     * 合法的状态流转映射
+     * Map of valid status transitions
      * <p>
-     * Key: 当前状态, Value: 允许跳转的目标状态集合
+     * Key: current status, Value: set of allowed target statuses
      */
     private static final Map<ApplicationStatus, Set<ApplicationStatus>> VALID_TRANSITIONS = Map.of(
             PENDING,   Set.of(SCREENING, REJECTED, WITHDRAWN),
@@ -43,7 +43,7 @@ public enum ApplicationStatus {
     );
 
     /**
-     * 判断是否允许从当前状态流转到目标状态
+     * Determine whether a transition from the current status to the target status is allowed
      */
     public boolean canTransitionTo(ApplicationStatus target) {
         Set<ApplicationStatus> allowed = VALID_TRANSITIONS.getOrDefault(this, Set.of());
@@ -51,14 +51,14 @@ public enum ApplicationStatus {
     }
 
     /**
-     * 获取允许的目标状态集合
+     * Get the set of allowed target statuses
      */
     public Set<ApplicationStatus> getAllowedTargets() {
         return VALID_TRANSITIONS.getOrDefault(this, Set.of());
     }
 
     /**
-     * 根据 code 获取枚举
+     * Get the enum constant by code
      */
     public static ApplicationStatus fromCode(String code) {
         if (code == null) return null;
@@ -71,7 +71,7 @@ public enum ApplicationStatus {
     }
 
     /**
-     * 获取中文描述，找不到则返回原始值
+     * Get the display description; returns the raw value if not found
      */
     public static String getDescriptionByCode(String code) {
         ApplicationStatus status = fromCode(code);

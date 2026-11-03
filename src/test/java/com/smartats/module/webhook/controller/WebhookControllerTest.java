@@ -36,11 +36,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * WebhookController 集成测试
+ * WebhookController integration tests
  */
 @WebMvcTest(WebhookController.class)
 @Import(SecurityConfig.class)
-@DisplayName("WebhookController 集成测试")
+@DisplayName("WebhookController integration tests")
 class WebhookControllerTest {
 
     @Autowired
@@ -79,7 +79,7 @@ class WebhookControllerTest {
                 .id(1L)
                 .url("https://example.com/webhook")
                 .events(List.of("resume.uploaded", "candidate.created"))
-                .description("测试 Webhook")
+                .description("Test Webhook")
                 .enabled(true)
                 .failureCount(0)
                 .secretHint("abcd****5678")
@@ -89,7 +89,7 @@ class WebhookControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建 Webhook
+    // Create Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -97,7 +97,7 @@ class WebhookControllerTest {
     class CreateTests {
 
         @Test
-        @DisplayName("创建成功 - 200")
+        @DisplayName("Creation succeeds - 200")
         void shouldCreateSuccessfully() throws Exception {
             WebhookCreateRequest request = new WebhookCreateRequest();
             request.setUrl("https://example.com/hook");
@@ -119,7 +119,7 @@ class WebhookControllerTest {
         }
 
         @Test
-        @DisplayName("未认证 - 401")
+        @DisplayName("Unauthenticated - 401")
         void shouldReturn401WhenNotAuthenticated() throws Exception {
             WebhookCreateRequest request = new WebhookCreateRequest();
             request.setUrl("https://example.com/hook");
@@ -134,7 +134,7 @@ class WebhookControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 获取 Webhook 列表
+    // List Webhooks
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -142,7 +142,7 @@ class WebhookControllerTest {
     class ListTests {
 
         @Test
-        @DisplayName("获取列表成功")
+        @DisplayName("Listing succeeds")
         void shouldReturnWebhookList() throws Exception {
             given(webhookService.getUserWebhooks(1L))
                     .willReturn(List.of(sampleWebhookResponse()));
@@ -157,7 +157,7 @@ class WebhookControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 删除 Webhook
+    // Delete Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -165,7 +165,7 @@ class WebhookControllerTest {
     class DeleteTests {
 
         @Test
-        @DisplayName("删除成功")
+        @DisplayName("Deletion succeeds")
         void shouldDeleteSuccessfully() throws Exception {
             willDoNothing().given(webhookService).deleteWebhook(1L, 1L);
 
@@ -178,7 +178,7 @@ class WebhookControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 测试 Webhook
+    // Test Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -186,7 +186,7 @@ class WebhookControllerTest {
     class TestWebhookTests {
 
         @Test
-        @DisplayName("测试成功")
+        @DisplayName("Test succeeds")
         void shouldReturnTrue() throws Exception {
             given(webhookService.testWebhook(1L, 1L)).willReturn(true);
 
@@ -199,10 +199,10 @@ class WebhookControllerTest {
         }
 
         @Test
-        @DisplayName("Webhook不存在 - 业务异常")
+        @DisplayName("Webhook not found - business exception")
         void shouldReturnErrorWhenNotFound() throws Exception {
             given(webhookService.testWebhook(1L, 999L))
-                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "Webhook 不存在"));
+                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "Webhook not found"));
 
             mockMvc.perform(post("/webhooks/999/test")
                             .with(authentication(mockAuth(1L)))

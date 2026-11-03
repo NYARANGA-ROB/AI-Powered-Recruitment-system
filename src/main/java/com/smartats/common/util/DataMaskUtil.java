@@ -1,22 +1,22 @@
 package com.smartats.common.util;
 
 /**
- * 数据脱敏工具类
+ * Data masking utility
  * <p>
- * 用于对手机号、邮箱等敏感字段做展示层脱敏处理。
- * 脱敏结果仅用于前端展示，<b>不写入数据库</b>。
+ * Masks sensitive fields such as phone numbers and email addresses for display purposes.
+ * Masked values are only used for frontend rendering and are <b>never written to the database</b>.
  */
 public class DataMaskUtil {
 
     private DataMaskUtil() {}
 
     /**
-     * 手机号脱敏：保留前 3 位 + 后 4 位，中间替换为 ****
+     * Mask a phone number: keep the first 3 and last 4 digits, replacing the middle with ****
      * <p>
-     * 示例：13812345678 → 138****5678
+     * Example: 13812345678 → 138****5678
      *
-     * @param phone 原始手机号，允许为 null
-     * @return 脱敏后的手机号；null 或长度 < 7 时原样返回
+     * @param phone the original phone number, may be null
+     * @return the masked phone number; returned unchanged when null or shorter than 7 characters
      */
     public static String maskPhone(String phone) {
         if (phone == null || phone.length() < 7) {
@@ -26,12 +26,12 @@ public class DataMaskUtil {
     }
 
     /**
-     * 邮箱脱敏：@ 前保留前 2 位，中间替换为 ****，@ 后完整保留
+     * Mask an email address: keep the first 2 characters before the @, replace the middle with ****, keep everything after the @ intact
      * <p>
-     * 示例：zhangsan@example.com → zh****@example.com
+     * Example: zhangsan@example.com → zh****@example.com
      *
-     * @param email 原始邮箱，允许为 null
-     * @return 脱敏后的邮箱；null 或格式不含 @ 时原样返回
+     * @param email the original email address, may be null
+     * @return the masked email address; returned unchanged when null or when it contains no @
      */
     public static String maskEmail(String email) {
         if (email == null) {
@@ -42,7 +42,7 @@ public class DataMaskUtil {
             return email;
         }
         String local = email.substring(0, atIndex);
-        String domain = email.substring(atIndex); // 含 @
+        String domain = email.substring(atIndex); // includes the @
 
         if (local.length() <= 2) {
             return local + "****" + domain;

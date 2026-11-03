@@ -9,49 +9,49 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 安排面试请求 DTO
+ * Interview scheduling request DTO
  */
 @Data
 public class ScheduleInterviewRequest {
 
     /**
-     * 关联的申请 ID
+     * Associated application ID
      */
-    @NotNull(message = "申请 ID 不能为空")
+    @NotNull(message = "Application ID must not be null")
     private Long applicationId;
 
     /**
-     * 面试官用户 ID
+     * Interviewer user ID
      */
-    @NotNull(message = "面试官 ID 不能为空")
+    @NotNull(message = "Interviewer ID must not be null")
     private Long interviewerId;
 
     /**
-     * 面试轮次（默认自动递增，可手动指定）
+     * Interview round (auto-incremented by default, can be specified manually)
      */
-    @Min(value = 1, message = "面试轮次最小为 1")
+    @Min(value = 1, message = "Interview round must be at least 1")
     private Integer round;
 
     /**
-     * 面试类型
+     * Interview type
      */
-    @NotNull(message = "面试类型不能为空")
+    @NotNull(message = "Interview type must not be null")
     @Pattern(
             regexp = "PHONE|VIDEO|ONSITE|WRITTEN_TEST",
-            message = "面试类型不合法，允许值：PHONE, VIDEO, ONSITE, WRITTEN_TEST"
+            message = "Invalid interview type; allowed values: PHONE, VIDEO, ONSITE, WRITTEN_TEST"
     )
     private String interviewType;
 
     /**
-     * 计划面试时间（必须是未来时间）
+     * Scheduled interview time (must be in the future)
      */
-    @NotNull(message = "面试时间不能为空")
-    @Future(message = "面试时间必须是未来时间")
+    @NotNull(message = "Interview time must not be null")
+    @Future(message = "Interview time must be in the future")
     private LocalDateTime scheduledAt;
 
     /**
-     * 面试时长（分钟，默认 60）
+     * Interview duration (minutes, defaults to 60)
      */
-    @Min(value = 15, message = "面试时长最少 15 分钟")
+    @Min(value = 15, message = "Interview duration must be at least 15 minutes")
     private Integer durationMinutes = 60;
 }

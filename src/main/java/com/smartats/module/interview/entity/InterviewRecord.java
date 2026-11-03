@@ -6,10 +6,10 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 面试记录实体
+ * Interview record entity
  * <p>
- * 对应数据库表 interview_records，与职位申请(job_applications)为多对一关系——
- * 同一申请可有多轮面试。
+ * Maps to the interview_records database table; many-to-one with job applications (job_applications) —
+ * a single application can have multiple interview rounds.
  */
 @Data
 @TableName("interview_records")
@@ -19,62 +19,62 @@ public class InterviewRecord {
     private Long id;
 
     /**
-     * 关联的申请 ID（job_applications.id）
+     * Associated application ID (job_applications.id)
      */
     private Long applicationId;
 
     /**
-     * 面试官用户 ID（users.id）
+     * Interviewer user ID (users.id)
      */
     private Long interviewerId;
 
     /**
-     * 面试轮次（1 = 一面，2 = 二面 ...）
+     * Interview round (1 = first round, 2 = second round, ...)
      */
     private Integer round;
 
     /**
-     * 面试类型：PHONE / VIDEO / ONSITE / WRITTEN_TEST
+     * Interview type: PHONE / VIDEO / ONSITE / WRITTEN_TEST
      */
     private String interviewType;
 
     /**
-     * 计划面试时间
+     * Scheduled interview time
      */
     private LocalDateTime scheduledAt;
 
     /**
-     * 面试时长（分钟）
+     * Interview duration (minutes)
      */
     private Integer durationMinutes;
 
     /**
-     * 面试状态：SCHEDULED / COMPLETED / CANCELLED / NO_SHOW
+     * Interview status: SCHEDULED / COMPLETED / CANCELLED / NO_SHOW
      */
     private String status;
 
     /**
-     * 面试反馈评语
+     * Interview feedback comments
      */
     private String feedback;
 
     /**
-     * 面试评分（1-10）
+     * Interview score (1-10)
      */
     private Integer score;
 
     /**
-     * 面试推荐结论：STRONG_YES / YES / NEUTRAL / NO / STRONG_NO
+     * Interview recommendation: STRONG_YES / YES / NEUTRAL / NO / STRONG_NO
      */
     private String recommendation;
 
     /**
-     * 创建时间
+     * Creation time
      */
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Update time
      */
     private LocalDateTime updatedAt;
 }

@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 职位管理控制器
+ * Job management controller
  */
-@Tag(name = "职位管理", description = "职位 CRUD、发布/关闭、热门排行、浏览计数")
+@Tag(name = "Job Management", description = "Job CRUD, publish/close, hot ranking, view counting")
 @RestController
 @RequestMapping("/jobs")
 @RequiredArgsConstructor
@@ -30,11 +30,11 @@ public class JobController {
     private final JobService jobService;
 
     /**
-     * 创建职位
+     * Create a job
      * POST /api/v1/jobs
      */
-    @Operation(summary = "创建职位")
-    @AuditLog(module = "职位管理", operation = "CREATE", description = "创建职位")
+    @Operation(summary = "Create job")
+    @AuditLog(module = "Job Management", operation = "CREATE", description = "Create job")
     @PostMapping
     public Result<Long> createJob(@Valid @RequestBody CreateJobRequest request, Authentication authentication) {
         Long creatorId = (Long) authentication.getPrincipal();
@@ -43,11 +43,11 @@ public class JobController {
     }
 
     /**
-     * 更新职位
+     * Update a job
      * PUT /api/v1/jobs
      */
-    @Operation(summary = "更新职位")
-    @AuditLog(module = "职位管理", operation = "UPDATE", description = "更新职位")
+    @Operation(summary = "Update job")
+    @AuditLog(module = "Job Management", operation = "UPDATE", description = "Update job")
     @PutMapping
     public Result<Void> updateJob(@Valid @RequestBody UpdateJobRequest request, Authentication authentication) {
         Long operatorId = (Long) authentication.getPrincipal();
@@ -56,10 +56,10 @@ public class JobController {
     }
 
     /**
-     * 获取职位详情
+     * Get job detail
      * GET /api/v1/jobs/{id}
      */
-    @Operation(summary = "获取职位详情", description = "Redis 缓存优先，30分钟 TTL")
+    @Operation(summary = "Get job detail", description = "Redis cache first, 30-minute TTL")
     @GetMapping("/{id}")
     public Result<JobResponse> getJobDetail(@PathVariable Long id) {
         JobResponse response = jobService.getJobDetail(id);
@@ -67,10 +67,10 @@ public class JobController {
     }
 
     /**
-     * 职位列表
+     * Job list
      * GET /api/v1/jobs
      */
-    @Operation(summary = "职位列表", description = "支持分页 + 多维度筛选")
+    @Operation(summary = "Job list", description = "Supports pagination + multi-dimensional filtering")
     @GetMapping
     public Result<Page<JobResponse>> getJobList(JobQueryRequest request) {
         Page<JobResponse> page = jobService.getJobList(request);
@@ -78,11 +78,11 @@ public class JobController {
     }
 
     /**
-     * 发布职位
+     * Publish a job
      * POST /api/v1/jobs/{id}/publish
      */
-    @Operation(summary = "发布职位")
-    @AuditLog(module = "职位管理", operation = "PUBLISH", description = "发布职位")
+    @Operation(summary = "Publish job")
+    @AuditLog(module = "Job Management", operation = "PUBLISH", description = "Publish job")
     @PostMapping("/{id}/publish")
     public Result<Void> publishJob(@PathVariable Long id, Authentication authentication) {
         Long operatorId = (Long) authentication.getPrincipal();
@@ -91,11 +91,11 @@ public class JobController {
     }
 
     /**
-     * 关闭职位
+     * Close a job
      * POST /api/v1/jobs/{id}/close
      */
-    @Operation(summary = "关闭职位")
-    @AuditLog(module = "职位管理", operation = "CLOSE", description = "关闭职位")
+    @Operation(summary = "Close job")
+    @AuditLog(module = "Job Management", operation = "CLOSE", description = "Close job")
     @PostMapping("/{id}/close")
     public Result<Void> closeJob(@PathVariable Long id, Authentication authentication) {
         Long operatorId = (Long) authentication.getPrincipal();
@@ -104,11 +104,11 @@ public class JobController {
     }
 
     /**
-     * 删除职位
+     * Delete a job
      * DELETE /api/v1/jobs/{id}
      */
-    @Operation(summary = "删除职位")
-    @AuditLog(module = "职位管理", operation = "DELETE", description = "删除职位")
+    @Operation(summary = "Delete job")
+    @AuditLog(module = "Job Management", operation = "DELETE", description = "Delete job")
     @DeleteMapping("/{id}")
     public Result<Void> deleteJob(@PathVariable Long id, Authentication authentication) {
         Long operatorId = (Long) authentication.getPrincipal();
@@ -117,12 +117,12 @@ public class JobController {
     }
 
     /**
-     * 热门职位
+     * Hot jobs
      * GET /api/v1/jobs/hot
      */
-    @Operation(summary = "热门职位", description = "Redis ZSet 排行榜，10分钟 TTL")
+    @Operation(summary = "Hot jobs", description = "Redis ZSet leaderboard, 10-minute TTL")
     @GetMapping("/hot")
-    public Result<List<JobResponse>> getHotJobs(@Parameter(description = "返回数量") @RequestParam(defaultValue = "10") Integer limit) {
+    public Result<List<JobResponse>> getHotJobs(@Parameter(description = "Number of items to return") @RequestParam(defaultValue = "10") Integer limit) {
         List<JobResponse> jobs = jobService.getHotJobs(limit);
         return Result.success(jobs);
     }

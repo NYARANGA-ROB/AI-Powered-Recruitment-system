@@ -7,42 +7,42 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 批量上传简历响应
+ * Batch resume upload response
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class BatchUploadResponse {
 
-    /** 总文件数 */
+    /** Total number of files */
     private int totalCount;
 
-    /** 成功数 */
+    /** Success count */
     private int successCount;
 
-    /** 失败数 */
+    /** Failed count */
     private int failedCount;
 
-    /** 每个文件的处理结果 */
+    /** Processing result for each file */
     private List<BatchUploadItem> items;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class BatchUploadItem {
-        /** 任务ID（成功时有值） */
+        /** Task ID (present on success) */
         private String taskId;
 
-        /** 简历ID */
+        /** Resume ID */
         private Long resumeId;
 
-        /** 原始文件名 */
+        /** Original file name */
         private String fileName;
 
-        /** 状态：QUEUED / DUPLICATE / FAILED */
+        /** Status: QUEUED / DUPLICATE / FAILED */
         private String status;
 
-        /** 描述信息 */
+        /** Description message */
         private String message;
     }
 }

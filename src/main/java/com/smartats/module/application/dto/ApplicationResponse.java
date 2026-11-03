@@ -8,48 +8,48 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 职位申请响应 DTO
+ * Job application response DTO
  */
 @Data
 public class ApplicationResponse {
 
     private Long id;
 
-    // ========== 关联信息 ==========
+    // ========== Related information ==========
 
     private Long jobId;
 
-    /** 职位标题（方便前端展示，无需二次请求） */
+    /** Job title (convenient for front-end display, avoids a second request) */
     private String jobTitle;
 
     private Long candidateId;
 
-    /** 候选人姓名（方便前端展示） */
+    /** Candidate name (convenient for front-end display) */
     private String candidateName;
 
-    // ========== AI 匹配信息 ==========
+    // ========== AI match information ==========
 
-    /** AI 匹配分数（0-100） */
+    /** AI match score (0-100) */
     private BigDecimal matchScore;
 
-    /** AI 匹配原因 */
+    /** AI match reasons */
     private List<String> matchReasons;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime matchCalculatedAt;
 
-    // ========== 状态与备注 ==========
+    // ========== Status and notes ==========
 
-    /** 申请状态：PENDING / SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN */
+    /** Application status: PENDING / SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN */
     private String status;
 
-    /** 状态中文描述 */
+    /** Status description */
     private String statusDesc;
 
-    /** HR 备注 */
+    /** HR notes */
     private String hrNotes;
 
-    // ========== 元数据 ==========
+    // ========== Metadata ==========
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime appliedAt;

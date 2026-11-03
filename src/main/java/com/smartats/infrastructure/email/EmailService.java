@@ -10,12 +10,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 /**
- * 邮件发送服务
+ * Email sending service
  * <p>
- * 功能：
- * 1. 发送验证码邮件
- * 2. 支持纯文本邮件
- * 3. 后续可扩展支持 HTML 邮件
+ * Capabilities:
+ * 1. Send verification code emails
+ * 2. Supports plain text emails
+ * 3. Can be extended to HTML emails later
  */
 @Slf4j
 @Service
@@ -31,66 +31,66 @@ public class EmailService {
     private Integer expireTimeSeconds;
 
     /**
-     * 发送验证码邮件
+     * Send a verification code email
      *
-     * @param to   收件人邮箱
-     * @param code 验证码
-     * @return 是否发送成功
+     * @param to   the recipient's email address
+     * @param code the verification code
+     * @return whether the email was sent successfully
      */
     public boolean sendVerificationCode(String to, String code) {
         try {
-            log.info("发送验证码邮件：to={}, code={}", to, code);
+            log.info("Sending the verification code email: to={}, code={}", to, code);
 
-            // 创建邮件消息
+            // Create the email message
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-            // 设置发件人
+            // Set the sender
             helper.setFrom(fromEmail);
 
-            // 设置收件人
+            // Set the recipient
             helper.setTo(to);
 
-            // 设置主题
-            helper.setSubject("【SmartATS】邮箱验证码");
+            // Set the subject
+            helper.setSubject("[SmartATS] Email verification code");
 
-            // 设置邮件内容
+            // Set the email body
             String content = buildEmailContent(code);
-            helper.setText(content, true);  // true = HTML 格式
+            helper.setText(content, true);  // true = HTML format
 
-            // 发送邮件
+            // Send the email
             mailSender.send(message);
 
-            log.info("验证码邮件发送成功：to={}", to);
+            log.info("Verification code email sent successfully: to={}", to);
             return true;
 
         } catch (MessagingException e) {
-            log.error("验证码邮件发送失败：to={}, error={}", to, e.getMessage());
+            log.error("Failed to send the verification code email: to={}, error={}", to, e.getMessage());
             return false;
         }
     }
 
     /**
-     * 构建邮件内容（Minimalism Tech 风格，中文版）
-     * 设计系统：
-     * - 风格: Minimalism（最小主义）+ Modern Tech
-     * - 字体: 思源黑体/Noto Sans SC（中文友好）+ 系统默认字体
-     * - 配色: 深蓝 (#0F172A) + 科技蓝 (#3B82F6) + 成功绿 (#22C55E)
-     * - 特点: 大量留白、清晰层次、高对比度、无多余装饰
+     * Build the email body (Minimalism Tech style, English version)
+     * Design system:
+     * - Style: Minimalism + Modern Tech
+     * - Fonts: Source Han Sans / Noto Sans SC (CJK friendly) + system default fonts
+     * - Colours: dark blue (#0F172A) + tech blue (#3B82F6) + success green (#22C55E)
+     * - Traits: generous white space, clear hierarchy, high contrast, no superfluous decoration
      *
-     * @param code 验证码
-     * @return HTML 格式的邮件内容
+     * @param code the verification code
+     * @return the email body in HTML format
      */
     private String buildEmailContent(String code) {
         int expireMinutes = expireTimeSeconds / 60;
 
         return """
             <!DOCTYPE html>
-            <html lang="zh-CN">
+            <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>邮箱验证 - SmartATS</title>
+                <title>Email verification - SmartATS</title>
                 <style>
                     /* ========== Reset & Base ========== */
                     *, *::before, *::after {
@@ -311,37 +311,37 @@ public class EmailService {
                         <!-- Header -->
                         <div class="header">
                             <div class="logo">SmartATS</div>
-                            <div class="tagline">智能招聘管理平台</div>
+                            <div class="tagline">Intelligent recruitment management platform</div>
                         </div>
 
                         <!-- Content -->
                         <div class="content">
-                            <div class="greeting">您好！</div>
+                            <div class="greeting">Hello!</div>
 
                             <p class="message">
-                                感谢您注册 SmartATS。请使用下方的验证码完成注册流程，激活您的账户。
+                                Thank you for registering with SmartATS. Use the verification code below to complete your registration and activate your account.
                             </p>
 
                             <!-- Verification Code Card -->
                             <div class="code-card">
-                                <div class="code-label">邮箱验证码</div>
+                                <div class="code-label">EMAIL VERIFICATION CODE</div>
                                 <div class="verification-code">%s</div>
                                 <div class="code-expire">
-                                    验证码有效期为 <strong>%d 分钟</strong>
+                                    This code is valid for <strong>%d minutes</strong>
                                 </div>
                             </div>
 
                             <!-- Info Box -->
                             <div class="info-box">
-                                <div class="info-box-title">下一步</div>
+                                <div class="info-box-title">Next step</div>
                                 <div class="info-box-content">
-                                    在注册页面输入此验证码即可激活账户，开始使用 SmartATS 智能招聘服务。
+                                    Enter this code on the registration page to activate your account and start using the SmartATS intelligent recruitment service.
                                 </div>
                             </div>
 
                             <!-- Security Notice -->
                             <div class="security-notice">
-                                如果您没有请求此验证码，请忽略此邮件。
+                                If you did not request this code, please ignore this email.
                             </div>
                         </div>
 
@@ -351,21 +351,21 @@ public class EmailService {
                         <!-- Footer -->
                         <div class="footer">
                             <p class="footer-text">
-                                此邮件由 SmartATS 系统自动发送，请勿直接回复。<br>
-                                如需帮助，请联系客服团队。
+                                This email was sent automatically by the SmartATS system; please do not reply directly.<br>
+                                If you need help, please contact our support team.
                             </p>
 
                             <div class="footer-links">
-                                <a href="https://smartats.com/privacy" class="footer-link">隐私政策</a>
+                                <a href="https://smartats.com/privacy" class="footer-link">Privacy Policy</a>
                                 <span style="color: #94A3B8">·</span>
-                                <a href="https://smartats.com/terms" class="footer-link">服务条款</a>
+                                <a href="https://smartats.com/terms" class="footer-link">Terms of Service</a>
                                 <span style="color: #94A3B8">·</span>
-                                <a href="https://smartats.com/support" class="footer-link">联系客服</a>
+                                <a href="https://smartats.com/support" class="footer-link">Contact Support</a>
                             </div>
 
                             <p class="copyright">
-                                &copy; 2026 SmartATS. 保留所有权利。<br>
-                                构建智能招聘的未来
+                                &copy; 2026 SmartATS. All rights reserved.<br>
+                                Building the future of intelligent recruitment
                             </p>
                         </div>
                     </div>

@@ -15,16 +15,16 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * MinIO 集成测试
+ * MinIO integration test
  * <p>
- * 需要 Docker 环境运行 MinIO 容器。
- * CI 环境可通过设置环境变量 CI=true 自动跳过。
- * 也可通过 Maven 排除：-Dtest='!MinioFileStorageServiceTest'
+ * Requires a MinIO container running in a Docker environment.
+ * In CI the test is skipped automatically when the environment variable CI=true is set.
+ * It can also be excluded via Maven: -Dtest='!MinioFileStorageServiceTest'
  */
 @SpringBootTest
 @ActiveProfiles("test")
 @Tag("integration")
-@DisabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "MinIO 集成测试需要 Docker 环境")
+@DisabledIfEnvironmentVariable(named = "CI", matches = "true", disabledReason = "The MinIO integration test requires a Docker environment")
 class MinioFileStorageServiceTest {
 
     @Autowired
@@ -32,13 +32,13 @@ class MinioFileStorageServiceTest {
 
     @Test
     void testEnsureBucketExists() {
-        // 应该不抛异常
+        // should not throw an exception
         assertDoesNotThrow(() -> fileStorageService.ensureBucketExists());
     }
 
     @Test
     void testUploadAndDeleteFile() throws Exception {
-        // 准备测试文件
+        // prepare the test file
         String content = "Hello, MinIO!";
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -49,22 +49,22 @@ class MinioFileStorageServiceTest {
 
         String objectName = "test/" + System.currentTimeMillis() + "/test.txt";
 
-        // 测试上传
+        // test the upload
         String url = fileStorageService.uploadFile(file, objectName);
         assertNotNull(url);
         assertTrue(url.contains(objectName));
 
-        // 测试文件存在
+        // test that the file exists
         assertTrue(fileStorageService.fileExists(objectName));
 
-        // 测试获取 URL
+        // test retrieving the URL
         String fileUrl = fileStorageService.getFileUrl(objectName);
         assertNotNull(fileUrl);
 
-        // 测试删除
+        // test the deletion
         assertDoesNotThrow(() -> fileStorageService.deleteFile(objectName));
 
-        // 测试文件不存在
+        // test that the file no longer exists
         assertFalse(fileStorageService.fileExists(objectName));
     }
 

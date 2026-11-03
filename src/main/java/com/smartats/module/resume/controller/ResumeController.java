@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 简历上传控制器
+ * Resume upload controller
  */
-@Tag(name = "简历管理", description = "简历上传、AI 解析任务状态查询、简历详情")
+@Tag(name = "Resume Management", description = "Resume upload, AI parsing task status queries, resume details")
 @Slf4j
 @RestController
 @RequestMapping("/resumes")
@@ -29,23 +29,23 @@ public class ResumeController {
     private final ResumeService resumeService;
 
     /**
-     * 上传简历
+     * Upload a resume
      *
-     * @param file          简历文件
-     * @param authentication Spring Security 认证信息（自动注入）
-     * @return 上传结果，包含 taskId 用于查询解析状态
+     * @param file          resume file
+     * @param authentication Spring Security authentication info (auto-injected)
+     * @return upload result, containing the taskId used to poll the parsing status
      */
-    @Operation(summary = "上传简历", description = "支持 PDF/DOC/DOCX，≤ 10MB，MD5 去重，异步 AI 解析")
-    @AuditLog(module = "简历管理", operation = "UPLOAD", description = "上传简历")
+    @Operation(summary = "Upload resume", description = "Supports PDF/DOC/DOCX, ≤ 10MB, MD5 de-duplication, asynchronous AI parsing")
+    @AuditLog(module = "Resume Management", operation = "UPLOAD", description = "Upload resume")
     @PostMapping("/upload")
     public Result<ResumeUploadResponse> uploadResume(
             @RequestParam("file") MultipartFile file,
             Authentication authentication
     ) {
-        // 从 SecurityContext 中获取 userId（JWT 过滤器已解析）
+        // Get userId from the SecurityContext (already parsed by the JWT filter)
         Long userId = (Long) authentication.getPrincipal();
 
-        log.info("收到简历上传请求: userId={}, fileName={}, size={}",
+        log.info("Received resume upload request: userId={}, fileName={}, size={}",
                 userId, file.getOriginalFilename(), file.getSize());
 
         ResumeUploadResponse response = resumeService.uploadResume(file, userId);
@@ -54,35 +54,35 @@ public class ResumeController {
     }
 
     /**
-     * 批量上传简历
+     * Batch upload resumes
      *
-     * @param files          简历文件数组（最多 20 个）
-     * @param authentication Spring Security 认证信息
-     * @return 批量上传结果，包含每个文件的处理状态
+     * @param files          array of resume files (at most 20)
+     * @param authentication Spring Security authentication info
+     * @return batch upload result, containing the processing status of each file
      */
-    @Operation(summary = "批量上传简历", description = "支持最多 20 个文件，每分钟限 5 次，单个失败不影响其他")
-    @AuditLog(module = "简历管理", operation = "BATCH_UPLOAD", description = "批量上传简历")
+    @Operation(summary = "Batch upload resumes", description = "Supports up to 20 files, limited to 5 uploads per minute, a single failure does not affect the others")
+    @AuditLog(module = "Resume Management", operation = "BATCH_UPLOAD", description = "Batch upload resumes")
     @PostMapping("/batch-upload")
     public Result<BatchUploadResponse> batchUploadResumes(
             @RequestParam("files") MultipartFile[] files,
             Authentication authentication
     ) {
         Long userId = (Long) authentication.getPrincipal();
-        log.info("收到批量简历上传请求: userId={}, fileCount={}", userId, files.length);
+        log.info("Received batch resume upload request: userId={}, fileCount={}", userId, files.length);
         BatchUploadResponse response = resumeService.batchUploadResumes(files, userId);
         return Result.success(response);
     }
 
     /**
-     * 查询任务状态
+     * Query task status
      *
-     * @param taskId 任务ID
-     * @return 任务状态，包含解析进度、结果等
+     * @param taskId task ID
+     * @return task status, including parsing progress, results, etc.
      */
-    @Operation(summary = "查询解析任务状态", description = "通过上传时返回的 taskId 轮询解析进度")
+    @Operation(summary = "Query parsing task status", description = "Poll the parsing progress with the taskId returned at upload time")
     @GetMapping("/tasks/{taskId}")
     public Result<TaskStatusResponse> getTaskStatus(@PathVariable String taskId) {
-        log.debug("查询任务状态: taskId={}", taskId);
+        log.debug("Querying task status: taskId={}", taskId);
 
         TaskStatusResponse response = resumeService.getTaskStatus(taskId);
 
@@ -90,13 +90,13 @@ public class ResumeController {
     }
 
     /**
-     * 获取简历详情
+     * Get resume detail
      *
-     * @param id             简历ID
-     * @param authentication 登录用户（仅能查看自己的简历）
-     * @return 简历详情
+     * @param id             resume ID
+     * @param authentication logged-in user (can only view their own resumes)
+     * @return resume detail
      */
-    @Operation(summary = "获取简历详情", description = "仅能查看当前用户的简历")
+    @Operation(summary = "Get resume detail", description = "Only the current user's resumes can be viewed")
     @GetMapping("/{id}")
     public Result<Resume> getResumeById(
             @PathVariable Long id,
@@ -108,14 +108,14 @@ public class ResumeController {
     }
 
     /**
-     * 分页查询简历列表（当前用户的简历）
+     * Paged query of the resume list (the current user's resumes)
      *
-     * @param page           页码（默认1）
-     * @param size           每页条数（默认10）
-     * @param authentication 登录用户
-     * @return 简历分页列表
+     * @param page           page number (default 1)
+     * @param size           page size (default 10)
+     * @param authentication logged-in user
+     * @return paged resume list
      */
-    @Operation(summary = "简历列表", description = "当前用户的简历分页列表")
+    @Operation(summary = "Resume list", description = "Paged list of the current user's resumes")
     @GetMapping
     public Result<Page<Resume>> listResumes(
             @RequestParam(defaultValue = "1") int page,

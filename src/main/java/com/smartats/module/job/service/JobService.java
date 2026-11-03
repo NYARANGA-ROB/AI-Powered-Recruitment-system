@@ -36,11 +36,11 @@ public class JobService {
     private final CacheEvictionService cacheEvictionService;
 
     /**
-     * 创建职位
+     * Create a job
      */
     @Transactional(rollbackFor = Exception.class)
     public Long createJob(CreateJobRequest request, Long creatorId) {
-        log.info("创建职位：title={}, creatorId={}", request.getTitle(), creatorId);
+        log.info("Creating position: title={}, creatorId={}", request.getTitle(), creatorId);
 
         Job job = new Job();
         BeanUtils.copyProperties(request, job);
@@ -48,67 +48,67 @@ public class JobService {
         job.setStatus(JobStatus.DRAFT.getCode());
         job.setViewCount(0);
 
-        // 手动设置时间（暂时代替自动填充）
+        // Manually set timestamps (temporary replacement for auto-fill)
         job.setCreatedAt(LocalDateTime.now());
         job.setUpdatedAt(LocalDateTime.now());
 
-        // JSON 序列化：List<String> -> JSON 字符串
+        // JSON serialization: List<String> -> JSON string
         if (request.getRequiredSkills() != null && !request.getRequiredSkills().isEmpty()) {
             try {
                 job.setRequiredSkills(objectMapper.writeValueAsString(request.getRequiredSkills()));
             } catch (JsonProcessingException e) {
-                log.error("技能标签序列化失败", e);
-                throw new BusinessException(ResultCode.INTERNAL_ERROR, "技能标签格式错误");
+                log.error("Failed to serialize skill tags", e);
+                throw new BusinessException(ResultCode.INTERNAL_ERROR, "Invalid skill tag format");
             }
         }
 
         int result = jobMapper.insert(job);
         if (result <= 0) {
-            log.error("职位创建失败：title={}", request.getTitle());
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "职位创建失败");
+            log.error("Failed to create position: title={}", request.getTitle());
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to create position");
         }
 
-        log.info("职位创建成功：id={}, title={}", job.getId(), job.getTitle());
+        log.info("Position created successfully: id={}, title={}", job.getId(), job.getTitle());
         return job.getId();
     }
 
     /**
-     * 更新职位（延迟双删）
+     * Update a job (delayed double-delete)
      */
     @Transactional(rollbackFor = Exception.class)
     public void updateJob(UpdateJobRequest request, Long operatorId) {
-        log.info("更新职位：id={}, operatorId={}", request.getId(), operatorId);
+        log.info("Updating position: id={}, operatorId={}", request.getId(), operatorId);
 
         String cacheKey = RedisKeyConstants.CACHE_JOB_KEY_PREFIX + request.getId();
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 1 步：第一次删除缓存（更新前）
+        // Step 1: First cache deletion (before the update)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         redisTemplate.delete(cacheKey);
-        log.debug("第 1 次删除缓存：key={}", cacheKey);
+        log.debug("Cache deletion pass 1: key={}", cacheKey);
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 2 步：查询职位是否存在
+        // Step 2: Check whether the job exists
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         Job job = jobMapper.selectById(request.getId());
         if (job == null) {
-            log.warn("职位不存在：id={}", request.getId());
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            log.warn("Position not found: id={}", request.getId());
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 3 步：检查权限
+        // Step 3: Permission check
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         if (!job.getCreatorId().equals(operatorId)) {
-            log.warn("无权限修改职位：jobId={}, creatorId={}, operatorId={}", request.getId(), job.getCreatorId(), operatorId);
-            throw new BusinessException(ResultCode.FORBIDDEN, "无权限修改此职位");
+            log.warn("No permission to modify position: jobId={}, creatorId={}, operatorId={}", request.getId(), job.getCreatorId(), operatorId);
+            throw new BusinessException(ResultCode.FORBIDDEN, "No permission to modify this position");
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 4 步：更新职位信息
+        // Step 4: Update job information
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         if (StringUtils.hasText(request.getTitle())) {
@@ -127,8 +127,8 @@ public class JobService {
             try {
                 job.setRequiredSkills(objectMapper.writeValueAsString(request.getRequiredSkills()));
             } catch (JsonProcessingException e) {
-                log.error("技能标签序列化失败", e);
-                throw new BusinessException(ResultCode.INTERNAL_ERROR, "技能标签格式错误");
+                log.error("Failed to serialize skill tags", e);
+                throw new BusinessException(ResultCode.INTERNAL_ERROR, "Invalid skill tag format");
             }
         }
         if (request.getSalaryMin() != null) {
@@ -151,98 +151,98 @@ public class JobService {
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 5 步：更新数据库
+        // Step 5: Update the database
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         int result = jobMapper.updateById(job);
         if (result <= 0) {
-            log.error("职位更新失败：id={}", request.getId());
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "职位更新失败");
+            log.error("Failed to update position: id={}", request.getId());
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to update position");
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 6 步：延迟双删（异步删除缓存，通过独立 Service 保证代理生效）
+        // Step 6: Delayed double-delete (async cache deletion, via a separate Service to ensure the proxy takes effect)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         cacheEvictionService.asyncDeleteCache(cacheKey);
 
-        log.info("职位更新成功：id={}", job.getId());
+        log.info("Position updated successfully: id={}", job.getId());
     }
 
     /**
-     * 获取职位详情（使用 Redis 原子计数器优化浏览量统计）
+     * Get job detail (uses a Redis atomic counter to optimize view-count tracking)
      * <p>
-     * 浏览量计算公式：用户看到的浏览量 = 数据库累积值 + Redis增量计数器
+     * View count formula: view count shown to users = cumulative database value + Redis incremental counter
      */
     public JobResponse getJobDetail(Long id) {
-        log.info("查询职位详情：id={}", id);
+        log.info("Querying position detail: id={}", id);
 
         String cacheKey = RedisKeyConstants.CACHE_JOB_KEY_PREFIX + id;
         String counterKey = RedisKeyConstants.COUNTER_JOB_VIEW_PREFIX + id;
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 1 步：原子自增 Redis 增量计数器（每次访问都计数）
+        // Step 1: Atomically increment the Redis incremental counter (counted on every visit)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         Long redisIncrement = redisTemplate.opsForValue().increment(counterKey);
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 2 步：尝试从缓存读取职位信息（缓存命中时跟过 DB）
+        // Step 2: Try to read the job from the cache (skips the DB on cache hit)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         String cachedJson = redisTemplate.opsForValue().get(cacheKey);
         if (cachedJson != null) {
             try {
                 JobResponse cached = objectMapper.readValue(cachedJson, JobResponse.class);
-                // 缓存中的浏览量可能已过时，用缓存的 baseViewCount + 当前 Redis 增量覆盖
+                // The view count in the cache may be stale; override it with the cached baseViewCount + the current Redis increment
                 cached.setViewCount(cached.getViewCount() != null ? cached.getViewCount() + 1 : redisIncrement.intValue());
-                log.debug("缓存命中：jobId={}", id);
+                log.debug("Cache hit: jobId={}", id);
                 return cached;
             } catch (Exception e) {
-                log.warn("职位缓存反序列化失败，降级查库：id={}", id, e);
+                log.warn("Failed to deserialize position cache, falling back to database: id={}", id, e);
             }
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 3 步：缓存未命中，从数据库读取
+        // Step 3: Cache miss, read from the database
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         Job job = jobMapper.selectById(id);
         if (job == null) {
-            log.warn("职位不存在：id={}", id);
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            log.warn("Position not found: id={}", id);
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
 
-        // 数据库中存储的是历史累积浏览量
+        // The value stored in the database is the historical cumulative view count
         int baseViewCount = job.getViewCount() != null ? job.getViewCount() : 0;
 
-        log.debug("Redis 计数器自增：key={}, increment={}, baseViewCount={}",
+        log.debug("Redis counter incremented: key={}, increment={}, baseViewCount={}",
             counterKey, redisIncrement, baseViewCount);
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 第 4 步：计算总浏览量并回填缓存
+        // Step 4: Compute the total view count and backfill the cache
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         JobResponse response = convertToResponse(job);
 
-        // 总浏览量 = 数据库累积值 + Redis增量计数器
+        // Total view count = cumulative database value + Redis incremental counter
         response.setViewCount(baseViewCount + redisIncrement.intValue());
 
         try {
             redisTemplate.opsForValue().set(cacheKey,
                 objectMapper.writeValueAsString(response), 30, TimeUnit.MINUTES);
         } catch (JsonProcessingException e) {
-            log.error("缓存数据序列化失败", e);
+            log.error("Failed to serialize cache data", e);
         }
 
         return response;
     }
 
     /**
-     * 职位列表（分页、筛选）
+     * Job list (pagination, filtering)
      */
     public Page<JobResponse> getJobList(JobQueryRequest request) {
-        log.info("查询职位列表：{}", request);
+        log.info("Querying position list: {}", request);
 
         LambdaQueryWrapper<Job> queryWrapper = new LambdaQueryWrapper<>();
 
@@ -276,7 +276,7 @@ public class JobService {
             queryWrapper.eq(Job::getStatus, JobStatus.PUBLISHED.getCode());
         }
 
-        // 排序
+        // Sorting
         if ("created_at".equals(request.getOrderBy())) {
             if ("asc".equals(request.getOrderDirection())) {
                 queryWrapper.orderByAsc(Job::getCreatedAt);
@@ -309,97 +309,97 @@ public class JobService {
     }
 
     /**
-     * 发布职位
+     * Publish a job
      */
     @Transactional(rollbackFor = Exception.class)
     public void publishJob(Long id, Long operatorId) {
-        log.info("发布职位：id={}, operatorId={}", id, operatorId);
+        log.info("Publishing position: id={}, operatorId={}", id, operatorId);
 
         Job job = jobMapper.selectById(id);
         if (job == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
 
         if (!job.getCreatorId().equals(operatorId)) {
-            throw new BusinessException(ResultCode.FORBIDDEN, "无权限操作此职位");
+            throw new BusinessException(ResultCode.FORBIDDEN, "No permission to operate on this position");
         }
 
         if (JobStatus.PUBLISHED.getCode().equals(job.getStatus())) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "职位已经是发布状态");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Position is already published");
         }
 
         job.setStatus(JobStatus.PUBLISHED.getCode());
         jobMapper.updateById(job);
 
-        // 清除缓存
+        // Evict the cache
         redisTemplate.delete(RedisKeyConstants.CACHE_JOB_KEY_PREFIX + id);
 
-        log.info("职位发布成功：id={}", id);
+        log.info("Position published successfully: id={}", id);
     }
 
     /**
-     * 关闭职位
+     * Close a job
      */
     @Transactional(rollbackFor = Exception.class)
     public void closeJob(Long id, Long operatorId) {
-        log.info("关闭职位：id={}, operatorId={}", id, operatorId);
+        log.info("Closing position: id={}, operatorId={}", id, operatorId);
 
         Job job = jobMapper.selectById(id);
         if (job == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
 
         if (!job.getCreatorId().equals(operatorId)) {
-            throw new BusinessException(ResultCode.FORBIDDEN, "无权限操作此职位");
+            throw new BusinessException(ResultCode.FORBIDDEN, "No permission to operate on this position");
         }
 
         if (JobStatus.CLOSED.getCode().equals(job.getStatus())) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "职位已经是关闭状态");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Position is already closed");
         }
 
         job.setStatus(JobStatus.CLOSED.getCode());
         jobMapper.updateById(job);
 
-        // 清除缓存
+        // Evict the cache
         redisTemplate.delete(RedisKeyConstants.CACHE_JOB_KEY_PREFIX + id);
 
-        log.info("职位关闭成功：id={}", id);
+        log.info("Position closed successfully: id={}", id);
     }
 
     /**
-     * 删除职位（软删除）
+     * Delete a job (soft delete)
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteJob(Long id, Long operatorId) {
-        log.info("删除职位：id={}, operatorId={}", id, operatorId);
+        log.info("Deleting position: id={}, operatorId={}", id, operatorId);
 
         Job job = jobMapper.selectById(id);
         if (job == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "职位不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Position not found");
         }
 
         if (!job.getCreatorId().equals(operatorId)) {
-            throw new BusinessException(ResultCode.FORBIDDEN, "无权限操作此职位");
+            throw new BusinessException(ResultCode.FORBIDDEN, "No permission to operate on this position");
         }
 
         int result = jobMapper.deleteById(id);
         if (result <= 0) {
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "职位删除失败");
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to delete position");
         }
 
-        // 清除缓存
+        // Evict the cache
         redisTemplate.delete(RedisKeyConstants.CACHE_JOB_KEY_PREFIX + id);
 
-        log.info("职位删除成功：id={}", id);
+        log.info("Position deleted successfully: id={}", id);
     }
 
     /**
-     * 热门职位列表
+     * Hot job list
      */
     public List<JobResponse> getHotJobs(Integer limit) {
-        log.info("查询热门职位：limit={}", limit);
+        log.info("Querying hot positions: limit={}", limit);
 
-        // 安全边界校验，避免使用 .last() 拼接 SQL
+        // Safe boundary check to avoid SQL concatenation via .last()
         int safeLimit = (limit != null && limit > 0 && limit <= 50) ? limit : 10;
 
         Page<Job> page = new Page<>(1, safeLimit);
@@ -411,31 +411,31 @@ public class JobService {
     }
 
     /**
-     * 转换为响应对象
+     * Convert to the response object
      */
     private JobResponse convertToResponse(Job job) {
         JobResponse response = new JobResponse();
         BeanUtils.copyProperties(job, response);
 
-        // JSON 反序列化：JSON 字符串 -> List<String>
+        // JSON deserialization: JSON string -> List<String>
         if (StringUtils.hasText(job.getRequiredSkills())) {
             try {
                 response.setRequiredSkills(java.util.Arrays.stream(objectMapper.readValue(job.getRequiredSkills(), String[].class)).collect(Collectors.toList()));
             } catch (JsonProcessingException e) {
-                log.error("技能标签反序列化失败", e);
+                log.error("Failed to deserialize skill tags", e);
             }
         }
 
-        // 格式化显示
+        // Formatted display
         if (job.getSalaryMin() != null && job.getSalaryMax() != null) {
             response.setSalaryRange(job.getSalaryMin() + "K-" + job.getSalaryMax() + "K");
         }
 
         if (job.getExperienceMin() != null && job.getExperienceMax() != null) {
-            response.setExperienceRange(job.getExperienceMin() + "-" + job.getExperienceMax() + "年");
+            response.setExperienceRange(job.getExperienceMin() + "-" + job.getExperienceMax() + " years");
         }
 
-        // 状态描述（委托给枚举）
+        // Status description (delegated to the enum)
         response.setStatusDesc(JobStatus.getDescriptionByCode(job.getStatus()));
 
         return response;

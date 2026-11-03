@@ -23,10 +23,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * CandidateVectorService 单元测试
+ * CandidateVectorService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CandidateVectorService 单元测试")
+@DisplayName("CandidateVectorService unit tests")
 class CandidateVectorServiceTest {
 
     @InjectMocks
@@ -46,13 +46,13 @@ class CandidateVectorServiceTest {
     void setUp() {
         testCandidate = new Candidate();
         testCandidate.setId(1L);
-        testCandidate.setName("张三");
+        testCandidate.setName("Zhang San");
 
         mockEmbedding = new ArrayList<>(Collections.nCopies(1024, 0.1f));
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // vectorizeCandidate 测试
+    // vectorizeCandidate tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -60,14 +60,14 @@ class CandidateVectorServiceTest {
     class VectorizeCandidateTests {
 
         @Test
-        @DisplayName("成功向量化并回写 MySQL")
+        @DisplayName("Vectorizes successfully and writes back to MySQL")
         void shouldVectorizeAndUpdateMySQL() {
             // Given
             given(embeddingService.buildCandidateText(any(Candidate.class)))
-                    .willReturn("姓名: 张三\n学历: 本科");
+                    .willReturn("Name: Zhang San\nEducation: Bachelor");
             given(embeddingService.generateCandidateEmbedding(any(Candidate.class)))
                     .willReturn(mockEmbedding);
-            given(vectorStoreService.upsertVector(eq(1L), eq("张三"), anyList()))
+            given(vectorStoreService.upsertVector(eq(1L), eq("Zhang San"), anyList()))
                     .willReturn("1");
 
             // When
@@ -76,40 +76,40 @@ class CandidateVectorServiceTest {
             // Then
             then(embeddingService).should().buildCandidateText(testCandidate);
             then(embeddingService).should().generateCandidateEmbedding(testCandidate);
-            then(vectorStoreService).should().upsertVector(eq(1L), eq("张三"), eq(mockEmbedding));
+            then(vectorStoreService).should().upsertVector(eq(1L), eq("Zhang San"), eq(mockEmbedding));
 
-            // 验证回写 MySQL
+            // verify the write-back to MySQL
             ArgumentCaptor<Candidate> captor = ArgumentCaptor.forClass(Candidate.class);
             then(candidateMapper).should().updateById(captor.capture());
 
             Candidate updated = captor.getValue();
             assertThat(updated.getId()).isEqualTo(1L);
             assertThat(updated.getVectorId()).isEqualTo("1");
-            assertThat(updated.getAiSummary()).isEqualTo("姓名: 张三\n学历: 本科");
+            assertThat(updated.getAiSummary()).isEqualTo("Name: Zhang San\nEducation: Bachelor");
             assertThat(updated.getUpdatedAt()).isNotNull();
         }
 
         @Test
-        @DisplayName("向量化失败不抛出异常（容错）")
+        @DisplayName("Vectorization failure does not throw (fault tolerance)")
         void shouldNotThrowWhenVectorizationFails() {
             // Given
             given(embeddingService.buildCandidateText(any(Candidate.class)))
-                    .willReturn("张三");
+                    .willReturn("Zhang San");
             given(embeddingService.generateCandidateEmbedding(any(Candidate.class)))
-                    .willThrow(new RuntimeException("嵌入服务不可用"));
+                    .willThrow(new RuntimeException("Embedding service unavailable"));
 
-            // When & Then — 不抛异常
+            // When & Then - does not throw
             assertThatCode(() -> candidateVectorService.vectorizeCandidate(testCandidate))
                     .doesNotThrowAnyException();
 
-            // Milvus 和 MySQL 不应被调用
+            // Milvus and MySQL must not be touched
             then(vectorStoreService).shouldHaveNoInteractions();
             then(candidateMapper).shouldHaveNoInteractions();
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // deleteVector 测试
+    // deleteVector tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -117,7 +117,7 @@ class CandidateVectorServiceTest {
     class DeleteVectorTests {
 
         @Test
-        @DisplayName("成功删除向量")
+        @DisplayName("Deletes the vector successfully")
         void shouldDeleteVector() {
             candidateVectorService.deleteVector(1L);
 
@@ -125,9 +125,9 @@ class CandidateVectorServiceTest {
         }
 
         @Test
-        @DisplayName("删除失败不抛出异常（容错）")
+        @DisplayName("Delete failure does not throw (fault tolerance)")
         void shouldNotThrowWhenDeleteFails() {
-            willThrow(new RuntimeException("连接失败"))
+            willThrow(new RuntimeException("Connection failed"))
                     .given(vectorStoreService).deleteVector(anyLong());
 
             assertThatCode(() -> candidateVectorService.deleteVector(1L))

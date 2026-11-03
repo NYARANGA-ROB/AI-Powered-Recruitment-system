@@ -32,10 +32,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * ResumeService 单元测试
+ * ResumeService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ResumeService 单元测试")
+@DisplayName("ResumeService unit tests")
 class ResumeServiceTest {
 
     @InjectMocks
@@ -65,7 +65,7 @@ class ResumeServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 上传简历测试
+    // Upload resume tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -73,7 +73,7 @@ class ResumeServiceTest {
     class UploadResumeTests {
 
         @Test
-        @DisplayName("文件为空抛异常")
+        @DisplayName("Throws exception when the file is empty")
         void shouldThrowWhenFileIsEmpty() {
             given(mockFile.isEmpty()).willReturn(true);
 
@@ -82,14 +82,14 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("文件为null抛异常")
+        @DisplayName("Throws exception when the file is null")
         void shouldThrowWhenFileIsNull() {
             assertThatThrownBy(() -> resumeService.uploadResume(null, 1L))
                     .isInstanceOf(BusinessException.class);
         }
 
         @Test
-        @DisplayName("文件超过10MB抛异常")
+        @DisplayName("Throws exception when the file exceeds 10MB")
         void shouldThrowWhenFileTooLarge() {
             given(mockFile.isEmpty()).willReturn(false);
             given(mockFile.getSize()).willReturn(11L * 1024 * 1024); // 11MB
@@ -99,7 +99,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("不支持的文件类型抛异常")
+        @DisplayName("Throws exception for an unsupported file type")
         void shouldThrowWhenUnsupportedContentType() {
             given(mockFile.isEmpty()).willReturn(false);
             given(mockFile.getSize()).willReturn(1024L);
@@ -110,7 +110,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("文件重复则返回已有简历")
+        @DisplayName("Returns the existing resume when the file is duplicated")
         void shouldReturnExistingWhenDuplicate() throws Exception {
             // Prepare a valid PDF upload that passes validation
             given(mockFile.isEmpty()).willReturn(false);
@@ -137,7 +137,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("上传成功返回taskId和resumeId")
+        @DisplayName("Successful upload returns taskId and resumeId")
         void shouldUploadSuccessfully() throws Exception {
             given(mockFile.isEmpty()).willReturn(false);
             given(mockFile.getSize()).willReturn(1024L);
@@ -172,7 +172,7 @@ class ResumeServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 任务状态查询测试
+    // Task status query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -180,7 +180,7 @@ class ResumeServiceTest {
     class GetTaskStatusTests {
 
         @Test
-        @DisplayName("Redis有数据时返回正确状态")
+        @DisplayName("Returns the correct status when Redis has data")
         void shouldReturnStatusFromRedis() throws Exception {
             String taskId = "test-task-id";
             String json = "{\"status\":\"COMPLETED\",\"progress\":100}";
@@ -200,7 +200,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("Redis无数据时返回NOT_FOUND")
+        @DisplayName("Returns NOT_FOUND when Redis has no data")
         void shouldReturnNotFoundWhenNoRedisData() {
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn(null);
@@ -212,7 +212,7 @@ class ResumeServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 简历详情查询测试
+    // Resume detail query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -220,7 +220,7 @@ class ResumeServiceTest {
     class GetResumeByIdTests {
 
         @Test
-        @DisplayName("查询自己的简历成功")
+        @DisplayName("Successfully queries one's own resume")
         void shouldReturnResumeForOwner() {
             Resume resume = new Resume();
             resume.setId(1L);
@@ -236,7 +236,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("简历不存在抛异常")
+        @DisplayName("Throws exception when the resume does not exist")
         void shouldThrowWhenResumeNotFound() {
             given(resumeMapper.selectById(999L)).willReturn(null);
 
@@ -245,7 +245,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("查询他人简历抛异常")
+        @DisplayName("Throws exception when querying another person's resume")
         void shouldThrowWhenNotOwner() {
             Resume resume = new Resume();
             resume.setId(1L);
@@ -259,7 +259,7 @@ class ResumeServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 简历列表测试
+    // Resume list tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -267,7 +267,7 @@ class ResumeServiceTest {
     class ListResumesTests {
 
         @Test
-        @DisplayName("分页查询返回结果")
+        @DisplayName("Paged query returns results")
         void shouldReturnPagedResults() {
             Page<Resume> page = new Page<>(1, 10);
             page.setTotal(1);
@@ -287,7 +287,7 @@ class ResumeServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 批量上传测试
+    // Batch upload tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -295,14 +295,14 @@ class ResumeServiceTest {
     class BatchUploadTests {
 
         @Test
-        @DisplayName("文件数组为空抛异常")
+        @DisplayName("Throws exception when the file array is empty")
         void shouldThrowWhenFilesEmpty() {
             assertThatThrownBy(() -> resumeService.batchUploadResumes(null, 1L))
                     .isInstanceOf(BusinessException.class);
         }
 
         @Test
-        @DisplayName("超过20个文件抛异常")
+        @DisplayName("Throws exception when there are more than 20 files")
         void shouldThrowWhenExceedMaxBatchSize() {
             MultipartFile[] files = new MultipartFile[21];
             for (int i = 0; i < 21; i++) {
@@ -314,7 +314,7 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("频率限制 - 超过每分钟5次抛异常")
+        @DisplayName("Rate limit - throws exception when exceeding 5 uploads per minute")
         void shouldThrowWhenRateLimited() {
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(anyString())).willReturn("5");
@@ -326,20 +326,20 @@ class ResumeServiceTest {
         }
 
         @Test
-        @DisplayName("单个文件失败不影响其他文件")
+        @DisplayName("A single file failure does not affect the other files")
         void shouldContinueWhenSingleFileFails() throws Exception {
             given(stringRedisTemplate.opsForValue()).willReturn(valueOperations);
             given(valueOperations.get(startsWith("rate:upload:"))).willReturn(null);
 
-            // 创建两个 mock 文件
+            // Create two mock files
             MultipartFile goodFile = mock(MultipartFile.class);
             MultipartFile badFile = mock(MultipartFile.class);
 
-            // badFile: 空文件 → 抛异常
+            // badFile: empty file → throws exception
             given(badFile.isEmpty()).willReturn(true);
             given(badFile.getOriginalFilename()).willReturn("bad.pdf");
 
-            // goodFile: 也设置为空以保持简单（会失败但不会 crash）
+            // goodFile: also set to empty to keep it simple (it will fail but not crash)
             given(goodFile.isEmpty()).willReturn(true);
             given(goodFile.getOriginalFilename()).willReturn("good.pdf");
 
@@ -350,7 +350,7 @@ class ResumeServiceTest {
             assertThat(result.getTotalCount()).isEqualTo(2);
             assertThat(result.getFailedCount()).isEqualTo(2);
             assertThat(result.getItems()).hasSize(2);
-            // 两个文件都因为空文件而失败，但不会crash
+            // Both files fail because they are empty, but nothing crashes
             assertThat(result.getItems().get(0).getStatus()).isEqualTo("FAILED");
             assertThat(result.getItems().get(1).getStatus()).isEqualTo("FAILED");
         }

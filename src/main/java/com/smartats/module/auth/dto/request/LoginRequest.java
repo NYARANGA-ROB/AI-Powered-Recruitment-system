@@ -4,14 +4,14 @@ import lombok.Data;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * 用户登录请求
+ * User login request
  */
 @Data
 public class LoginRequest {
 
-    @NotBlank(message = "用户名不能为空")
+    @NotBlank(message = "Username is required")
     private String username;
 
-    @NotBlank(message = "密码不能为空")
+    @NotBlank(message = "Password is required")
     private String password;
 }

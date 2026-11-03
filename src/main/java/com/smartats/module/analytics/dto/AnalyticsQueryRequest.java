@@ -7,23 +7,23 @@ import lombok.Data;
 import java.time.LocalDate;
 
 /**
- * 分析查询请求参数
+ * Analytics query request parameters
  * <p>
- * 支持按职位 ID、日期范围进行筛选。
- * 所有字段均为可选，不传则查询全部数据。
+ * Supports filtering by job ID and date range.
+ * All fields are optional; omitted fields query across all data.
  */
 @Data
-@Schema(description = "招聘分析查询参数")
+@Schema(description = "Recruitment analytics query parameters")
 public class AnalyticsQueryRequest {
 
-    @Schema(description = "职位 ID（筛选特定职位的分析数据）")
+    @Schema(description = "Job ID (filters analytics data to a specific job)")
     private Long jobId;
 
-    @Schema(description = "起始日期（含）", example = "2026-01-01")
+    @Schema(description = "Start date (inclusive)", example = "2026-01-01")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 
-    @Schema(description = "截止日期（含）", example = "2026-12-31")
+    @Schema(description = "End date (inclusive)", example = "2026-12-31")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 }

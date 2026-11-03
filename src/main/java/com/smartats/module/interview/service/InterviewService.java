@@ -34,14 +34,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 面试记录服务
+ * Interview record service
  * <p>
- * 核心业务逻辑：
+ * Core business logic:
  * <ul>
- *   <li>安排面试（自动递增轮次、关联申请校验、时间冲突检测）</li>
- *   <li>提交反馈（评分 + 评语 + 推荐结论）</li>
- *   <li>取消面试</li>
- *   <li>按申请查询所有面试轮次</li>
+ *   <li>Scheduling interviews (automatic round increment, application validation, time conflict detection)</li>
+ *   <li>Submitting feedback (score + comments + recommendation)</li>
+ *   <li>Cancelling interviews</li>
+ *   <li>Querying all interview rounds by application</li>
  * </ul>
  */
 @Slf4j
@@ -56,44 +56,44 @@ public class InterviewService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
-    /** 缓存 TTL（分钟） */
+    /** Cache TTL (minutes) */
     private static final long CACHE_TTL_MINUTES = 30;
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 安排面试
+    // Schedule interview
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 安排面试
+     * Schedule an interview
      *
-     * @param request 面试安排请求
-     * @return 新建面试记录的 ID
+     * @param request interview scheduling request
+     * @return ID of the newly created interview record
      */
     @Transactional(rollbackFor = Exception.class)
     public Long scheduleInterview(ScheduleInterviewRequest request) {
         Long applicationId = request.getApplicationId();
-        log.info("安排面试：applicationId={}, interviewerId={}, type={}",
+        log.info("Scheduling interview: applicationId={}, interviewerId={}, type={}",
                 applicationId, request.getInterviewerId(), request.getInterviewType());
 
-        // ① 校验申请是否存在且处于面试阶段
+        // (1) Validate that the application exists and is in the interview stage
         JobApplication application = jobApplicationMapper.selectById(applicationId);
         if (application == null) {
             throw new BusinessException(ResultCode.APPLICATION_NOT_FOUND);
         }
-        // 只有 SCREENING 或 INTERVIEW 状态的申请才允许安排面试
+        // Only applications in SCREENING or INTERVIEW status may have interviews scheduled
         if (!ApplicationStatus.SCREENING.getCode().equals(application.getStatus())
                 && !ApplicationStatus.INTERVIEW.getCode().equals(application.getStatus())) {
             throw new BusinessException(ResultCode.APPLICATION_STATUS_INVALID,
-                    "当前申请状态为 [" + application.getStatus() + "]，不允许安排面试");
+                    "Current application status is [" + application.getStatus() + "]; scheduling an interview is not allowed");
         }
 
-        // ② 校验面试官是否存在
+        // (2) Validate that the interviewer exists
         User interviewer = userMapper.selectById(request.getInterviewerId());
         if (interviewer == null) {
-            throw new BusinessException(ResultCode.USER_NOT_FOUND, "面试官不存在");
+            throw new BusinessException(ResultCode.USER_NOT_FOUND, "Interviewer not found");
         }
 
-        // ③ 自动计算面试轮次（如果没有手动指定）
+        // (3) Automatically compute the interview round (unless manually specified)
         Integer round = request.getRound();
         if (round == null) {
             LambdaQueryWrapper<InterviewRecord> countWrapper = new LambdaQueryWrapper<>();
@@ -102,7 +102,7 @@ public class InterviewService {
             round = (int) existingRounds + 1;
         }
 
-        // ④ 面试官时间冲突检测（同一面试官 ±面试时长 范围内不能有其他面试）
+        // (4) Interviewer time conflict detection (the same interviewer cannot have another interview within +/- the interview duration)
         int duration = request.getDurationMinutes() != null ? request.getDurationMinutes() : 60;
         LocalDateTime startTime = request.getScheduledAt();
         LocalDateTime endTime = startTime.plusMinutes(duration);
@@ -111,9 +111,9 @@ public class InterviewService {
         conflictWrapper.eq(InterviewRecord::getInterviewerId, request.getInterviewerId())
                 .eq(InterviewRecord::getStatus, InterviewStatus.SCHEDULED.getCode())
                 .and(w -> w
-                        // 已有面试的开始时间在新面试时间范围内
+                        // Existing interview starts within the new interview window
                         .between(InterviewRecord::getScheduledAt, startTime, endTime)
-                        // 或已有面试包含新面试的开始时间
+                        // Or an existing interview overlaps the new interview start time
                         .or()
                         .le(InterviewRecord::getScheduledAt, startTime)
                         .apply("DATE_ADD(scheduled_at, INTERVAL duration_minutes MINUTE) > {0}", startTime)
@@ -123,7 +123,7 @@ public class InterviewService {
             throw new BusinessException(ResultCode.INTERVIEW_TIME_CONFLICT);
         }
 
-        // ⑤ 创建面试记录
+        // (5) Create the interview record
         InterviewRecord record = new InterviewRecord();
         record.setApplicationId(applicationId);
         record.setInterviewerId(request.getInterviewerId());
@@ -137,17 +137,17 @@ public class InterviewService {
 
         interviewRecordMapper.insert(record);
 
-        // ⑥ 如果申请状态为 SCREENING，自动推进到 INTERVIEW
+        // (6) If the application status is SCREENING, automatically advance it to INTERVIEW
         if (ApplicationStatus.SCREENING.getCode().equals(application.getStatus())) {
             application.setStatus(ApplicationStatus.INTERVIEW.getCode());
             application.setUpdatedAt(LocalDateTime.now());
             jobApplicationMapper.updateById(application);
-            log.info("申请状态自动推进为 INTERVIEW：applicationId={}", applicationId);
+            log.info("Application status automatically advanced to INTERVIEW: applicationId={}", applicationId);
         }
 
-        log.info("面试安排成功：id={}, applicationId={}, round={}", record.getId(), applicationId, round);
+        log.info("Interview scheduled successfully: id={}, applicationId={}, round={}", record.getId(), applicationId, round);
 
-        // ⑦ 触发 Webhook 事件
+        // (7) Trigger the Webhook event
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("interviewId", record.getId());
         eventData.put("applicationId", applicationId);
@@ -162,18 +162,18 @@ public class InterviewService {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 提交反馈
+    // Submit feedback
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 提交面试反馈
+     * Submit interview feedback
      *
-     * @param id      面试记录 ID
-     * @param request 反馈内容
+     * @param id      interview record ID
+     * @param request feedback content
      */
     @Transactional(rollbackFor = Exception.class)
     public void submitFeedback(Long id, SubmitFeedbackRequest request) {
-        log.info("提交面试反馈：id={}, score={}, recommendation={}", id, request.getScore(), request.getRecommendation());
+        log.info("Submitting interview feedback: id={}, score={}, recommendation={}", id, request.getScore(), request.getRecommendation());
 
         InterviewRecord record = interviewRecordMapper.selectById(id);
         if (record == null) {
@@ -184,7 +184,7 @@ public class InterviewService {
             throw new BusinessException(ResultCode.INTERVIEW_ALREADY_CANCELLED);
         }
 
-        // 填写反馈并标记完成
+        // Fill in the feedback and mark the interview as completed
         record.setScore(request.getScore());
         record.setFeedback(request.getFeedback());
         record.setRecommendation(request.getRecommendation());
@@ -194,9 +194,9 @@ public class InterviewService {
         interviewRecordMapper.updateById(record);
         evictCache(id);
 
-        log.info("面试反馈提交成功：id={}", id);
+        log.info("Interview feedback submitted successfully: id={}", id);
 
-        // 触发 Webhook 事件
+        // Trigger the Webhook event
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("interviewId", id);
         eventData.put("applicationId", record.getApplicationId());
@@ -207,17 +207,17 @@ public class InterviewService {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 取消面试
+    // Cancel interview
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 取消面试
+     * Cancel an interview
      *
-     * @param id 面试记录 ID
+     * @param id interview record ID
      */
     @Transactional(rollbackFor = Exception.class)
     public void cancelInterview(Long id) {
-        log.info("取消面试：id={}", id);
+        log.info("Cancelling interview: id={}", id);
 
         InterviewRecord record = interviewRecordMapper.selectById(id);
         if (record == null) {
@@ -237,9 +237,9 @@ public class InterviewService {
         interviewRecordMapper.updateById(record);
         evictCache(id);
 
-        log.info("面试已取消：id={}", id);
+        log.info("Interview cancelled: id={}", id);
 
-        // 触发 Webhook 事件
+        // Trigger the Webhook event
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("interviewId", id);
         eventData.put("applicationId", record.getApplicationId());
@@ -248,28 +248,28 @@ public class InterviewService {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询
+    // Queries
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 获取面试记录详情（Redis 缓存）
+     * Get interview record details (Redis cached)
      */
     public InterviewResponse getById(Long id) {
-        log.info("查询面试详情：id={}", id);
+        log.info("Querying interview details: id={}", id);
 
         String cacheKey = RedisKeyConstants.CACHE_INTERVIEW_KEY_PREFIX + id;
 
-        // 1. 查缓存
+        // 1. Check the cache
         String cached = redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
             try {
                 return objectMapper.readValue(cached, InterviewResponse.class);
             } catch (JsonProcessingException e) {
-                log.warn("面试缓存反序列化失败，降级查库：id={}", id, e);
+                log.warn("Interview cache deserialization failed, falling back to the database: id={}", id, e);
             }
         }
 
-        // 2. 查数据库
+        // 2. Query the database
         InterviewRecord record = interviewRecordMapper.selectById(id);
         if (record == null) {
             throw new BusinessException(ResultCode.INTERVIEW_NOT_FOUND);
@@ -277,7 +277,7 @@ public class InterviewService {
 
         InterviewResponse response = convertToResponse(record);
 
-        // 3. 回填缓存
+        // 3. Repopulate the cache
         try {
             redisTemplate.opsForValue().set(
                     cacheKey,
@@ -286,17 +286,17 @@ public class InterviewService {
                     TimeUnit.MINUTES
             );
         } catch (JsonProcessingException e) {
-            log.warn("面试写入缓存失败（不影响业务）：id={}", id, e);
+            log.warn("Failed to write interview to cache (no business impact): id={}", id, e);
         }
 
         return response;
     }
 
     /**
-     * 按申请 ID 查询所有面试轮次（批量查询面试官避免 N+1）
+     * Query all interview rounds by application ID (batch-fetch interviewers to avoid N+1)
      */
     public List<InterviewResponse> listByApplicationId(Long applicationId) {
-        log.info("查询申请的面试记录：applicationId={}", applicationId);
+        log.info("Querying interview records for application: applicationId={}", applicationId);
 
         LambdaQueryWrapper<InterviewRecord> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(InterviewRecord::getApplicationId, applicationId)
@@ -307,7 +307,7 @@ public class InterviewService {
             return List.of();
         }
 
-        // 批量查询所有面试官（避免 N+1）
+        // Batch-fetch all interviewers (avoid N+1)
         Set<Long> interviewerIds = records.stream()
                 .map(InterviewRecord::getInterviewerId)
                 .collect(Collectors.toSet());
@@ -320,16 +320,16 @@ public class InterviewService {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 私有方法
+    // Private helpers
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 将实体转换为响应 DTO（单条查询使用，关联查询面试官）
+     * Convert the entity to a response DTO (single-record query; looks up the interviewer relationally)
      */
     private InterviewResponse convertToResponse(InterviewRecord record) {
         InterviewResponse response = buildBaseResponse(record);
 
-        // 关联查询面试官姓名
+        // Look up the interviewer name relationally
         User interviewer = userMapper.selectById(record.getInterviewerId());
         if (interviewer != null) {
             response.setInterviewerName(interviewer.getUsername());
@@ -339,7 +339,7 @@ public class InterviewService {
     }
 
     /**
-     * 将实体转换为响应 DTO（使用预加载的面试官 Map，批量查询使用）
+     * Convert the entity to a response DTO (using a preloaded interviewer map; for batch queries)
      */
     private InterviewResponse convertToResponseWithMap(InterviewRecord record, Map<Long, User> interviewerMap) {
         InterviewResponse response = buildBaseResponse(record);
@@ -353,7 +353,7 @@ public class InterviewService {
     }
 
     /**
-     * 构建基础响应对象（不含关联查询，复用于单条和批量转换）
+     * Build the base response object (no relational lookups; shared by single and batch conversion)
      */
     private InterviewResponse buildBaseResponse(InterviewRecord record) {
         InterviewResponse response = new InterviewResponse();
@@ -377,7 +377,7 @@ public class InterviewService {
     }
 
     /**
-     * 面试类型中文描述（委托给枚举）
+     * Human-readable interview type description (delegated to the enum)
      */
     private String getInterviewTypeDesc(String type) {
         if (type == null) return "";
@@ -385,7 +385,7 @@ public class InterviewService {
     }
 
     /**
-     * 面试状态中文描述（委托给枚举）
+     * Human-readable interview status description (delegated to the enum)
      */
     private String getStatusDesc(String status) {
         if (status == null) return "";
@@ -393,7 +393,7 @@ public class InterviewService {
     }
 
     /**
-     * 推荐结论中文描述（委托给枚举）
+     * Human-readable recommendation description (delegated to the enum)
      */
     private String getRecommendationDesc(String recommendation) {
         if (recommendation == null) return "";
@@ -401,10 +401,10 @@ public class InterviewService {
     }
 
     /**
-     * 清除缓存
+     * Evict the cache
      */
     private void evictCache(Long id) {
         redisTemplate.delete(RedisKeyConstants.CACHE_INTERVIEW_KEY_PREFIX + id);
-        log.debug("面试缓存已失效：id={}", id);
+        log.debug("Interview cache evicted: id={}", id);
     }
 }

@@ -35,27 +35,27 @@ const eventCategoryMap: Record<
   { label: string; color: string; events: WebhookEventType[] }
 > = {
   resume: {
-    label: '简历',
+    label: 'Resume',
     color: 'blue',
     events: ['resume.uploaded', 'resume.parse_completed', 'resume.parse_failed'],
   },
   candidate: {
-    label: '候选人',
+    label: 'Candidate',
     color: 'green',
     events: ['candidate.created', 'candidate.updated'],
   },
   application: {
-    label: '申请',
+    label: 'Application',
     color: 'purple',
     events: ['application.submitted', 'application.status_changed'],
   },
   interview: {
-    label: '面试',
+    label: 'Interview',
     color: 'orange',
     events: ['interview.scheduled', 'interview.completed', 'interview.cancelled'],
   },
   system: {
-    label: '系统',
+    label: 'System',
     color: 'red',
     events: ['system.error', 'system.maintenance'],
   },
@@ -85,7 +85,7 @@ export default function SettingsPage() {
   const handleCreate = async () => {
     const values = await form.validateFields();
     await webhookApi.create(values);
-    message.success('Webhook 创建成功');
+    message.success('Webhook created successfully');
     setCreateModal(false);
     form.resetFields();
     loadWebhooks();
@@ -93,7 +93,7 @@ export default function SettingsPage() {
 
   const handleDelete = async (id: number) => {
     await webhookApi.delete(id);
-    message.success('已删除');
+    message.success('Deleted');
     loadWebhooks();
   };
 
@@ -101,9 +101,9 @@ export default function SettingsPage() {
     setTestingId(id);
     try {
       await webhookApi.test(id);
-      message.success('测试消息已发送');
+      message.success('Test message sent');
     } catch {
-      message.error('测试发送失败');
+      message.error('Test send failed');
     } finally {
       setTestingId(null);
     }
@@ -124,7 +124,7 @@ export default function SettingsPage() {
       ),
     },
     {
-      title: '事件类型',
+      title: 'Event Types',
       dataIndex: 'events',
       width: 240,
       render: (events: string[]) => (
@@ -142,29 +142,29 @@ export default function SettingsPage() {
       ),
     },
     {
-      title: '签名密钥',
+      title: 'Signing Secret',
       dataIndex: 'secretHint',
       width: 100,
       render: (v: string) =>
         v ? (
           <Text code>{v}</Text>
         ) : (
-          <span className="text-gray-400">未设置</span>
+          <span className="text-gray-400">Not set</span>
         ),
     },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'enabled',
       width: 80,
       render: (active: boolean) =>
         active !== false ? (
-          <Badge status="success" text="活跃" />
+          <Badge status="success" text="Active" />
         ) : (
-          <Badge status="default" text="禁用" />
+          <Badge status="default" text="Disabled" />
         ),
     },
     {
-      title: '操作',
+      title: 'Actions',
       width: 140,
       render: (_: unknown, record: WebhookResponse) => (
         <Space size={4}>
@@ -175,11 +175,11 @@ export default function SettingsPage() {
             loading={testingId === record.id}
             onClick={() => handleTest(record.id)}
           >
-            测试
+            Test
           </Button>
-          <Popconfirm title="确定删除此 Webhook？" onConfirm={() => handleDelete(record.id)}>
+          <Popconfirm title="Are you sure you want to delete this webhook?" onConfirm={() => handleDelete(record.id)}>
             <Button type="link" size="small" icon={<DeleteOutlined />} danger>
-              删除
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -189,17 +189,17 @@ export default function SettingsPage() {
 
   return (
     <PageTransition>
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">系统设置</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">System Settings</h2>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* Webhook 管理 */}
+        {/* Webhook management */}
         <motion.div variants={staggerItem}>
           <Card
             bordered={false}
             title={
               <span className="flex items-center gap-2">
                 <ApiOutlined className="text-cyan-600" />
-                <span>Webhook 配置</span>
+                <span>Webhook Configuration</span>
               </span>
             }
             extra={
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                 icon={<PlusOutlined />}
                 onClick={() => setCreateModal(true)}
               >
-                新建 Webhook
+                New Webhook
               </Button>
             }
           >
@@ -224,13 +224,13 @@ export default function SettingsPage() {
         </motion.div>
       </motion.div>
 
-      {/* 创建 Webhook 弹窗 */}
+      {/* Create webhook modal */}
       <Modal
-        title="新建 Webhook"
+        title="New Webhook"
         open={createModal}
         onCancel={() => setCreateModal(false)}
         onOk={handleCreate}
-        okText="创建"
+        okText="Create"
         width={580}
       >
         <Form form={form} layout="vertical" className="mt-4">
@@ -238,8 +238,8 @@ export default function SettingsPage() {
             name="url"
             label="Webhook URL"
             rules={[
-              { required: true, message: '请输入 URL' },
-              { type: 'url', message: '请输入有效的 URL' },
+              { required: true, message: 'Please enter a URL' },
+              { type: 'url', message: 'Please enter a valid URL' },
             ]}
           >
             <Input
@@ -248,14 +248,14 @@ export default function SettingsPage() {
             />
           </Form.Item>
 
-          <Form.Item name="secret" label="签名密钥（HMAC-SHA256）">
-            <Input.Password placeholder="可选，用于验证消息签名" />
+          <Form.Item name="secret" label="Signing Secret (HMAC-SHA256)">
+            <Input.Password placeholder="Optional, used to verify message signatures" />
           </Form.Item>
 
           <Form.Item
             name="events"
-            label="订阅事件"
-            rules={[{ required: true, message: '至少选择一个事件' }]}
+            label="Subscribed Events"
+            rules={[{ required: true, message: 'Select at least one event' }]}
           >
             <Checkbox.Group className="w-full">
               {Object.entries(eventCategoryMap).map(([catKey, catData]) => (

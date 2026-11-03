@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 招聘总览数据
+ * Recruitment overview data
  * <p>
- * 提供完整的招聘管线（Pipeline）全景视图，包括：
+ * Provides a full-view snapshot of the recruitment pipeline, including:
  * <ul>
- *   <li>核心指标：总申请、总候选人、Offer 转化率、平均匹配分、平均招聘周期</li>
- *   <li>漏斗分布：各阶段数量及转化率</li>
- *   <li>月度趋势：按月聚合的申请量走势</li>
+ *   <li>Core metrics: total applications, total candidates, offer conversion rate, average match score, average time-to-hire</li>
+ *   <li>Funnel distribution: counts and conversion rates per stage</li>
+ *   <li>Monthly trend: application volume aggregated by month</li>
  * </ul>
  */
 @Data
@@ -26,66 +26,66 @@ import java.util.Map;
 @AllArgsConstructor
 public class RecruitmentOverviewDTO implements Serializable {
 
-    // ==================== 核心指标 ====================
+    // ==================== Core metrics ====================
 
     /**
-     * 总申请数
+     * Total number of applications
      */
     private long totalApplications;
 
     /**
-     * 总候选人数
+     * Total number of candidates
      */
     private long totalCandidates;
 
     /**
-     * 总职位数
+     * Total number of jobs
      */
     private long totalJobs;
 
     /**
-     * 在招职位数
+     * Number of open jobs
      */
     private long openJobs;
 
     /**
-     * 已安排面试数
+     * Number of scheduled interviews
      */
     private long interviewsScheduled;
 
     /**
-     * 已发 Offer 数
+     * Number of offers extended
      */
     private long offersExtended;
 
     /**
-     * Offer 转化率（总 Offer / 总申请）
+     * Offer conversion rate (total offers / total applications)
      */
     private double offerRate;
 
     /**
-     * 平均 AI 匹配分（0-100）
+     * Average AI match score (0-100)
      */
     private BigDecimal avgMatchScore;
 
     /**
-     * 平均招聘周期（天）：从申请到发出 Offer 的平均天数
+     * Average time-to-hire (days): average days from application to offer
      */
     private Double avgDaysToOffer;
 
-    // ==================== 漏斗分布 ====================
+    // ==================== Funnel distribution ====================
 
     /**
-     * 招聘漏斗各阶段统计
+     * Per-stage statistics of the recruitment funnel
      */
     private List<FunnelStageDTO> funnel;
 
-    // ==================== 趋势数据 ====================
+    // ==================== Trend data ====================
 
     /**
-     * 按月聚合的申请趋势 {月份 → 申请数}
+     * Monthly aggregated application trend {month -> count}
      * <p>
-     * key 格式: yyyy-MM (如 "2026-01")
+     * key format: yyyy-MM (e.g. "2026-01")
      */
     private Map<String, Long> applicationTrend;
 }

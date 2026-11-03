@@ -5,7 +5,7 @@ import com.smartats.module.webhook.entity.WebhookLog;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * Webhook 日志 Mapper
+ * Webhook log Mapper
  */
 @Mapper
 public interface WebhookLogMapper extends BaseMapper<WebhookLog> {

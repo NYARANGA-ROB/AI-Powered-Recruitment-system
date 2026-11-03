@@ -26,10 +26,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * UserService 单元测试
+ * Unit tests for UserService
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserService 单元测试")
+@DisplayName("UserService unit tests")
 class UserServiceTest {
 
     @InjectMocks
@@ -63,7 +63,7 @@ class UserServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 注册测试
+    // Registration tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -71,7 +71,7 @@ class UserServiceTest {
     class RegisterTests {
 
         @Test
-        @DisplayName("注册成功")
+        @DisplayName("Registration succeeds")
         void shouldRegisterSuccessfully() {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("newuser");
@@ -95,7 +95,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("验证码无效抛异常")
+        @DisplayName("An invalid verification code throws an exception")
         void shouldThrowWhenCodeInvalid() {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("newuser");
@@ -110,7 +110,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("用户名已存在抛异常")
+        @DisplayName("An existing username throws an exception")
         void shouldThrowWhenUsernameExists() {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("existuser");
@@ -127,7 +127,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("邮箱已存在抛异常")
+        @DisplayName("An existing email address throws an exception")
         void shouldThrowWhenEmailExists() {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("newuser");
@@ -145,7 +145,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("默认角色为HR")
+        @DisplayName("The role defaults to HR")
         void shouldDefaultRoleToHR() {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("newuser");
@@ -168,7 +168,7 @@ class UserServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 登录测试
+    // Login tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -176,7 +176,7 @@ class UserServiceTest {
     class LoginTests {
 
         @Test
-        @DisplayName("登录成功返回Token和用户信息")
+        @DisplayName("Successful login returns the token and user information")
         void shouldLoginSuccessfully() {
             LoginRequest request = new LoginRequest();
             request.setUsername("zhangsan");
@@ -201,7 +201,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("用户不存在抛异常")
+        @DisplayName("A missing user throws an exception")
         void shouldThrowWhenUserNotFound() {
             LoginRequest request = new LoginRequest();
             request.setUsername("nonexistent");
@@ -214,7 +214,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("密码错误抛异常")
+        @DisplayName("A wrong password throws an exception")
         void shouldThrowWhenPasswordWrong() {
             LoginRequest request = new LoginRequest();
             request.setUsername("zhangsan");
@@ -228,7 +228,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("账号已禁用抛异常")
+        @DisplayName("A disabled account throws an exception")
         void shouldThrowWhenAccountDisabled() {
             LoginRequest request = new LoginRequest();
             request.setUsername("zhangsan");
@@ -243,7 +243,7 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("登录时读取今日AI使用次数")
+        @DisplayName("Login reads today's AI usage count")
         void shouldReadTodayAiUsedFromRedis() {
             LoginRequest request = new LoginRequest();
             request.setUsername("zhangsan");
@@ -265,7 +265,7 @@ class UserServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Token 刷新测试
+    // Token refresh tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -273,14 +273,14 @@ class UserServiceTest {
     class RefreshTokenTests {
 
         @Test
-        @DisplayName("Token为空抛异常")
+        @DisplayName("A blank token throws an exception")
         void shouldThrowWhenTokenBlank() {
             assertThatThrownBy(() -> userService.refreshToken(""))
                     .isInstanceOf(BusinessException.class);
         }
 
         @Test
-        @DisplayName("Token为null抛异常")
+        @DisplayName("A null token throws an exception")
         void shouldThrowWhenTokenNull() {
             assertThatThrownBy(() -> userService.refreshToken(null))
                     .isInstanceOf(BusinessException.class);

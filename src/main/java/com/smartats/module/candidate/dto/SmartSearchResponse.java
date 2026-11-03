@@ -5,51 +5,51 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 语义搜索响应 DTO
+ * Semantic search response DTO
  */
 @Data
 public class SmartSearchResponse {
 
-    /** 原始查询文本 */
+    /** Original query text */
     private String query;
 
-    /** 返回的匹配候选人数量 */
+    /** Number of matched candidates returned */
     private int totalMatches;
 
-    /** 匹配的候选人列表（按相似度倒序） */
+    /** List of matched candidates (sorted by similarity, descending) */
     private List<MatchedCandidate> candidates;
 
     /**
-     * 单个匹配候选人结果
+     * A single matched candidate result
      */
     @Data
     public static class MatchedCandidate {
 
-        /** 候选人 ID */
+        /** Candidate ID */
         private Long candidateId;
 
-        /** 候选人姓名 */
+        /** Candidate name */
         private String name;
 
-        /** 相似度分数（0~1，COSINE） */
+        /** Similarity score (0-1, COSINE) */
         private double matchScore;
 
-        /** 当前职位 */
+        /** Current position */
         private String currentPosition;
 
-        /** 当前公司 */
+        /** Current company */
         private String currentCompany;
 
-        /** 最高学历 */
+        /** Highest education */
         private String education;
 
-        /** 工作年限 */
+        /** Years of experience */
         private Integer workYears;
 
-        /** 技能标签 */
+        /** Skill tags */
         private List<String> skills;
 
-        /** AI 生成摘要 */
+        /** AI-generated summary */
         private String aiSummary;
     }
 }

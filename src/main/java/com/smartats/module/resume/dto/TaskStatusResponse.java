@@ -10,37 +10,37 @@ import lombok.NoArgsConstructor;
 public class TaskStatusResponse {
 
     /**
-     * 任务状态
+     * Task status
      */
     private String status;
 
     /**
-     * 简历ID（解析完成后有值）
+     * Resume ID (present after parsing completes)
      */
     private Long resumeId;
 
     /**
-     * 候选人ID（解析完成后有值）
+     * Candidate ID (present after parsing completes)
      */
     private Long candidateId;
 
     /**
-     * 错误信息（失败时有值）
+     * Error message (present on failure)
      */
     private String errorMessage;
 
     /**
-     * 进度百分比（0-100）
+     * Progress percentage (0-100)
      */
     private Integer progress;
 
     /**
-     * 当前重试次数（RETRYING 状态时有值）
+     * Current retry count (present in RETRYING status)
      */
     private Integer retryCount;
 
     /**
-     * 最大重试次数
+     * Maximum retry count
      */
     private Integer maxRetries;
 }

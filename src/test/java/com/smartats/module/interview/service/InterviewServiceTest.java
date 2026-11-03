@@ -35,12 +35,12 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * InterviewService 单元测试
+ * InterviewService unit tests
  * <p>
- * 使用 Mockito 隔离外部依赖，测试核心业务逻辑。
+ * Uses Mockito to isolate external dependencies and test the core business logic.
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("InterviewService 单元测试")
+@DisplayName("InterviewService unit tests")
 class InterviewServiceTest {
 
     @InjectMocks
@@ -67,7 +67,7 @@ class InterviewServiceTest {
 
     @BeforeEach
     void setUp() {
-        // 构造通用测试数据
+        // Build common test data
         mockApplication = new JobApplication();
         mockApplication.setId(1L);
         mockApplication.setJobId(10L);
@@ -76,7 +76,7 @@ class InterviewServiceTest {
 
         mockInterviewer = new User();
         mockInterviewer.setId(100L);
-        mockInterviewer.setUsername("面试官张三");
+        mockInterviewer.setUsername("Interviewer Zhang San");
 
         scheduleRequest = new ScheduleInterviewRequest();
         scheduleRequest.setApplicationId(1L);
@@ -87,23 +87,23 @@ class InterviewServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 安排面试测试
+    // Schedule interview tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("安排面试")
+    @DisplayName("Schedule interview")
     class ScheduleInterviewTests {
 
         @Test
-        @DisplayName("正常安排面试 - 自动递增轮次")
+        @DisplayName("Schedules an interview successfully - auto-increments the round")
         void scheduleInterview_success_autoRound() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
             given(userMapper.selectById(100L)).willReturn(mockInterviewer);
-            given(interviewRecordMapper.selectCount(any())).willReturn(0L); // 无已有轮次
+            given(interviewRecordMapper.selectCount(any())).willReturn(0L); // no existing rounds
             given(interviewRecordMapper.insert(any(InterviewRecord.class))).willAnswer(invocation -> {
                 InterviewRecord record = invocation.getArgument(0);
-                record.setId(999L); // 模拟自增 ID
+                record.setId(999L); // simulate auto-increment ID
                 return 1;
             });
 
@@ -125,7 +125,7 @@ class InterviewServiceTest {
         }
 
         @Test
-        @DisplayName("安排面试 - 申请状态从 SCREENING 自动推进为 INTERVIEW")
+        @DisplayName("Schedules an interview - application status auto-advances from SCREENING to INTERVIEW")
         void scheduleInterview_autoPromoteStatus() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
@@ -136,34 +136,34 @@ class InterviewServiceTest {
             // When
             interviewService.scheduleInterview(scheduleRequest);
 
-            // Then - 验证申请状态被更新为 INTERVIEW
+            // Then - verify the application status is updated to INTERVIEW
             ArgumentCaptor<JobApplication> appCaptor = ArgumentCaptor.forClass(JobApplication.class);
             then(jobApplicationMapper).should().updateById(appCaptor.capture());
             assertThat(appCaptor.getValue().getStatus()).isEqualTo(ApplicationStatus.INTERVIEW.getCode());
         }
 
         @Test
-        @DisplayName("安排面试 - 申请已经是 INTERVIEW 状态时不再推进")
+        @DisplayName("Schedules an interview - no status promotion when the application is already in INTERVIEW")
         void scheduleInterview_noPromoteWhenAlreadyInterview() {
             // Given
             mockApplication.setStatus(ApplicationStatus.INTERVIEW.getCode());
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
             given(userMapper.selectById(100L)).willReturn(mockInterviewer);
-            // 第一次 selectCount = 1L (轮次计算)，第二次 = 0L (无时间冲突)
+            // first selectCount = 1L (round calculation), second = 0L (no time conflict)
             given(interviewRecordMapper.selectCount(any()))
-                    .willReturn(1L)   // 已有面试轮次
-                    .willReturn(0L);  // 无时间冲突
+                    .willReturn(1L)   // existing interview rounds
+                    .willReturn(0L);  // no time conflict
             given(interviewRecordMapper.insert(any(InterviewRecord.class))).willReturn(1);
 
             // When
             interviewService.scheduleInterview(scheduleRequest);
 
-            // Then - 不应再次更新申请状态
+            // Then - the application status must not be updated again
             then(jobApplicationMapper).should(never()).updateById(any(JobApplication.class));
         }
 
         @Test
-        @DisplayName("安排面试 - 申请不存在时抛异常")
+        @DisplayName("Schedules an interview - throws when the application does not exist")
         void scheduleInterview_applicationNotFound() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(null);
@@ -171,11 +171,11 @@ class InterviewServiceTest {
             // When & Then
             assertThatThrownBy(() -> interviewService.scheduleInterview(scheduleRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("申请记录不存在");
+                    .hasMessageContaining("Application record not found");
         }
 
         @Test
-        @DisplayName("安排面试 - 申请状态不允许安排面试时抛异常")
+        @DisplayName("Schedules an interview - throws when the application status does not allow scheduling")
         void scheduleInterview_invalidStatus() {
             // Given
             mockApplication.setStatus(ApplicationStatus.PENDING.getCode());
@@ -184,11 +184,11 @@ class InterviewServiceTest {
             // When & Then
             assertThatThrownBy(() -> interviewService.scheduleInterview(scheduleRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("不允许安排面试");
+                    .hasMessageContaining("scheduling an interview is not allowed");
         }
 
         @Test
-        @DisplayName("安排面试 - 面试官不存在时抛异常")
+        @DisplayName("Schedules an interview - throws when the interviewer does not exist")
         void scheduleInterview_interviewerNotFound() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
@@ -197,28 +197,28 @@ class InterviewServiceTest {
             // When & Then
             assertThatThrownBy(() -> interviewService.scheduleInterview(scheduleRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试官不存在");
+                    .hasMessageContaining("Interviewer not found");
         }
 
         @Test
-        @DisplayName("安排面试 - 时间冲突时抛异常")
+        @DisplayName("Schedules an interview - throws on a time conflict")
         void scheduleInterview_timeConflict() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
             given(userMapper.selectById(100L)).willReturn(mockInterviewer);
-            // 第一次 selectCount 返回已有面试数(轮次计算)，第二次返回冲突数
+            // first selectCount returns the existing interview count (round calculation), second returns the conflict count
             given(interviewRecordMapper.selectCount(any()))
-                    .willReturn(0L)  // 轮次计算
-                    .willReturn(1L); // 冲突检测
+                    .willReturn(0L)  // round calculation
+                    .willReturn(1L); // conflict detection
 
             // When & Then
             assertThatThrownBy(() -> interviewService.scheduleInterview(scheduleRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试时间冲突");
+                    .hasMessageContaining("Interview time conflict");
         }
 
         @Test
-        @DisplayName("安排面试 - 触发 Webhook 事件")
+        @DisplayName("Schedules an interview - triggers a Webhook event")
         void scheduleInterview_triggerWebhook() {
             // Given
             given(jobApplicationMapper.selectById(1L)).willReturn(mockApplication);
@@ -235,11 +235,11 @@ class InterviewServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 提交反馈测试
+    // Submit feedback tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("提交面试反馈")
+    @DisplayName("Submit interview feedback")
     class SubmitFeedbackTests {
 
         private InterviewRecord existingRecord;
@@ -255,16 +255,16 @@ class InterviewServiceTest {
 
             feedbackRequest = new SubmitFeedbackRequest();
             feedbackRequest.setScore(8);
-            feedbackRequest.setFeedback("技术能力优秀，沟通表达清晰");
+            feedbackRequest.setFeedback("Excellent technical skills, clear communication");
             feedbackRequest.setRecommendation("STRONG_YES");
 
-            // 模拟 Redis 操作
+            // Mock Redis operations
             lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             lenient().when(redisTemplate.delete(anyString())).thenReturn(true);
         }
 
         @Test
-        @DisplayName("正常提交反馈 - 面试状态变为 COMPLETED")
+        @DisplayName("Submits feedback successfully - interview status becomes COMPLETED")
         void submitFeedback_success() {
             // Given
             given(interviewRecordMapper.selectById(1L)).willReturn(existingRecord);
@@ -280,38 +280,38 @@ class InterviewServiceTest {
             InterviewRecord updated = captor.getValue();
             assertThat(updated.getStatus()).isEqualTo(InterviewStatus.COMPLETED.getCode());
             assertThat(updated.getScore()).isEqualTo(8);
-            assertThat(updated.getFeedback()).isEqualTo("技术能力优秀，沟通表达清晰");
+            assertThat(updated.getFeedback()).isEqualTo("Excellent technical skills, clear communication");
             assertThat(updated.getRecommendation()).isEqualTo("STRONG_YES");
         }
 
         @Test
-        @DisplayName("面试不存在时抛异常")
+        @DisplayName("Throws when the interview does not exist")
         void submitFeedback_notFound() {
             given(interviewRecordMapper.selectById(1L)).willReturn(null);
 
             assertThatThrownBy(() -> interviewService.submitFeedback(1L, feedbackRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试记录不存在");
+                    .hasMessageContaining("Interview record not found");
         }
 
         @Test
-        @DisplayName("已取消的面试不允许提交反馈")
+        @DisplayName("Cancelled interviews do not allow submitting feedback")
         void submitFeedback_cancelledInterview() {
             existingRecord.setStatus(InterviewStatus.CANCELLED.getCode());
             given(interviewRecordMapper.selectById(1L)).willReturn(existingRecord);
 
             assertThatThrownBy(() -> interviewService.submitFeedback(1L, feedbackRequest))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试已取消");
+                    .hasMessageContaining("The interview has been cancelled");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 取消面试测试
+    // Cancel interview tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("取消面试")
+    @DisplayName("Cancel interview")
     class CancelInterviewTests {
 
         private InterviewRecord scheduledRecord;
@@ -329,7 +329,7 @@ class InterviewServiceTest {
         }
 
         @Test
-        @DisplayName("正常取消面试")
+        @DisplayName("Cancels an interview successfully")
         void cancelInterview_success() {
             given(interviewRecordMapper.selectById(1L)).willReturn(scheduledRecord);
             given(interviewRecordMapper.updateById(any(InterviewRecord.class))).willReturn(1);
@@ -342,44 +342,44 @@ class InterviewServiceTest {
         }
 
         @Test
-        @DisplayName("已完成的面试不允许取消")
+        @DisplayName("Completed interviews cannot be cancelled")
         void cancelInterview_alreadyCompleted() {
             scheduledRecord.setStatus(InterviewStatus.COMPLETED.getCode());
             given(interviewRecordMapper.selectById(1L)).willReturn(scheduledRecord);
 
             assertThatThrownBy(() -> interviewService.cancelInterview(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试已完成");
+                    .hasMessageContaining("The interview is already completed");
         }
 
         @Test
-        @DisplayName("已取消的面试不允许再次取消")
+        @DisplayName("Cancelled interviews cannot be cancelled again")
         void cancelInterview_alreadyCancelled() {
             scheduledRecord.setStatus(InterviewStatus.CANCELLED.getCode());
             given(interviewRecordMapper.selectById(1L)).willReturn(scheduledRecord);
 
             assertThatThrownBy(() -> interviewService.cancelInterview(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试已取消");
+                    .hasMessageContaining("The interview has been cancelled");
         }
 
         @Test
-        @DisplayName("面试不存在时抛异常")
+        @DisplayName("Throws when the interview does not exist")
         void cancelInterview_notFound() {
             given(interviewRecordMapper.selectById(1L)).willReturn(null);
 
             assertThatThrownBy(() -> interviewService.cancelInterview(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试记录不存在");
+                    .hasMessageContaining("Interview record not found");
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询测试
+    // Query tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("查询面试记录")
+    @DisplayName("Query interview records")
     class QueryTests {
 
         @BeforeEach
@@ -388,13 +388,13 @@ class InterviewServiceTest {
         }
 
         @Test
-        @DisplayName("根据 ID 查询 - 缓存未命中时从数据库查询并回填缓存")
+        @DisplayName("Query by ID - falls back to the database on a cache miss and repopulates the cache")
         void getById_cacheMiss() throws Exception {
             // Given
             InterviewRecord record = buildFullRecord();
             User interviewer = mockInterviewer;
 
-            given(valueOperations.get(anyString())).willReturn(null); // 缓存未命中
+            given(valueOperations.get(anyString())).willReturn(null); // cache miss
             given(interviewRecordMapper.selectById(1L)).willReturn(record);
             given(userMapper.selectById(100L)).willReturn(interviewer);
             given(objectMapper.writeValueAsString(any())).willReturn("{}");
@@ -405,17 +405,17 @@ class InterviewServiceTest {
             // Then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getInterviewerName()).isEqualTo("面试官张三");
+            assertThat(response.getInterviewerName()).isEqualTo("Interviewer Zhang San");
             then(valueOperations).should().set(anyString(), anyString(), anyLong(), any());
         }
 
         @Test
-        @DisplayName("根据 ID 查询 - 缓存命中时直接返回")
+        @DisplayName("Query by ID - returns directly on a cache hit")
         void getById_cacheHit() throws Exception {
             // Given
             InterviewResponse cached = new InterviewResponse();
             cached.setId(1L);
-            cached.setInterviewerName("面试官张三");
+            cached.setInterviewerName("Interviewer Zhang San");
 
             given(valueOperations.get(anyString())).willReturn("{\"id\":1}");
             given(objectMapper.readValue(anyString(), eq(InterviewResponse.class))).willReturn(cached);
@@ -425,22 +425,22 @@ class InterviewServiceTest {
 
             // Then
             assertThat(response.getId()).isEqualTo(1L);
-            then(interviewRecordMapper).should(never()).selectById(any()); // 不查数据库
+            then(interviewRecordMapper).should(never()).selectById(any()); // no database query
         }
 
         @Test
-        @DisplayName("根据 ID 查询 - 面试不存在时抛异常")
+        @DisplayName("Query by ID - throws when the interview does not exist")
         void getById_notFound() {
             given(valueOperations.get(anyString())).willReturn(null);
             given(interviewRecordMapper.selectById(1L)).willReturn(null);
 
             assertThatThrownBy(() -> interviewService.getById(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("面试记录不存在");
+                    .hasMessageContaining("Interview record not found");
         }
 
         @Test
-        @DisplayName("按申请查询面试列表 - 空列表")
+        @DisplayName("List interviews by application - empty list")
         void listByApplicationId_empty() {
             given(interviewRecordMapper.selectList(any())).willReturn(Collections.emptyList());
 
@@ -450,14 +450,14 @@ class InterviewServiceTest {
         }
 
         @Test
-        @DisplayName("按申请查询面试列表 - 批量查询面试官避免 N+1")
+        @DisplayName("List interviews by application - batch-fetches interviewers to avoid N+1")
         void listByApplicationId_batchQuery() {
             // Given
             InterviewRecord r1 = buildRecord(1L, 100L, 1, InterviewStatus.COMPLETED.getCode());
             InterviewRecord r2 = buildRecord(2L, 200L, 2, InterviewStatus.SCHEDULED.getCode());
 
-            User u1 = buildUser(100L, "面试官A");
-            User u2 = buildUser(200L, "面试官B");
+            User u1 = buildUser(100L, "Interviewer A");
+            User u2 = buildUser(200L, "Interviewer B");
 
             given(interviewRecordMapper.selectList(any())).willReturn(List.of(r1, r2));
             given(userMapper.selectBatchIds(anyCollection())).willReturn(List.of(u1, u2));
@@ -467,17 +467,17 @@ class InterviewServiceTest {
 
             // Then
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getInterviewerName()).isEqualTo("面试官A");
-            assertThat(result.get(1).getInterviewerName()).isEqualTo("面试官B");
+            assertThat(result.get(0).getInterviewerName()).isEqualTo("Interviewer A");
+            assertThat(result.get(1).getInterviewerName()).isEqualTo("Interviewer B");
 
-            // 验证只调用了一次批量查询（而非 N 次单条查询）
+            // verify exactly one batch query was made (instead of N single queries)
             then(userMapper).should(times(1)).selectBatchIds(anyCollection());
             then(userMapper).should(never()).selectById(any());
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 测试工具方法
+    // Test helper methods
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private InterviewRecord buildFullRecord() {

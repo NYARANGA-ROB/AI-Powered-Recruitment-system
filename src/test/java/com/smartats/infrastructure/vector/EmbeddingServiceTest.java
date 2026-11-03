@@ -23,10 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 
 /**
- * EmbeddingService 单元测试
+ * EmbeddingService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("EmbeddingService 单元测试")
+@DisplayName("EmbeddingService unit tests")
 class EmbeddingServiceTest {
 
     @InjectMocks
@@ -41,20 +41,20 @@ class EmbeddingServiceTest {
     void setUp() {
         testCandidate = new Candidate();
         testCandidate.setId(1L);
-        testCandidate.setName("张三");
+        testCandidate.setName("John Smith");
         testCandidate.setGender("MALE");
-        testCandidate.setEducation("本科");
-        testCandidate.setSchool("北京大学");
-        testCandidate.setMajor("计算机科学");
+        testCandidate.setEducation("Bachelor");
+        testCandidate.setSchool("Peking University");
+        testCandidate.setMajor("Computer Science");
         testCandidate.setWorkYears(5);
-        testCandidate.setCurrentCompany("腾讯");
-        testCandidate.setCurrentPosition("高级后端工程师");
+        testCandidate.setCurrentCompany("Tencent");
+        testCandidate.setCurrentPosition("Senior Backend Engineer");
         testCandidate.setSkills(List.of("Java", "Spring Boot", "MySQL", "Redis"));
-        testCandidate.setSelfEvaluation("5年后端开发经验，擅长高并发系统设计");
+        testCandidate.setSelfEvaluation("5 years of backend development experience, skilled in high-concurrency system design");
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // buildCandidateText 测试
+    // buildCandidateText tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -62,70 +62,70 @@ class EmbeddingServiceTest {
     class BuildCandidateTextTests {
 
         @Test
-        @DisplayName("包含所有非空字段")
+        @DisplayName("includes every non-empty field")
         void shouldIncludeAllNonNullFields() {
             String text = embeddingService.buildCandidateText(testCandidate);
 
             assertThat(text)
-                    .contains("姓名: 张三")
-                    .contains("性别: MALE")
-                    .contains("学历: 本科")
-                    .contains("院校: 北京大学")
-                    .contains("专业: 计算机科学")
-                    .contains("工作年限: 5年")
-                    .contains("当前公司: 腾讯")
-                    .contains("当前职位: 高级后端工程师")
-                    .contains("技能: Java, Spring Boot, MySQL, Redis")
-                    .contains("自我评价: 5年后端开发经验");
+                    .contains("Name: John Smith")
+                    .contains("Gender: MALE")
+                    .contains("Education: Bachelor")
+                    .contains("School: Peking University")
+                    .contains("Major: Computer Science")
+                    .contains("Work Years: 5 years")
+                    .contains("Current Company: Tencent")
+                    .contains("Current Position: Senior Backend Engineer")
+                    .contains("Skills: Java, Spring Boot, MySQL, Redis")
+                    .contains("Self Evaluation: 5 years of backend development");
         }
 
         @Test
-        @DisplayName("字段为空时跳过")
+        @DisplayName("skips empty fields")
         void shouldSkipNullFields() {
             Candidate minimal = new Candidate();
-            minimal.setName("李四");
+            minimal.setName("Jane Doe");
 
             String text = embeddingService.buildCandidateText(minimal);
 
-            assertThat(text).contains("姓名: 李四");
-            assertThat(text).doesNotContain("学历:");
-            assertThat(text).doesNotContain("技能:");
+            assertThat(text).contains("Name: Jane Doe");
+            assertThat(text).doesNotContain("Education:");
+            assertThat(text).doesNotContain("Skills:");
         }
 
         @Test
-        @DisplayName("包含工作经历信息")
+        @DisplayName("includes work experience")
         void shouldIncludeWorkExperience() {
             testCandidate.setWorkExperience(List.of(
-                    Map.of("company", "阿里巴巴", "position", "Java 开发", "description", "负责核心交易系统")
+                    Map.of("company", "Alibaba", "position", "Java Developer", "description", "Owned the core trading system")
             ));
 
             String text = embeddingService.buildCandidateText(testCandidate);
             assertThat(text)
-                    .contains("工作经历:")
-                    .contains("阿里巴巴")
-                    .contains("Java 开发")
-                    .contains("负责核心交易系统");
+                    .contains("Work Experience:")
+                    .contains("Alibaba")
+                    .contains("Java Developer")
+                    .contains("Owned the core trading system");
         }
 
         @Test
-        @DisplayName("包含项目经历信息")
+        @DisplayName("includes project experience")
         void shouldIncludeProjectExperience() {
             testCandidate.setProjectExperience(List.of(
-                    Map.of("name", "电商平台", "role", "技术负责人", "description", "从0到1搭建微服务架构")
+                    Map.of("name", "E-commerce Platform", "role", "Technical Lead", "description", "Built the microservice architecture from scratch")
             ));
 
             String text = embeddingService.buildCandidateText(testCandidate);
             assertThat(text)
-                    .contains("项目经历:")
-                    .contains("电商平台")
-                    .contains("技术负责人")
-                    .contains("从0到1搭建微服务架构");
+                    .contains("Project Experience:")
+                    .contains("E-commerce Platform")
+                    .contains("Technical Lead")
+                    .contains("Built the microservice architecture from scratch");
         }
 
         @Test
-        @DisplayName("超长文本截断到最大长度")
+        @DisplayName("truncates oversized text to the maximum length")
         void shouldTruncateLongText() {
-            // 构建超长自我评价
+            // Build an oversized self evaluation
             String longText = "A".repeat(10000);
             testCandidate.setSelfEvaluation(longText);
 
@@ -135,7 +135,7 @@ class EmbeddingServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // generateCandidateEmbedding 测试
+    // generateCandidateEmbedding tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -143,7 +143,7 @@ class EmbeddingServiceTest {
     class GenerateCandidateEmbeddingTests {
 
         @Test
-        @DisplayName("成功生成候选人嵌入向量")
+        @DisplayName("generates the candidate embedding successfully")
         void shouldGenerateEmbedding() {
             // Given
             float[] mockEmbedding = new float[1024];
@@ -169,7 +169,7 @@ class EmbeddingServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // generateQueryEmbedding 测试
+    // generateQueryEmbedding tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -177,7 +177,7 @@ class EmbeddingServiceTest {
     class GenerateQueryEmbeddingTests {
 
         @Test
-        @DisplayName("成功生成查询嵌入向量")
+        @DisplayName("generates the query embedding successfully")
         void shouldGenerateQueryEmbedding() {
             // Given
             float[] mockEmbedding = new float[1024];
@@ -190,7 +190,7 @@ class EmbeddingServiceTest {
             given(embeddingModel.call(any(EmbeddingRequest.class))).willReturn(response);
 
             // When
-            List<Float> embedding = embeddingService.generateQueryEmbedding("3年Java后端开发");
+            List<Float> embedding = embeddingService.generateQueryEmbedding("3 years of Java backend development");
 
             // Then
             assertThat(embedding).hasSize(1024);

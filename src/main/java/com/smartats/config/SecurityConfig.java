@@ -37,16 +37,16 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // 认证接口：允许匿名访问
+                        // Authentication endpoints: anonymous access allowed
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/send-verification-code").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
 
-                        // 职位接口：GET 允许匿名浏览
+                        // Job endpoints: GET allows anonymous browsing
                         .requestMatchers(HttpMethod.GET, "/jobs/**").permitAll()
 
-                        // Swagger / OpenAPI 文档：允许匿名访问
+                        // Swagger / OpenAPI docs: anonymous access allowed
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
@@ -55,7 +55,7 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
 
-                        // 其他所有接口（Webhook管理、申请管理、面试管理等）：需要认证
+                        // All other endpoints (Webhook management, application management, interview management, etc.): authentication required
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -65,8 +65,8 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS 配置
-     * 生产环境应该配置具体的域名，而不是使用 "*"
+     * CORS configuration
+     * In production you should list the concrete domains rather than using "*"
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -78,8 +78,8 @@ public class SecurityConfig {
         return request -> {
             CorsConfiguration config = new CorsConfiguration();
 
-            // 通过配置项 smartats.cors.allowed-origins 控制允许的域名
-            // dev 环境默认 "*"，prod 环境从环境变量读取
+            // The allowed domains are controlled by the smartats.cors.allowed-origins property
+            // dev defaults to "*", prod reads them from environment variables
             List<String> origins = Arrays.asList(allowedOrigins.split(","));
             config.setAllowedOriginPatterns(origins);
 

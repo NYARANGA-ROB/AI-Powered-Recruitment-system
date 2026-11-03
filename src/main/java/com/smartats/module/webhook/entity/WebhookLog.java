@@ -8,8 +8,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * Webhook 调用日志
- * 记录每次 Webhook 调用的详细信息，用于调试和重试
+ * Webhook invocation log
+ * Records the details of each Webhook invocation for debugging and retries
  */
 @Data
 @TableName("webhook_logs")
@@ -19,52 +19,52 @@ public class WebhookLog {
     private Long id;
 
     /**
-     * Webhook 配置 ID
+     * Webhook configuration ID
      */
     private Long webhookId;
 
     /**
-     * 事件类型
+     * Event type
      */
     private String eventType;
 
     /**
-     * 请求负载（JSON）
+     * Request payload (JSON)
      */
     private String payload;
 
     /**
-     * HTTP 响应状态码
+     * HTTP response status code
      */
     private Integer responseStatus;
 
     /**
-     * HTTP 响应内容
+     * HTTP response body
      */
     private String responseBody;
 
     /**
-     * 错误信息（如果发送失败）
+     * Error message (if delivery failed)
      */
     private String errorMessage;
 
     /**
-     * 调用状态：SUCCESS, FAILED, RETRYING
+     * Invocation status: SUCCESS, FAILED, RETRYING
      */
     private String status;
 
     /**
-     * 重试次数
+     * Retry count
      */
     private Integer retryCount;
 
     /**
-     * 调用耗时（毫秒）
+     * Invocation duration (milliseconds)
      */
     private Long duration;
 
     /**
-     * 创建时间
+     * Creation time
      */
     private LocalDateTime createdAt;
 }

@@ -5,10 +5,10 @@ import com.smartats.module.auth.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 用户 Mapper 接口
+ * User mapper interface
  *
- * @Mapper: MyBatis-Plus 扫描注解
- * BaseMapper: 提供 CRUD 基础方法
+ * @Mapper: the MyBatis-Plus scanning annotation
+ * BaseMapper: provides the basic CRUD methods
  */
 @Mapper
 public interface UserMapper extends BaseMapper<User> {

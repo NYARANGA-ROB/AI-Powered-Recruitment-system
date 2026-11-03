@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 候选人服务
+ * Candidate service
  */
 @Slf4j
 @Service
@@ -39,23 +39,23 @@ public class CandidateService {
     private final StringRedisTemplate redisTemplate;
     private final CandidateVectorService candidateVectorService;
 
-    /** 候选人缓存 TTL（分钟） */
+    /** Candidate cache TTL (minutes) */
     private static final long CACHE_TTL_MINUTES = 30;
 
     /**
-     * 创建候选人记录
+     * Create a candidate record
      */
     @Transactional(rollbackFor = Exception.class)
     public Candidate createCandidate(Long resumeId, CandidateInfo candidateInfo, String rawJson) {
-        log.info("创建候选人记录: resumeId={}, name={}", resumeId, candidateInfo.getName());
+        log.info("Creating candidate record: resumeId={}, name={}", resumeId, candidateInfo.getName());
 
-        // 检查是否已存在
+        // Check whether the record already exists
         LambdaQueryWrapper<Candidate> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Candidate::getResumeId, resumeId);
         Candidate existing = candidateMapper.selectOne(queryWrapper);
 
         if (existing != null) {
-            log.info("候选人已存在，更新记录: candidateId={}", existing.getId());
+            log.info("Candidate already exists, updating record: candidateId={}", existing.getId());
             return updateCandidate(existing.getId(), candidateInfo, rawJson);
         }
 
@@ -67,20 +67,20 @@ public class CandidateService {
         candidate.setUpdatedAt(now);
 
         candidateMapper.insert(candidate);
-        log.info("候选人记录创建成功: candidateId={}", candidate.getId());
+        log.info("Candidate record created successfully: candidateId={}", candidate.getId());
         return candidate;
     }
 
     /**
-     * 更新候选人记录
+     * Update a candidate record
      */
     @Transactional(rollbackFor = Exception.class)
     public Candidate updateCandidate(Long id, CandidateInfo candidateInfo, String rawJson) {
-        log.info("更新候选人记录: candidateId={}, name={}", id, candidateInfo.getName());
+        log.info("Updating candidate record: candidateId={}, name={}", id, candidateInfo.getName());
 
         Candidate candidate = candidateMapper.selectById(id);
         if (candidate == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在: id=" + id);
+            throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found: id=" + id);
         }
 
         buildFromCandidateInfo(candidate, candidateInfo, rawJson);
@@ -90,12 +90,12 @@ public class CandidateService {
         candidateMapper.updateById(candidate);
         evictCache(id);
 
-        log.info("候选人记录更新成功: candidateId={}", id);
+        log.info("Candidate record updated successfully: candidateId={}", id);
         return candidateMapper.selectById(id);
     }
 
     /**
-     * 根据 resumeId 查询候选人
+     * Query a candidate by resumeId
      */
     public Candidate getByResumeId(Long resumeId) {
         LambdaQueryWrapper<Candidate> queryWrapper = new LambdaQueryWrapper<>();
@@ -104,28 +104,28 @@ public class CandidateService {
     }
 
     /**
-     * 根据 ID 查询候选人详情，优先从 Redis 缓存读取
+     * Query candidate details by ID, reading from the Redis cache first
      */
     public Candidate getById(Long id) {
         String cacheKey = RedisKeyConstants.CACHE_CANDIDATE_KEY_PREFIX + id;
 
-        // 1. 查缓存
+        // 1. Check the cache
         String cached = redisTemplate.opsForValue().get(cacheKey);
         if (cached != null) {
             try {
                 return objectMapper.readValue(cached, Candidate.class);
             } catch (JsonProcessingException e) {
-                log.warn("候选人缓存反序列化失败，降级查库: id={}", id, e);
+                log.warn("Candidate cache deserialization failed, falling back to the database: id={}", id, e);
             }
         }
 
-        // 2. 查数据库
+        // 2. Query the database
         Candidate candidate = candidateMapper.selectById(id);
         if (candidate == null) {
             return null;
         }
 
-        // 3. 回填缓存
+        // 3. Repopulate the cache
         try {
             redisTemplate.opsForValue().set(
                     cacheKey,
@@ -134,37 +134,37 @@ public class CandidateService {
                     TimeUnit.MINUTES
             );
         } catch (JsonProcessingException e) {
-            log.warn("候选人写入缓存失败（不影响业务）: id={}", id, e);
+            log.warn("Failed to write candidate to cache (no business impact): id={}", id, e);
         }
 
         return candidate;
     }
 
     /**
-     * 手动更新候选人（由 Controller 直接调用，字段已在外部设置好）
+     * Manually update a candidate (called directly by the controller; fields are already set externally)
      */
     @Transactional(rollbackFor = Exception.class)
     public Candidate saveManual(Candidate candidate) {
         candidate.setUpdatedAt(LocalDateTime.now());
         candidateMapper.updateById(candidate);
         evictCache(candidate.getId());
-        log.info("候选人手动更新成功: candidateId={}", candidate.getId());
+        log.info("Candidate manually updated successfully: candidateId={}", candidate.getId());
         return getById(candidate.getId());
     }
 
     /**
-     * 使用 DTO 部分更新候选人字段（仅更新非 null 字段）
+     * Partially update candidate fields using the DTO (only non-null fields are updated)
      */
     @Transactional(rollbackFor = Exception.class)
     public Candidate updateManual(Long id, CandidateUpdateRequest request) {
-        log.info("更新候选人信息: id={}", id);
+        log.info("Updating candidate information: id={}", id);
 
         Candidate candidate = candidateMapper.selectById(id);
         if (candidate == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found");
         }
 
-        // 仅更新非 null 字段
+        // Only update non-null fields
         if (request.getName() != null) candidate.setName(request.getName());
         if (request.getPhone() != null) candidate.setPhone(request.getPhone());
         if (request.getEmail() != null) candidate.setEmail(request.getEmail());
@@ -184,34 +184,34 @@ public class CandidateService {
         candidateMapper.updateById(candidate);
         evictCache(id);
 
-        // 异步更新向量（候选人信息变更后需重新嵌入）
+        // Update the vector asynchronously (re-embedding is required after candidate changes)
         Candidate updated = getById(id);
         candidateVectorService.vectorizeCandidateAsync(updated);
 
-        log.info("候选人更新成功: candidateId={}", id);
+        log.info("Candidate updated successfully: candidateId={}", id);
         return updated;
     }
 
     /**
-     * 删除候选人
+     * Delete a candidate
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteById(Long id) {
         candidateMapper.deleteById(id);
         evictCache(id);
-        // 同步删除 Milvus 向量
+        // Synchronously delete the Milvus vector
         candidateVectorService.deleteVector(id);
-        log.info("候选人删除成功: candidateId={}", id);
+        log.info("Candidate deleted successfully: candidateId={}", id);
     }
 
     /**
-     * 分页查询候选人列表，支持多维度高级筛选
+     * Paginated candidate list query with multi-dimensional advanced filtering
      * <ul>
-     *   <li>keyword  — 姓名/邮箱/公司/职位 模糊</li>
-     *   <li>education — 学历精确匹配</li>
-     *   <li>skill    — 技能 JSON_CONTAINS</li>
-     *   <li>minWorkYears / maxWorkYears — 工作年限范围</li>
-     *   <li>currentPosition — 当前职位关键字</li>
+     *   <li>keyword  — fuzzy match on name/email/company/position</li>
+     *   <li>education — exact education match</li>
+     *   <li>skill    — skill JSON_CONTAINS</li>
+     *   <li>minWorkYears / maxWorkYears — years-of-experience range</li>
+     *   <li>currentPosition — current position keyword</li>
      * </ul>
      */
     public Page<Candidate> listCandidates(CandidateQueryRequest request) {
@@ -221,7 +221,7 @@ public class CandidateService {
         Page<Candidate> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<Candidate> wrapper = new LambdaQueryWrapper<>();
 
-        // ① 通用关键字
+        // (1) Common keyword
         if (StringUtils.hasText(request.getKeyword())) {
             String kw = request.getKeyword().trim();
             wrapper.and(w -> w
@@ -232,17 +232,17 @@ public class CandidateService {
             );
         }
 
-        // ② 学历精确匹配
+        // (2) Exact education match
         if (StringUtils.hasText(request.getEducation())) {
             wrapper.eq(Candidate::getEducation, request.getEducation().trim());
         }
 
-        // ③ 技能 JSON_CONTAINS
+        // (3) Skill JSON_CONTAINS
         if (StringUtils.hasText(request.getSkill())) {
             wrapper.apply("JSON_CONTAINS(skills, JSON_QUOTE({0}))", request.getSkill().trim());
         }
 
-        // ④ 工作年限范围
+        // (4) Years-of-experience range
         if (request.getMinWorkYears() != null) {
             wrapper.ge(Candidate::getWorkYears, request.getMinWorkYears());
         }
@@ -250,7 +250,7 @@ public class CandidateService {
             wrapper.le(Candidate::getWorkYears, request.getMaxWorkYears());
         }
 
-        // ⑤ 当前职位关键字
+        // (5) Current position keyword
         if (StringUtils.hasText(request.getCurrentPosition())) {
             wrapper.like(Candidate::getCurrentPosition, request.getCurrentPosition().trim());
         }
@@ -260,15 +260,15 @@ public class CandidateService {
     }
 
     /**
-     * 删除候选人详情缓存（写后失效策略）
+     * Evict the candidate details cache (write-through invalidation strategy)
      */
     private void evictCache(Long id) {
         redisTemplate.delete(RedisKeyConstants.CACHE_CANDIDATE_KEY_PREFIX + id);
-        log.debug("候选人缓存已失效: id={}", id);
+        log.debug("Candidate cache evicted: id={}", id);
     }
 
     /**
-     * 将 CandidateInfo 字段填充到 Candidate 实体（复用于创建和更新场景）
+     * Populate a Candidate entity from CandidateInfo fields (shared by the create and update flows)
      */
     private Candidate buildFromCandidateInfo(Candidate candidate, CandidateInfo info, String rawJson) {
         candidate.setName(info.getName());
@@ -295,7 +295,7 @@ public class CandidateService {
     }
 
     /**
-     * 将对象列表转换为 {@code List<Map<String, Object>>}（用于 JSON 字段存储）
+     * Convert an object list to {@code List<Map<String, Object>>} (for JSON field storage)
      */
     private List<Map<String, Object>> convertToMapList(List<?> list) {
         if (list == null) {
@@ -307,7 +307,7 @@ public class CandidateService {
                         String json = objectMapper.writeValueAsString(obj);
                         return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
                     } catch (JsonProcessingException e) {
-                        log.error("对象转换为 Map 失败: obj={}", obj, e);
+                        log.error("Failed to convert object to Map: obj={}", obj, e);
                         return new HashMap<String, Object>();
                     }
                 })
@@ -315,7 +315,7 @@ public class CandidateService {
     }
 
     /**
-     * 规范化 gender 字段为数据库 ENUM 合法值
+     * Normalize the gender field to legal database ENUM values
      */
     private String normalizeGender(String raw) {
         if (raw == null || raw.isBlank()) {

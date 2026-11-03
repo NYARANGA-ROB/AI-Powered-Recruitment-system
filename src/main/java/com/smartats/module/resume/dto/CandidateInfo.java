@@ -5,31 +5,31 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * AI 解析的候选人信息 DTO
- * 与智谱 AI 返回的 JSON 结构对应
+ * Candidate information DTO parsed by AI
+ * Corresponds to the JSON structure returned by Zhipu AI
  */
 @Data
 public class CandidateInfo {
 
-    // 基本信息
+    // Basic information
     private String name;
     private String phone;
     private String email;
     private String gender;
     private Integer age;
 
-    // 教育信息
+    // Education information
     private String education;
     private String school;
     private String major;
     private Integer graduationYear;
 
-    // 工作信息
+    // Work information
     private Integer workYears;
     private String currentCompany;
     private String currentPosition;
 
-    // 技能与经历
+    // Skills and experience
     private List<String> skills;
     private List<WorkExperience> workExperience;
     private List<ProjectExperience> projectExperience;

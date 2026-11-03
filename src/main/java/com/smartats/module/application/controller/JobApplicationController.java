@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "职位申请管理", description = "申请创建、状态流转(PENDING→REVIEWING→INTERVIEW→OFFER/REJECTED)、多维查询")
+@Tag(name = "Job Application Management", description = "Application creation, status transitions (PENDING→REVIEWING→INTERVIEW→OFFER/REJECTED), multi-dimensional queries")
 @Slf4j
 @RestController
 @RequestMapping("/applications")
@@ -25,17 +25,17 @@ public class JobApplicationController {
     private final MatchScoreService matchScoreService;
 
     /**
-     * 创建职位申请
+     * Create a job application
      * POST /api/v1/applications
      */
-    @Operation(summary = "创建职位申请", description = "自动去重（同一候选人不能重复申请同一职位）")
-    @AuditLog(module = "职位申请", operation = "CREATE", description = "创建职位申请")
+    @Operation(summary = "Create job application", description = "Automatic de-duplication (the same candidate cannot apply to the same job twice)")
+    @AuditLog(module = "Job Applications", operation = "CREATE", description = "Create job application")
     @PostMapping
     public Result<Long> createApplication(
             @Valid @RequestBody CreateApplicationRequest request,
             Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        log.info("创建职位申请：userId={}, jobId={}, candidateId={}",
+        log.info("Creating job application: userId={}, jobId={}, candidateId={}",
                 userId, request.getJobId(), request.getCandidateId());
 
         Long applicationId = jobApplicationService.createApplication(request);
@@ -43,18 +43,18 @@ public class JobApplicationController {
     }
 
     /**
-     * 更新申请状态
+     * Update application status
      * PUT /api/v1/applications/{id}/status
      */
-    @Operation(summary = "更新申请状态", description = "状态流转校验，触发 Webhook 通知")
-    @AuditLog(module = "职位申请", operation = "UPDATE_STATUS", description = "更新申请状态")
+    @Operation(summary = "Update application status", description = "Validates status transitions and triggers Webhook notifications")
+    @AuditLog(module = "Job Applications", operation = "UPDATE_STATUS", description = "Update application status")
     @PutMapping("/{id}/status")
     public Result<Void> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateApplicationStatusRequest request,
             Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        log.info("更新申请状态：userId={}, applicationId={}, targetStatus={}",
+        log.info("Updating application status: userId={}, applicationId={}, targetStatus={}",
                 userId, id, request.getStatus());
 
         jobApplicationService.updateStatus(id, request);
@@ -62,10 +62,10 @@ public class JobApplicationController {
     }
 
     /**
-     * 获取申请详情
+     * Get application detail
      * GET /api/v1/applications/{id}
      */
-    @Operation(summary = "获取申请详情")
+    @Operation(summary = "Get application detail")
     @GetMapping("/{id}")
     public Result<ApplicationResponse> getById(@PathVariable Long id) {
         ApplicationResponse response = jobApplicationService.getById(id);
@@ -73,10 +73,10 @@ public class JobApplicationController {
     }
 
     /**
-     * 按职位查询申请列表（HR 视角）
+     * List applications by job (HR view)
      * GET /api/v1/applications/job/{jobId}
      */
-    @Operation(summary = "按职位查询申请列表")
+    @Operation(summary = "List applications by job")
     @GetMapping("/job/{jobId}")
     public Result<Page<ApplicationResponse>> listByJobId(
             @PathVariable Long jobId,
@@ -87,10 +87,10 @@ public class JobApplicationController {
     }
 
     /**
-     * 按候选人查询申请列表
+     * List applications by candidate
      * GET /api/v1/applications/candidate/{candidateId}
      */
-    @Operation(summary = "按候选人查询申请列表")
+    @Operation(summary = "List applications by candidate")
     @GetMapping("/candidate/{candidateId}")
     public Result<Page<ApplicationResponse>> listByCandidateId(
             @PathVariable Long candidateId,
@@ -101,10 +101,10 @@ public class JobApplicationController {
     }
 
     /**
-     * 综合查询申请列表（支持多维筛选 + 分页 + 排序）
+     * Comprehensive application query (supports multi-dimensional filtering + pagination + sorting)
      * GET /api/v1/applications
      */
-    @Operation(summary = "综合查询申请列表", description = "支持多维筛选 + 分页 + 排序")
+    @Operation(summary = "Comprehensive application query", description = "Supports multi-dimensional filtering + pagination + sorting")
     @GetMapping
     public Result<Page<ApplicationResponse>> listApplications(ApplicationQueryRequest request) {
         Page<ApplicationResponse> page = jobApplicationService.listApplications(request);
@@ -112,17 +112,17 @@ public class JobApplicationController {
     }
 
     /**
-     * 计算/重新计算 AI 匹配分数
+     * Calculate/recalculate the AI match score
      * POST /api/v1/applications/{id}/match-score
      */
-    @Operation(summary = "计算AI匹配分数", description = "基于向量语义(30%)+技能(35%)+经验(20%)+学历(15%)多维打分")
-    @AuditLog(module = "职位申请", operation = "MATCH_SCORE", description = "计算AI匹配分数")
+    @Operation(summary = "Calculate AI match score", description = "Multi-dimensional scoring: vector semantics (30%) + skills (35%) + experience (20%) + education (15%)")
+    @AuditLog(module = "Job Applications", operation = "MATCH_SCORE", description = "Calculate AI match score")
     @PostMapping("/{id}/match-score")
     public Result<MatchScoreResponse> calculateMatchScore(
             @PathVariable Long id,
             Authentication authentication) {
         Long userId = (Long) authentication.getPrincipal();
-        log.info("计算匹配分数：userId={}, applicationId={}", userId, id);
+        log.info("Calculating match score: userId={}, applicationId={}", userId, id);
 
         MatchScoreResponse response = matchScoreService.calculateAndSave(id);
         return Result.success(response);

@@ -9,8 +9,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * Webhook 配置实体
- * 存储用户配置的 Webhook URL 和订阅的事件类型
+ * Webhook configuration entity
+ * Stores the Webhook URL configured by the user and the subscribed event types
  */
 @Data
 @TableName("webhook_configs")
@@ -20,58 +20,58 @@ public class WebhookConfig {
     private Long id;
 
     /**
-     * 用户 ID
+     * User ID
      */
     private Long userId;
 
     /**
-     * Webhook URL（接收事件的回调地址）
+     * Webhook URL (callback address that receives events)
      */
     private String url;
 
     /**
-     * 订阅的事件类型（JSON 数组，如：["resume.uploaded", "resume.parse_completed"]）
+     * Subscribed event types (JSON array, e.g. ["resume.uploaded", "resume.parse_completed"])
      */
     @TableField(value = "events")
     private String events;
 
     /**
-     * 签名密钥（HMAC-SHA256）
+     * Signing secret (HMAC-SHA256)
      */
     private String secret;
 
     /**
-     * 是否启用
+     * Whether the configuration is enabled
      */
     private Boolean enabled;
 
     /**
-     * 描述/备注
+     * Description/notes
      */
     private String description;
 
     /**
-     * 失败次数（连续失败达到阈值后自动禁用）
+     * Failure count (automatically disabled once consecutive failures reach the threshold)
      */
     private Integer failureCount;
 
     /**
-     * 最后一次失败时间
+     * Time of the last failure
      */
     private LocalDateTime lastFailureAt;
 
     /**
-     * 最后一次成功时间
+     * Time of the last success
      */
     private LocalDateTime lastSuccessAt;
 
     /**
-     * 创建时间
+     * Creation time
      */
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Update time
      */
     private LocalDateTime updatedAt;
 }

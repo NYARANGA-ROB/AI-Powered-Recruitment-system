@@ -6,61 +6,61 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 面试记录响应 DTO
+ * Interview record response DTO
  */
 @Data
 public class InterviewResponse {
 
     private Long id;
 
-    // ========== 关联信息 ==========
+    // ========== Related information ==========
 
     private Long applicationId;
 
-    /** 面试官用户 ID */
+    /** Interviewer user ID */
     private Long interviewerId;
 
-    /** 面试官姓名（关联查询） */
+    /** Interviewer name (resolved relationally) */
     private String interviewerName;
 
-    // ========== 面试安排 ==========
+    // ========== Interview scheduling ==========
 
-    /** 面试轮次 */
+    /** Interview round */
     private Integer round;
 
-    /** 面试类型：PHONE / VIDEO / ONSITE / WRITTEN_TEST */
+    /** Interview type: PHONE / VIDEO / ONSITE / WRITTEN_TEST */
     private String interviewType;
 
-    /** 面试类型中文描述 */
+    /** Human-readable interview type description */
     private String interviewTypeDesc;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime scheduledAt;
 
-    /** 面试时长（分钟） */
+    /** Interview duration (minutes) */
     private Integer durationMinutes;
 
-    // ========== 面试状态与结果 ==========
+    // ========== Interview status and outcome ==========
 
-    /** 面试状态：SCHEDULED / COMPLETED / CANCELLED / NO_SHOW */
+    /** Interview status: SCHEDULED / COMPLETED / CANCELLED / NO_SHOW */
     private String status;
 
-    /** 状态中文描述 */
+    /** Human-readable status description */
     private String statusDesc;
 
-    /** 面试反馈评语 */
+    /** Interview feedback comments */
     private String feedback;
 
-    /** 面试评分（1-10） */
+    /** Interview score (1-10) */
     private Integer score;
 
-    /** 推荐结论 */
+    /** Recommendation */
     private String recommendation;
 
-    /** 推荐结论中文描述 */
+    /** Human-readable recommendation description */
     private String recommendationDesc;
 
-    // ========== 元数据 ==========
+    // ========== Metadata ==========
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

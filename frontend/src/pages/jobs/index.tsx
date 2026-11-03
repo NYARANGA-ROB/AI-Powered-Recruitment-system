@@ -35,9 +35,9 @@ import { staggerContainer, staggerItem } from '../../components/motionVariants';
 const { Paragraph } = Typography;
 
 const statusConfig: Record<JobStatus, { color: string; label: string }> = {
-  DRAFT: { color: 'default', label: '草稿' },
-  PUBLISHED: { color: 'success', label: '已发布' },
-  CLOSED: { color: 'error', label: '已关闭' },
+  DRAFT: { color: 'default', label: 'Draft' },
+  PUBLISHED: { color: 'success', label: 'Published' },
+  CLOSED: { color: 'error', label: 'Closed' },
 };
 
 export default function JobsPage() {
@@ -85,10 +85,10 @@ export default function JobsPage() {
     const payload = { ...values, requiredSkills: skills };
     if (editingJob) {
       await jobApi.update({ ...payload, id: editingJob.id });
-      message.success('更新成功');
+      message.success('Updated successfully');
     } else {
       await jobApi.create(payload);
-      message.success('创建成功');
+      message.success('Created successfully');
     }
     setModalOpen(false);
     loadJobs();
@@ -96,25 +96,25 @@ export default function JobsPage() {
 
   const handlePublish = async (id: number) => {
     await jobApi.publish(id);
-    message.success('已发布');
+    message.success('Published');
     loadJobs();
   };
 
   const handleClose = async (id: number) => {
     await jobApi.close(id);
-    message.success('已关闭');
+    message.success('Closed');
     loadJobs();
   };
 
   const handleDelete = async (id: number) => {
     await jobApi.delete(id);
-    message.success('已删除');
+    message.success('Deleted');
     loadJobs();
   };
 
   const columns = [
     {
-      title: '职位名称',
+      title: 'Job Title',
       dataIndex: 'title',
       width: 200,
       render: (text: string, record: JobResponse) => (
@@ -127,20 +127,20 @@ export default function JobsPage() {
       ),
     },
     {
-      title: '部门',
+      title: 'Department',
       dataIndex: 'department',
       width: 120,
       render: (v: string) => <span className="text-gray-500">{v || '-'}</span>,
     },
     {
-      title: '薪资范围',
+      title: 'Salary Range',
       dataIndex: 'salaryRange',
       width: 120,
       render: (v: string) => <span className="font-semibold text-amber-600">{v}</span>,
     },
-    { title: '经验', dataIndex: 'experienceRange', width: 100 },
+    { title: 'Experience', dataIndex: 'experienceRange', width: 100 },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'status',
       width: 90,
       render: (status: JobStatus) => (
@@ -148,7 +148,7 @@ export default function JobsPage() {
       ),
     },
     {
-      title: '浏览量',
+      title: 'Views',
       dataIndex: 'viewCount',
       width: 80,
       sorter: true,
@@ -158,15 +158,15 @@ export default function JobsPage() {
         </span>
       ),
     },
-    { title: '创建时间', dataIndex: 'createdAt', width: 160 },
+    { title: 'Created At', dataIndex: 'createdAt', width: 160 },
     {
-      title: '操作',
+      title: 'Actions',
       width: 180,
       className: '!overflow-visible',
       render: (_: unknown, record: JobResponse) => (
         <Space size={4} wrap>
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            编辑
+            Edit
           </Button>
           {record.status === 'DRAFT' && (
             <Button
@@ -175,7 +175,7 @@ export default function JobsPage() {
               icon={<SendOutlined />}
               onClick={() => handlePublish(record.id)}
             >
-              发布
+              Publish
             </Button>
           )}
           {record.status === 'PUBLISHED' && (
@@ -186,12 +186,12 @@ export default function JobsPage() {
               danger
               onClick={() => handleClose(record.id)}
             >
-              关闭
+              Close
             </Button>
           )}
-          <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)}>
+          <Popconfirm title="Are you sure you want to delete this job?" onConfirm={() => handleDelete(record.id)}>
             <Button type="link" size="small" icon={<DeleteOutlined />} danger>
-              删除
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -203,20 +203,20 @@ export default function JobsPage() {
     <PageTransition>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 m-0">职位管理</h2>
+        <h2 className="text-xl font-semibold text-gray-900 m-0">Job Management</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-          新建职位
+          New Job
         </Button>
       </div>
 
-      {/* 搜索栏 */}
+      {/* Search bar */}
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
         <motion.div variants={staggerItem}>
           <Card bordered={false} className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <div className="md:col-span-5">
                 <Input
-                  placeholder="搜索职位名称"
+                  placeholder="Search job titles"
                   prefix={<SearchOutlined className="text-gray-400" />}
                   allowClear
                   onChange={(e) => setQuery((q) => ({ ...q, keyword: e.target.value, pageNum: 1 }))}
@@ -224,27 +224,27 @@ export default function JobsPage() {
               </div>
               <div className="md:col-span-3">
                 <Select
-                  placeholder="状态"
+                  placeholder="Status"
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, status: v, pageNum: 1 }))}
                   options={[
-                    { value: 'DRAFT', label: '草稿' },
-                    { value: 'PUBLISHED', label: '已发布' },
-                    { value: 'CLOSED', label: '已关闭' },
+                    { value: 'DRAFT', label: 'Draft' },
+                    { value: 'PUBLISHED', label: 'Published' },
+                    { value: 'CLOSED', label: 'Closed' },
                   ]}
                 />
               </div>
               <div className="md:col-span-3">
                 <Select
-                  placeholder="职位类型"
+                  placeholder="Job Type"
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, jobType: v, pageNum: 1 }))}
                   options={[
-                    { value: '全职', label: '全职' },
-                    { value: '兼职', label: '兼职' },
-                    { value: '实习', label: '实习' },
+                    { value: '全职', label: 'Full-time' },
+                    { value: '兼职', label: 'Part-time' },
+                    { value: '实习', label: 'Internship' },
                   ]}
                 />
               </div>
@@ -252,7 +252,7 @@ export default function JobsPage() {
           </Card>
         </motion.div>
 
-        {/* 表格 */}
+        {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
             <Table
@@ -266,7 +266,7 @@ export default function JobsPage() {
                 pageSize: query.pageSize,
                 total,
                 showSizeChanger: true,
-                showTotal: (t) => `共 ${t} 条`,
+                showTotal: (t) => `${t} records in total`,
                 onChange: (page, size) => setQuery((q) => ({ ...q, pageNum: page, pageSize: size })),
               }}
             />
@@ -274,75 +274,75 @@ export default function JobsPage() {
         </motion.div>
       </motion.div>
 
-      {/* 新建 / 编辑弹窗 */}
+      {/* Create / edit modal */}
       <Modal
-        title={editingJob ? '编辑职位' : '新建职位'}
+        title={editingJob ? 'Edit Job' : 'New Job'}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={handleSubmit}
         width={640}
-        okText={editingJob ? '更新' : '创建'}
+        okText={editingJob ? 'Update' : 'Create'}
       >
         <Form form={form} layout="vertical" className="mt-4">
-          <Form.Item name="title" label="职位名称" rules={[{ required: true }]}>
-            <Input placeholder="如：高级 Java 工程师" />
+          <Form.Item name="title" label="Job Title" rules={[{ required: true }]}>
+            <Input placeholder="e.g. Senior Java Engineer" />
           </Form.Item>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="department" label="部门">
-              <Input placeholder="如：技术部" />
+            <Form.Item name="department" label="Department">
+              <Input placeholder="e.g. Engineering" />
             </Form.Item>
-            <Form.Item name="jobType" label="职位类型">
+            <Form.Item name="jobType" label="Job Type">
               <Select
-                placeholder="选择类型"
+                placeholder="Select type"
                 options={[
-                  { value: '全职', label: '全职' },
-                  { value: '兼职', label: '兼职' },
-                  { value: '实习', label: '实习' },
+                  { value: '全职', label: 'Full-time' },
+                  { value: '兼职', label: 'Part-time' },
+                  { value: '实习', label: 'Internship' },
                 ]}
               />
             </Form.Item>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="salaryMin" label="最低薪资(K)" rules={[{ required: true }]}>
+            <Form.Item name="salaryMin" label="Min Salary (K CNY)" rules={[{ required: true }]}>
               <InputNumber min={0} className="w-full" />
             </Form.Item>
-            <Form.Item name="salaryMax" label="最高薪资(K)" rules={[{ required: true }]}>
+            <Form.Item name="salaryMax" label="Max Salary (K CNY)" rules={[{ required: true }]}>
               <InputNumber min={0} className="w-full" />
             </Form.Item>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Form.Item name="experienceMin" label="最低经验(年)">
+            <Form.Item name="experienceMin" label="Min Experience (years)">
               <InputNumber min={0} className="w-full" />
             </Form.Item>
-            <Form.Item name="experienceMax" label="最高经验(年)">
+            <Form.Item name="experienceMax" label="Max Experience (years)">
               <InputNumber min={0} className="w-full" />
             </Form.Item>
-            <Form.Item name="education" label="学历要求">
+            <Form.Item name="education" label="Education Requirement">
               <Select
-                placeholder="选择学历"
+                placeholder="Select education"
                 allowClear
                 options={[
-                  { value: '大专', label: '大专' },
-                  { value: '本科', label: '本科' },
-                  { value: '硕士', label: '硕士' },
-                  { value: '博士', label: '博士' },
+                  { value: '大专', label: 'Associate' },
+                  { value: '本科', label: "Bachelor's" },
+                  { value: '硕士', label: "Master's" },
+                  { value: '博士', label: 'PhD' },
                 ]}
               />
             </Form.Item>
           </div>
-          <Form.Item name="requiredSkills" label="技能标签（逗号分隔）">
-            <Input placeholder="如：Java, Spring Boot, MySQL" />
+          <Form.Item name="requiredSkills" label="Skill Tags (comma-separated)">
+            <Input placeholder="e.g. Java, Spring Boot, MySQL" />
           </Form.Item>
-          <Form.Item name="description" label="职位描述" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="职位描述..." />
+          <Form.Item name="description" label="Job Description" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} placeholder="Job description..." />
           </Form.Item>
-          <Form.Item name="requirements" label="任职要求" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="任职要求..." />
+          <Form.Item name="requirements" label="Requirements" rules={[{ required: true }]}>
+            <Input.TextArea rows={3} placeholder="Requirements..." />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* 详情抽屉 */}
+      {/* Detail drawer */}
       <Drawer
         title={detailDrawer?.title}
         open={!!detailDrawer}
@@ -352,25 +352,25 @@ export default function JobsPage() {
         {detailDrawer && (
           <div className="space-y-6">
             <Descriptions column={2}>
-              <Descriptions.Item label="部门">{detailDrawer.department || '-'}</Descriptions.Item>
-              <Descriptions.Item label="类型">{detailDrawer.jobType || '全职'}</Descriptions.Item>
-              <Descriptions.Item label="薪资">
+              <Descriptions.Item label="Department">{detailDrawer.department || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Type">{detailDrawer.jobType || 'Full-time'}</Descriptions.Item>
+              <Descriptions.Item label="Salary">
                 <span className="font-semibold text-amber-600">{detailDrawer.salaryRange}</span>
               </Descriptions.Item>
-              <Descriptions.Item label="经验">{detailDrawer.experienceRange}</Descriptions.Item>
-              <Descriptions.Item label="学历">{detailDrawer.education || '不限'}</Descriptions.Item>
-              <Descriptions.Item label="状态">
+              <Descriptions.Item label="Experience">{detailDrawer.experienceRange}</Descriptions.Item>
+              <Descriptions.Item label="Education">{detailDrawer.education || 'Any'}</Descriptions.Item>
+              <Descriptions.Item label="Status">
                 <Tag color={statusConfig[detailDrawer.status]?.color}>
                   {statusConfig[detailDrawer.status]?.label}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="浏览量">{detailDrawer.viewCount}</Descriptions.Item>
-              <Descriptions.Item label="创建时间">{detailDrawer.createdAt}</Descriptions.Item>
+              <Descriptions.Item label="Views">{detailDrawer.viewCount}</Descriptions.Item>
+              <Descriptions.Item label="Created At">{detailDrawer.createdAt}</Descriptions.Item>
             </Descriptions>
             <Divider className="my-4" />
             {detailDrawer.requiredSkills?.length > 0 && (
               <div>
-                <p className="font-semibold text-gray-900 mb-2">技能标签</p>
+                <p className="font-semibold text-gray-900 mb-2">Skill Tags</p>
                 <div className="flex flex-wrap gap-1.5">
                   {detailDrawer.requiredSkills.map((s) => (
                     <Tag color="blue" key={s}>
@@ -381,13 +381,13 @@ export default function JobsPage() {
               </div>
             )}
             <div>
-              <p className="font-semibold text-gray-900 mb-2">职位描述</p>
+              <p className="font-semibold text-gray-900 mb-2">Job Description</p>
               <Paragraph className="whitespace-pre-wrap text-gray-600">
                 {detailDrawer.description}
               </Paragraph>
             </div>
             <div>
-              <p className="font-semibold text-gray-900 mb-2">任职要求</p>
+              <p className="font-semibold text-gray-900 mb-2">Requirements</p>
               <Paragraph className="whitespace-pre-wrap text-gray-600">
                 {detailDrawer.requirements}
               </Paragraph>

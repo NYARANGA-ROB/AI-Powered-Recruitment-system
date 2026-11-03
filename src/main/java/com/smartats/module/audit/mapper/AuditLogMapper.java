@@ -5,7 +5,7 @@ import com.smartats.module.audit.entity.AuditLogEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 审计日志 Mapper 接口
+ * Audit log Mapper interface
  */
 @Mapper
 public interface AuditLogMapper extends BaseMapper<AuditLogEntity> {

@@ -39,14 +39,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * InterviewController 集成测试
+ * InterviewController integration tests
  * <p>
- * @Import SecurityConfig 以加载自定义安全规则。
- * JwtAuthenticationFilter 被 Mock 为透传。
+ * SecurityConfig is @Import-ed to load the custom security rules.
+ * JwtAuthenticationFilter is mocked as a pass-through.
  */
 @WebMvcTest(InterviewController.class)
 @Import(SecurityConfig.class)
-@DisplayName("InterviewController 集成测试")
+@DisplayName("InterviewController integration tests")
 class InterviewControllerTest {
 
     @Autowired
@@ -93,15 +93,15 @@ class InterviewControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 安排面试
+    // Schedule interview
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("POST /interviews - 安排面试")
+    @DisplayName("POST /interviews - schedule interview")
     class ScheduleTests {
 
         @Test
-        @DisplayName("正常安排面试 - 200")
+        @DisplayName("Schedules an interview successfully - 200")
         void schedule_success() throws Exception {
             ScheduleInterviewRequest request = new ScheduleInterviewRequest();
             request.setApplicationId(10L);
@@ -122,7 +122,7 @@ class InterviewControllerTest {
         }
 
         @Test
-        @DisplayName("未认证 - 401/403")
+        @DisplayName("Unauthenticated - 401/403")
         void schedule_unauthenticated() throws Exception {
             ScheduleInterviewRequest request = new ScheduleInterviewRequest();
             request.setApplicationId(10L);
@@ -139,7 +139,7 @@ class InterviewControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 提交反馈
+    // Submit feedback
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -147,11 +147,11 @@ class InterviewControllerTest {
     class FeedbackTests {
 
         @Test
-        @DisplayName("提交反馈 - 200")
+        @DisplayName("Submits feedback - 200")
         void feedback_success() throws Exception {
             SubmitFeedbackRequest request = new SubmitFeedbackRequest();
             request.setScore(8);
-            request.setFeedback("候选人表现优秀");
+            request.setFeedback("The candidate performed excellently");
             request.setRecommendation("YES");
 
             willDoNothing().given(interviewService).submitFeedback(eq(1L), any(SubmitFeedbackRequest.class));
@@ -167,7 +167,7 @@ class InterviewControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 取消面试
+    // Cancel interview
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -175,7 +175,7 @@ class InterviewControllerTest {
     class CancelTests {
 
         @Test
-        @DisplayName("取消面试 - 200")
+        @DisplayName("Cancels an interview - 200")
         void cancel_success() throws Exception {
             willDoNothing().given(interviewService).cancelInterview(1L);
 
@@ -187,9 +187,9 @@ class InterviewControllerTest {
         }
 
         @Test
-        @DisplayName("取消不存在的面试 - 业务异常")
+        @DisplayName("Cancels a nonexistent interview - business exception")
         void cancel_notFound() throws Exception {
-            willThrow(new BusinessException(ResultCode.NOT_FOUND, "面试记录不存在"))
+            willThrow(new BusinessException(ResultCode.NOT_FOUND, "Interview record not found"))
                     .given(interviewService).cancelInterview(999L);
 
             mockMvc.perform(post("/interviews/999/cancel")
@@ -197,20 +197,20 @@ class InterviewControllerTest {
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(ResultCode.NOT_FOUND.getCode()))
-                    .andExpect(jsonPath("$.message").value("面试记录不存在"));
+                    .andExpect(jsonPath("$.message").value("Interview record not found"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询
+    // Queries
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("GET /interviews - 查询")
+    @DisplayName("GET /interviews - queries")
     class QueryTests {
 
         @Test
-        @DisplayName("查询面试详情 - 200")
+        @DisplayName("Gets interview details - 200")
         void getById_success() throws Exception {
             given(interviewService.getById(1L)).willReturn(sampleResponse());
 
@@ -223,7 +223,7 @@ class InterviewControllerTest {
         }
 
         @Test
-        @DisplayName("按申请查询面试列表 - 200")
+        @DisplayName("Lists interviews by application - 200")
         void listByApplication_success() throws Exception {
             given(interviewService.listByApplicationId(10L)).willReturn(List.of(sampleResponse()));
 

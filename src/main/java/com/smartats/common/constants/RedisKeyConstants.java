@@ -1,248 +1,248 @@
 package com.smartats.common.constants;
 
 /**
- * Redis Key 常量定义
+ * Redis key constant definitions
  * <p>
- * 统一管理所有 Redis Key 前缀，避免硬编码和拼写错误
+ * Centralises all Redis key prefixes to avoid hard-coding and typos
  * <p>
- * 命名规范：
- * - 全大写，下划线分隔
- * - 以 _KEY_PREFIX 或 _KEY 结尾
- * - 使用冒号分隔层级（如：jwt:token:{userId}）
+ * Naming conventions:
+ * - Upper case, separated by underscores
+ * - Ends with _KEY_PREFIX or _KEY
+ * - Levels separated by colons (e.g. jwt:token:{userId})
  */
 public class RedisKeyConstants {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // JWT Token 相关
+    // JWT token related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * JWT AccessToken Key 前缀
+     * JWT access token key prefix
      * <p>
-     * 完整格式：jwt:token:{userId}
+     * Full format: jwt:token:{userId}
      * <p>
-     * Value：accessToken 字符串
+     * Value: the accessToken string
      * <p>
-     * TTL：2小时（与 accessToken 过期时间一致）
+     * TTL: 2 hours (matches the accessToken expiry)
      */
     public static final String JWT_TOKEN_KEY_PREFIX = "jwt:token:";
 
     /**
-     * JWT RefreshToken Key 前缀
+     * JWT refresh token key prefix
      * <p>
-     * 完整格式：jwt:refresh:{userId}
+     * Full format: jwt:refresh:{userId}
      * <p>
-     * Value：refreshToken 字符串
+     * Value: the refreshToken string
      * <p>
-     * TTL：7天（与 refreshToken 过期时间一致）
+     * TTL: 7 days (matches the refreshToken expiry)
      */
     public static final String JWT_REFRESH_TOKEN_KEY_PREFIX = "jwt:refresh:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 验证码相关
+    // Verification code related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 邮箱验证码 Key 前缀
+     * Email verification code key prefix
      * <p>
-     * 完整格式：verify:code:{email}
+     * Full format: verify:code:{email}
      * <p>
-     * Value：验证码（6位数字）
+     * Value: the verification code (6 digits)
      * <p>
-     * TTL：5分钟
+     * TTL: 5 minutes
      */
     public static final String VERIFICATION_CODE_KEY_PREFIX = "verify:code:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // AI 配额相关
+    // AI quota related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * AI 调用次数限制 Key 前缀
+     * AI call rate limit key prefix
      * <p>
-     * 完整格式：rate:ai:{userId}:{date}
+     * Full format: rate:ai:{userId}:{date}
      * <p>
-     * Value：今日已调用次数
+     * Value: number of calls made today
      * <p>
-     * TTL：24小时（自然日过期）
+     * TTL: 24 hours (expires at the end of the calendar day)
      */
     public static final String AI_QUOTA_KEY_PREFIX = "rate:ai:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 任务状态相关
+    // Task status related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 简历解析任务状态 Key 前缀
+     * Resume parsing task status key prefix
      * <p>
-     * 完整格式：task:resume:{taskId}
+     * Full format: task:resume:{taskId}
      * <p>
-     * Value：JSON 格式的任务状态（包含 status、progress、message 等）
+     * Value: task status in JSON format (contains status, progress, message, etc.)
      * <p>
-     * TTL：24小时
+     * TTL: 24 hours
      */
     public static final String RESUME_TASK_KEY_PREFIX = "task:resume:";
 
     /**
-     * 简历解析分布式锁 Key 前缀
+     * Resume parsing distributed lock key prefix
      * <p>
-     * 完整格式：lock:resume:{fileHash}
+     * Full format: lock:resume:{fileHash}
      * <p>
-     * Value：锁标识
+     * Value: lock identifier
      * <p>
-     * TTL：10分钟
+     * TTL: 10 minutes
      */
     public static final String RESUME_LOCK_KEY_PREFIX = "lock:resume:";
 
     /**
-     * 简历解析幂等性检查 Key 前缀
+     * Resume parsing idempotency check key prefix
      * <p>
-     * 完整格式：idempotent:resume:{resumeId}
+     * Full format: idempotent:resume:{resumeId}
      * <p>
-     * Value：已处理标记
+     * Value: processed marker
      * <p>
-     * TTL：1小时
+     * TTL: 1 hour
      */
     public static final String RESUME_IDEMPOTENT_KEY_PREFIX = "idempotent:resume:";
 
     /**
-     * 简历文件去重 Key 前缀
+     * Resume file de-duplication key prefix
      * <p>
-     * 完整格式：dedup:resume:{fileHash}
+     * Full format: dedup:resume:{fileHash}
      * <p>
-     * Value：已存在标记
+     * Value: already-exists marker
      * <p>
-     * TTL：7天
+     * TTL: 7 days
      */
     public static final String RESUME_DEDUP_KEY_PREFIX = "dedup:resume:";
 
     /**
-     * 批量上传频率限制 Key 前缀
+     * Batch upload rate limit key prefix
      * <p>
-     * 完整格式：rate:upload:{userId}
+     * Full format: rate:upload:{userId}
      * <p>
-     * Value：当前分钟内批量上传次数
+     * Value: number of batch uploads in the current minute
      * <p>
-     * TTL：60秒
+     * TTL: 60 seconds
      */
     public static final String UPLOAD_RATE_LIMIT_KEY_PREFIX = "rate:upload:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 职位缓存相关
+    // Job cache related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 职位详情缓存 Key 前缀
+     * Job detail cache key prefix
      * <p>
-     * 完整格式：cache:job:{jobId}
+     * Full format: cache:job:{jobId}
      * <p>
-     * Value：JSON 格式的职位详情对象
+     * Value: job detail object in JSON format
      * <p>
-     * TTL：30分钟
+     * TTL: 30 minutes
      */
     public static final String CACHE_JOB_KEY_PREFIX = "cache:job:";
 
     /**
-     * 热门职位排行 Key
+     * Hot job ranking key
      * <p>
-     * 完整格式：cache:job:hot
+     * Full format: cache:job:hot
      * <p>
-     * Type：ZSet（有序集合）
+     * Type: ZSet (sorted set)
      * <p>
-     * Score：浏览次数
+     * Score: view count
      * <p>
-     * TTL：10分钟
+     * TTL: 10 minutes
      */
     public static final String CACHE_JOB_HOT_KEY = "cache:job:hot";
 
     /**
-     * 职位浏览量计数器 Key 前缀
+     * Job view counter key prefix
      * <p>
-     * 完整格式：counter:job:view:{jobId}
+     * Full format: counter:job:view:{jobId}
      * <p>
-     * Value：浏览量计数（纯数字）
+     * Value: view count (plain number)
      * <p>
-     * TTL：永不过期（由定时任务同步到数据库后手动删除）
+     * TTL: never expires (deleted manually once the scheduled task has synced it to the database)
      */
     public static final String COUNTER_JOB_VIEW_PREFIX = "counter:job:view:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 候选人缓存相关
+    // Candidate cache related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 候选人详情缓存 Key 前缀
+     * Candidate detail cache key prefix
      * <p>
-     * 完整格式：cache:candidate:{candidateId}
+     * Full format: cache:candidate:{candidateId}
      * <p>
-     * Value：JSON 格式的候选人详情对象
+     * Value: candidate detail object in JSON format
      * <p>
-     * TTL：30分钟
+     * TTL: 30 minutes
      */
     public static final String CACHE_CANDIDATE_KEY_PREFIX = "cache:candidate:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 职位申请缓存相关
+    // Job application cache related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 职位申请详情缓存 Key 前缀
-     * 完整格式：cache:application:{applicationId}
-     * Value：JSON 格式的申请详情
-     * TTL：30分钟
+     * Job application detail cache key prefix
+     * Full format: cache:application:{applicationId}
+     * Value: application detail in JSON format
+     * TTL: 30 minutes
      */
     public static final String CACHE_APPLICATION_KEY_PREFIX = "cache:application:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 面试记录缓存相关
+    // Interview record cache related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 面试记录详情缓存 Key 前缀
-     * 完整格式：cache:interview:{interviewId}
-     * Value：JSON 格式的面试记录详情
-     * TTL：30分钟
+     * Interview record detail cache key prefix
+     * Full format: cache:interview:{interviewId}
+     * Value: interview record detail in JSON format
+     * TTL: 30 minutes
      */
     public static final String CACHE_INTERVIEW_KEY_PREFIX = "cache:interview:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 招聘分析缓存相关
+    // Recruitment analytics cache related
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 招聘分析总览缓存 Key 前缀
+     * Recruitment analytics overview cache key prefix
      * <p>
-     * 完整格式：cache:analytics:overview:{jobId}:{startDate}:{endDate}
+     * Full format: cache:analytics:overview:{jobId}:{startDate}:{endDate}
      * <p>
-     * Value：JSON 格式的 RecruitmentOverviewDTO
+     * Value: RecruitmentOverviewDTO in JSON format
      * <p>
-     * TTL：5分钟
+     * TTL: 5 minutes
      */
     public static final String CACHE_ANALYTICS_KEY_PREFIX = "cache:analytics:overview:";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 角色前缀
+    // Role prefix
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * Spring Security 角色前缀
+     * Spring Security role prefix
      * <p>
-     * 格式：ROLE_{role}
+     * Format: ROLE_{role}
      * <p>
-     * 示例：ROLE_ADMIN、ROLE_HR、ROLE_INTERVIEWER
+     * Examples: ROLE_ADMIN, ROLE_HR, ROLE_INTERVIEWER
      */
     public static final String ROLE_PREFIX = "ROLE_";
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 构造函数
+    // Constructor
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
-     * 私有构造函数，防止实例化
+     * Private constructor to prevent instantiation
      *
-     * @throws UnsupportedOperationException 如果尝试实例化
+     * @throws UnsupportedOperationException if instantiation is attempted
      */
     private RedisKeyConstants() {
-        throw new UnsupportedOperationException("常量类不允许实例化");
+        throw new UnsupportedOperationException("Constant classes cannot be instantiated");
     }
 }

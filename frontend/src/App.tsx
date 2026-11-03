@@ -1,14 +1,14 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, Spin } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
 import themeConfig from './styles/theme';
 import './styles/global.css';
 
 import AuthGuard from './components/AuthGuard';
 import AppLayout from './components/AppLayout';
 
-// 懒加载页面
+// Lazy-loaded pages
 const LoginPage = lazy(() => import('./pages/login'));
 const DashboardPage = lazy(() => import('./pages/dashboard'));
 const JobsPage = lazy(() => import('./pages/jobs'));
@@ -29,14 +29,14 @@ const PageLoading = () => (
 
 export default function App() {
   return (
-    <ConfigProvider locale={zhCN} theme={themeConfig}>
+    <ConfigProvider locale={enUS} theme={themeConfig}>
       <BrowserRouter>
         <Suspense fallback={<PageLoading />}>
           <Routes>
-            {/* 公开路由 */}
+            {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
 
-            {/* 需要认证的路由 */}
+            {/* Authenticated routes */}
             <Route element={<AuthGuard><AppLayout /></AuthGuard>}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/jobs" element={<JobsPage />} />
@@ -50,7 +50,7 @@ export default function App() {
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 
-            {/* 默认重定向 */}
+            {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

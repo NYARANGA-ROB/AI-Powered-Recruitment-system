@@ -7,15 +7,15 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
- * 缓存淘汰服务（独立 Service 保证 @Async 代理生效）
+ * Cache eviction service (separate Service so the @Async proxy takes effect)
  * <p>
- * 延迟双删策略的关键：<br>
- * 1. 写操作前先删除缓存<br>
- * 2. 异步延迟一段时间后再次删除（清除并发窗口内被重建的旧缓存）<br>
+ * Key points of the delayed double-delete strategy:<br>
+ * 1. Delete the cache before the write operation<br>
+ * 2. Delete it again asynchronously after a delay (evicts stale cache rebuilt within the concurrency window)<br>
  * <p>
- * ⚠️ Spring @Async 仅在**跨 Bean 调用**时经过代理生效。
- * 如果 asyncDeleteCache() 放在 JobService 同类中被调用，会变成同步执行。
- * 因此必须抽到独立 Service 中。
+ * ⚠️ Spring @Async only takes effect via the proxy on **cross-Bean calls**.
+ * If asyncDeleteCache() were placed in and called from the same JobService class, it would run synchronously.
+ * That is why it must live in a separate Service.
  */
 @Slf4j
 @Service
@@ -25,22 +25,22 @@ public class CacheEvictionService {
     private final StringRedisTemplate redisTemplate;
 
     /**
-     * 异步延迟删除缓存（延迟双删第二步）
+     * Asynchronously delete the cache with a delay (second step of the delayed double-delete)
      *
-     * @param cacheKey 缓存 Key
+     * @param cacheKey cache Key
      */
     @Async("asyncExecutor")
     public void asyncDeleteCache(String cacheKey) {
         try {
-            // 延迟 500ms（大于读请求的平均耗时，确保旧缓存已被写入）
+            // Delay 500ms (longer than the average read request duration, ensuring the stale cache has been written)
             Thread.sleep(500);
 
             redisTemplate.delete(cacheKey);
-            log.debug("延迟双删完成（第 2 次）：key={}", cacheKey);
+            log.debug("Delayed double-delete completed (pass 2): key={}", cacheKey);
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("延迟删除缓存被中断：key={}", cacheKey, e);
+            log.error("Delayed cache deletion interrupted: key={}", cacheKey, e);
         }
     }
 }

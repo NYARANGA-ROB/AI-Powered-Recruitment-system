@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 /**
- * 简历 AI 解析服务（智谱 AI）
+ * Resume AI parsing service (Zhipu AI)
  */
 @Slf4j
 @Service
@@ -32,7 +32,7 @@ public class ResumeParseService {
     }
 
     /**
-     * 解析简历，返回候选人信息及 AI 原始响应（用于屘入 rawJson）
+     * Parse a resume and return the candidate information plus the raw AI response (for storing rawJson)
      */
     public ParseResult parseResumeWithRaw(String resumeContent) {
         return parseResumeInternal(resumeContent);
@@ -41,43 +41,43 @@ public class ResumeParseService {
     public record ParseResult(CandidateInfo candidateInfo, String rawResponse) {}
 
     private ParseResult parseResumeInternal(String resumeContent) {
-        log.info("开始使用智谱 AI 解析简历: model={}, contentLength={}", model, resumeContent.length());
+        log.info("Starting resume parsing with Zhipu AI: model={}, contentLength={}", model, resumeContent.length());
 
-        // 内容预检：避免将空内容发给 AI
+        // Content pre-check: avoid sending empty content to the AI
         if (resumeContent == null || resumeContent.trim().length() < 20) {
-            log.error("简历文本内容过短或为空，无法解析。实际内容: [{}]", resumeContent);
+            log.error("Resume text content too short or empty, cannot parse. Actual content: [{}]", resumeContent);
             throw new BusinessException(ResultCode.BAD_REQUEST,
-                    "简历内容提取失败，可能是扫描件或特殊编码 PDF，提取长度=" + (resumeContent == null ? 0 : resumeContent.trim().length()));
+                    "Resume content extraction failed, possibly a scanned document or a specially encoded PDF, extracted length=" + (resumeContent == null ? 0 : resumeContent.trim().length()));
         }
 
-        log.info("提取的简历文本前 300 字符: [{}]",
+        log.info("First 300 characters of the extracted resume text: [{}]",
                 resumeContent.trim().substring(0, Math.min(300, resumeContent.trim().length())));
 
         try {
-            // 1. 构建 Prompt（针对中文简历优化）
+            // 1. Build the prompt (optimized for Chinese resumes)
             String prompt = buildPromptForChineseResume(resumeContent);
 
-            // 2. 调用智谱 AI
+            // 2. Call Zhipu AI
             Prompt aiPrompt = new Prompt(new UserMessage(prompt));
             String responseContent = chatModel.call(aiPrompt).getResult().getOutput().getContent();
 
-            log.info("智谱 AI 原始响应: {}", responseContent);
+            log.info("Raw Zhipu AI response: {}", responseContent);
 
-            // 3. 清理响应内容（移除可能的 markdown 代码块标记）
+            // 3. Clean the response content (remove possible markdown code block markers)
             String cleanedResponse = cleanMarkdownCodeBlock(responseContent);
-            log.info("清理后的 JSON: {}", cleanedResponse);
+            log.info("Cleaned JSON: {}", cleanedResponse);
 
-            // 4. 解析 JSON 响应
+            // 4. Parse the JSON response
             CandidateInfo candidateInfo = objectMapper.readValue(cleanedResponse, CandidateInfo.class);
 
-            log.info("智谱 AI 解析成功: name={}, phone={}, email={}",
+            log.info("Zhipu AI parsing succeeded: name={}, phone={}, email={}",
                     candidateInfo.getName(), candidateInfo.getPhone(), candidateInfo.getEmail());
 
-            // 空结果预警
+            // Warn on empty results
             if (!StringUtils.hasText(candidateInfo.getName()) && !StringUtils.hasText(candidateInfo.getPhone())) {
-                log.warn("AI 解析结果所有关键字段均为 null，AI 响应可能格式异常。原始响应: {}", responseContent);
+                log.warn("All key fields of the AI parsing result are null; the AI response may be malformed. Raw response: {}", responseContent);
                 throw new BusinessException(ResultCode.AI_SERVICE_ERROR,
-                        "AI 解析返回结果为空，请检查日志。AI 原始响应: " + responseContent);
+                        "AI parsing returned an empty result, please check the logs. Raw AI response: " + responseContent);
             }
 
             return new ParseResult(candidateInfo, responseContent);
@@ -85,71 +85,71 @@ public class ResumeParseService {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            // 限流（429）错误仅记录警告（避免冗余堆栈），其他错误记录完整异常
+            // For rate-limit (429) errors log only a warning (to avoid redundant stacks); for other errors log the full exception
             if (isRateLimitError(e)) {
-                log.warn("智谱 AI 限流（429），将由 MQ 层重试: {}", e.getMessage());
+                log.warn("Zhipu AI rate limited (429), retry will be handled by the MQ layer: {}", e.getMessage());
             } else {
-                log.error("智谱 AI 解析失败", e);
+                log.error("Zhipu AI parsing failed", e);
             }
-            throw new BusinessException(ResultCode.AI_SERVICE_ERROR, "简历解析失败: " + e.getMessage());
+            throw new BusinessException(ResultCode.AI_SERVICE_ERROR, "Resume parsing failed: " + e.getMessage());
         }
     }
 
     private String buildPromptForChineseResume(String resumeContent) {
         return """
-                你是一个专业的简历信息提取助手。请从以下中文简历内容中提取结构化信息，并以 JSON 格式返回。
+                You are a professional resume information extraction assistant. Please extract structured information from the following Chinese resume content and return it in JSON format.
 
-                ## 提取字段说明
+                ## Field extraction guide
 
-                ### 基本信息
-                - name: 姓名
-                - phone: 手机号（11位数字）
-                - email: 邮箱地址
-                - gender: 性别（男/女）
-                - age: 年龄
+                ### Basic information
+                - name: full name
+                - phone: mobile number (11 digits)
+                - email: email address
+                - gender: gender (MALE/FEMALE)
+                - age: age
 
-                ### 教育信息
-                - education: 学历（高中/专科/本科/硕士研究生/博士研究生）
-                - school: 毕业院校
-                - major: 专业
-                - graduationYear: 毕业年份（4位整数）
+                ### Education information
+                - education: education level, use one of the stored values (高中/专科/本科/硕士研究生/博士研究生)
+                - school: graduated school
+                - major: major
+                - graduationYear: graduation year (4-digit integer)
 
-                ### 工作信息
-                - workYears: 工作年限（整数年）
-                - currentCompany: 当前公司
-                - currentPosition: 当前职位
+                ### Work information
+                - workYears: years of experience (integer years)
+                - currentCompany: current company
+                - currentPosition: current position
 
-                ### 技能与经历
-                - skills: 技能列表（只保留技术技能）
-                - workExperience: 工作经历数组，包含 company, position, startDate, endDate, description
-                - projectExperience: 项目经历数组，包含 name, role, startDate, endDate, description, technologies
-                - selfEvaluation: 自我评价
+                ### Skills and experience
+                - skills: skill list (keep only technical skills)
+                - workExperience: array of work experience, containing company, position, startDate, endDate, description
+                - projectExperience: array of project experience, containing name, role, startDate, endDate, description, technologies
+                - selfEvaluation: self evaluation
 
-                ## 日期格式转换
+                ## Date format conversion
 
-                - "2020年1月" → "2020-01"
+                - "January 2020" → "2020-01"
                 - "2020.01" → "2020-01"
-                - "至今" → "至今"
+                - "up to now" → "Present"
 
-                ## 注意事项
+                ## Notes
 
-                1. 无法提取的字段使用 null
-                2. 日期格式统一为 yyyy-MM
-                3. 技能列表只保留核心技术
-                4. 工作经历按时间倒序
-                5. 只返回 JSON，不包含 markdown 代码块标记
-                6. workExperience 和 projectExperience 数组中的每个元素也使用 JSON 对象
+                1. Use null for fields that cannot be extracted
+                2. Unify date formats as yyyy-MM
+                3. Keep only core technologies in the skill list
+                4. Sort work experience in reverse chronological order
+                5. Return only JSON, without markdown code block markers
+                6. Each element in the workExperience and projectExperience arrays must also be a JSON object
 
-                ## 简历内容
+                ## Resume content
 
                 %s
 
-                请返回提取的 JSON（不要包含任何 markdown 标记）：
+                Please return the extracted JSON (do not include any markdown markers):
                 """.formatted(resumeContent);
     }
 
     /**
-     * 清理响应中的 markdown 代码块标记
+     * Clean markdown code block markers from the response
      */
     private String cleanMarkdownCodeBlock(String content) {
         if (content == null || content.isEmpty()) {
@@ -158,14 +158,14 @@ public class ResumeParseService {
 
         content = content.trim();
 
-        // 移除开头的 ```json 或 ```
+        // Remove the leading ```json or ```
         if (content.startsWith("```json")) {
             content = content.substring(7);
         } else if (content.startsWith("```")) {
             content = content.substring(3);
         }
 
-        // 移除结尾的 ```
+        // Remove the trailing ```
         if (content.endsWith("```")) {
             content = content.substring(0, content.length() - 3);
         }
@@ -174,7 +174,7 @@ public class ResumeParseService {
     }
 
     /**
-     * 判断是否为 API 限流（429 Too Many Requests）错误
+     * Determine whether this is an API rate-limit (429 Too Many Requests) error
      */
     private boolean isRateLimitError(Exception e) {
         return containsRateLimitKeyword(e.getMessage())

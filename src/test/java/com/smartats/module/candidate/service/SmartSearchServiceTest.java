@@ -26,10 +26,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * SmartSearchService 单元测试
+ * SmartSearchService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SmartSearchService 单元测试")
+@DisplayName("SmartSearchService unit tests")
 class SmartSearchServiceTest {
 
     @InjectMocks
@@ -48,7 +48,7 @@ class SmartSearchServiceTest {
     @BeforeEach
     void setUp() {
         request = new SmartSearchRequest();
-        request.setQuery("3年以上Java后端开发");
+        request.setQuery("3+ years of Java backend development");
         request.setTopK(10);
         request.setMinScore(0.3);
 
@@ -56,40 +56,40 @@ class SmartSearchServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 正常搜索流程
+    // Normal search flow
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("正常搜索流程")
+    @DisplayName("Normal search flow")
     class NormalSearchTests {
 
         @Test
-        @DisplayName("成功返回匹配候选人")
+        @DisplayName("Returns matched candidates successfully")
         void shouldReturnMatchedCandidates() {
             // Given
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
 
             SearchResult sr1 = new SearchResult();
             sr1.setCandidateId(1L);
-            sr1.setCandidateName("张三");
+            sr1.setCandidateName("Zhang San");
             sr1.setScore(0.85f);
 
             SearchResult sr2 = new SearchResult();
             sr2.setCandidateId(2L);
-            sr2.setCandidateName("李四");
+            sr2.setCandidateName("Li Si");
             sr2.setScore(0.72f);
 
             given(vectorStoreService.search(anyList(), eq(10))).willReturn(List.of(sr1, sr2));
 
-            Candidate c1 = buildCandidate(1L, "张三", "高级后端工程师", "腾讯", 5);
-            Candidate c2 = buildCandidate(2L, "李四", "后端工程师", "阿里巴巴", 3);
+            Candidate c1 = buildCandidate(1L, "Zhang San", "Senior backend engineer", "Tencent", 5);
+            Candidate c2 = buildCandidate(2L, "Li Si", "Backend engineer", "Alibaba", 3);
             given(candidateMapper.selectBatchIds(anyList())).willReturn(List.of(c1, c2));
 
             // When
             SmartSearchResponse response = smartSearchService.search(request);
 
             // Then
-            assertThat(response.getQuery()).isEqualTo("3年以上Java后端开发");
+            assertThat(response.getQuery()).isEqualTo("3+ years of Java backend development");
             assertThat(response.getTotalMatches()).isEqualTo(2);
             assertThat(response.getCandidates()).hasSize(2);
             assertThat(response.getCandidates().get(0).getCandidateId()).isEqualTo(1L);
@@ -98,24 +98,24 @@ class SmartSearchServiceTest {
         }
 
         @Test
-        @DisplayName("按相似度阈值过滤低分结果")
+        @DisplayName("Filters out low-scoring results by similarity threshold")
         void shouldFilterByMinScore() {
             // Given
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
 
             SearchResult sr1 = new SearchResult();
             sr1.setCandidateId(1L);
-            sr1.setCandidateName("张三");
+            sr1.setCandidateName("Zhang San");
             sr1.setScore(0.85f);
 
             SearchResult sr2 = new SearchResult();
             sr2.setCandidateId(2L);
-            sr2.setCandidateName("李四");
-            sr2.setScore(0.15f);  // 低于阈值
+            sr2.setCandidateName("Li Si");
+            sr2.setScore(0.15f);  // below the threshold
 
             given(vectorStoreService.search(anyList(), eq(10))).willReturn(List.of(sr1, sr2));
 
-            Candidate c1 = buildCandidate(1L, "张三", "后端", "腾讯", 5);
+            Candidate c1 = buildCandidate(1L, "Zhang San", "Backend", "Tencent", 5);
             given(candidateMapper.selectBatchIds(anyList())).willReturn(List.of(c1));
 
             // When
@@ -128,25 +128,25 @@ class SmartSearchServiceTest {
         }
 
         @Test
-        @DisplayName("候选人不在MySQL中时跳过")
+        @DisplayName("Skips candidates missing from MySQL")
         void shouldSkipMissingCandidates() {
             // Given
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
 
             SearchResult sr1 = new SearchResult();
             sr1.setCandidateId(1L);
-            sr1.setCandidateName("张三");
+            sr1.setCandidateName("Zhang San");
             sr1.setScore(0.85f);
 
             SearchResult sr2 = new SearchResult();
             sr2.setCandidateId(999L);
-            sr2.setCandidateName("已删除");
+            sr2.setCandidateName("Deleted");
             sr2.setScore(0.75f);
 
             given(vectorStoreService.search(anyList(), eq(10))).willReturn(List.of(sr1, sr2));
 
-            // 只返回 candidateId=1，不包含 999
-            Candidate c1 = buildCandidate(1L, "张三", "后端", "腾讯", 5);
+            // returns only candidateId=1, not 999
+            Candidate c1 = buildCandidate(1L, "Zhang San", "Backend", "Tencent", 5);
             given(candidateMapper.selectBatchIds(anyList())).willReturn(List.of(c1));
 
             // When
@@ -158,15 +158,15 @@ class SmartSearchServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 空结果场景
+    // Empty result scenarios
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("空结果场景")
+    @DisplayName("Empty result scenarios")
     class EmptyResultTests {
 
         @Test
-        @DisplayName("Milvus 无匹配结果")
+        @DisplayName("No matching results from Milvus")
         void shouldReturnEmptyWhenNoMilvusResults() {
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
             given(vectorStoreService.search(anyList(), eq(10))).willReturn(List.of());
@@ -178,14 +178,14 @@ class SmartSearchServiceTest {
         }
 
         @Test
-        @DisplayName("所有结果低于阈值")
+        @DisplayName("All results below the threshold")
         void shouldReturnEmptyWhenAllBelowThreshold() {
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
 
             SearchResult sr = new SearchResult();
             sr.setCandidateId(1L);
-            sr.setCandidateName("张三");
-            sr.setScore(0.1f);  // 低于默认 0.3
+            sr.setCandidateName("Zhang San");
+            sr.setScore(0.1f);  // below the default 0.3
 
             given(vectorStoreService.search(anyList(), eq(10))).willReturn(List.of(sr));
 
@@ -197,26 +197,26 @@ class SmartSearchServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 异常场景
+    // Exception scenarios
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("异常场景")
+    @DisplayName("Exception scenarios")
     class ExceptionTests {
 
         @Test
-        @DisplayName("嵌入服务异常抛出 BusinessException")
+        @DisplayName("Embedding service failure throws BusinessException")
         void shouldThrowWhenEmbeddingFails() {
             given(embeddingService.generateQueryEmbedding(anyString()))
-                    .willThrow(new RuntimeException("API 超时"));
+                    .willThrow(new RuntimeException("API timeout"));
 
             assertThatThrownBy(() -> smartSearchService.search(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("AI 向量化服务不可用");
+                    .hasMessageContaining("AI vectorization service unavailable");
         }
 
         @Test
-        @DisplayName("Milvus 搜索异常抛出 BusinessException")
+        @DisplayName("Milvus search failure throws BusinessException")
         void shouldThrowWhenMilvusSearchFails() {
             given(embeddingService.generateQueryEmbedding(anyString())).willReturn(mockEmbedding);
             given(vectorStoreService.search(anyList(), eq(10)))
@@ -224,7 +224,7 @@ class SmartSearchServiceTest {
 
             assertThatThrownBy(() -> smartSearchService.search(request))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("向量搜索服务不可用");
+                    .hasMessageContaining("Vector search service unavailable");
         }
     }
 

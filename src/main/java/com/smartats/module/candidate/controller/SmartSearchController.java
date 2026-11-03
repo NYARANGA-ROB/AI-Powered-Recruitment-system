@@ -15,36 +15,36 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 候选人智能语义搜索接口
+ * Candidate intelligent semantic search API
  * <p>
- * 基于 Milvus 向量数据库 + 智谱 embedding-3 模型，
- * 支持自然语言描述搜索匹配候选人。
+ * Based on the Milvus vector database and the Zhipu embedding-3 model,
+ * supporting candidate matching through natural language queries.
  */
 @Slf4j
 @RestController
 @RequestMapping("/candidates")
 @RequiredArgsConstructor
-@Tag(name = "候选人智能搜索", description = "基于向量数据库的语义搜索")
+@Tag(name = "Candidate Smart Search", description = "Vector-database-based semantic search")
 public class SmartSearchController {
 
     private final SmartSearchService smartSearchService;
 
     /**
-     * 语义搜索候选人
+     * Semantic candidate search
      * <p>
-     * 使用自然语言描述搜索最匹配的候选人。
-     * 系统会将查询文本转化为向量，在 Milvus 中进行 ANN 近似搜索，
-     * 返回按相似度排序的候选人列表。
+     * Search for the best-matching candidates using a natural language query.
+     * The system converts the query text into a vector and runs an ANN approximate search in Milvus,
+     * returning candidates sorted by similarity.
      * <p>
-     * 示例查询：
-     * - "3年以上 Java 后端开发，熟悉 Spring Boot 和微服务架构"
-     * - "有大厂经验的前端工程师，精通 React 和 TypeScript"
-     * - "计算机硕士，有机器学习和深度学习项目经验"
+     * Example queries:
+     * - "3+ years of Java backend development, familiar with Spring Boot and microservice architecture"
+     * - "Front-end engineer from a major tech company, proficient in React and TypeScript"
+     * - "Master's in computer science with machine learning and deep learning project experience"
      */
     @PostMapping("/smart-search")
-    @Operation(summary = "语义搜索候选人", description = "基于自然语言描述搜索匹配的候选人")
+    @Operation(summary = "Semantic candidate search", description = "Search for matching candidates using a natural language query")
     public Result<SmartSearchResponse> smartSearch(@Valid @RequestBody SmartSearchRequest request) {
-        log.info("收到语义搜索请求: query='{}', topK={}", request.getQuery(), request.getTopK());
+        log.info("Received semantic search request: query='{}', topK={}", request.getQuery(), request.getTopK());
 
         SmartSearchResponse response = smartSearchService.search(request);
         return Result.success(response);

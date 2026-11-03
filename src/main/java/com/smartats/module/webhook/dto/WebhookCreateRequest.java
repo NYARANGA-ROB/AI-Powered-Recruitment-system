@@ -8,16 +8,16 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 创建 Webhook 配置请求
+ * Webhook configuration creation request
  */
 @Data
 public class WebhookCreateRequest {
 
-    @NotBlank(message = "Webhook URL 不能为空")
-    @Pattern(regexp = "^https?://[\\w\\-]+(\\.[\\w\\-]+)+([\\w\\-.,@?^=%&:/~+#]*[\\w\\-@?^=%&/~+#])?$", message = "Webhook URL 格式不正确")
+    @NotBlank(message = "Webhook URL must not be blank")
+    @Pattern(regexp = "^https?://[\\w\\-]+(\\.[\\w\\-]+)+([\\w\\-.,@?^=%&:/~+#]*[\\w\\-@?^=%&/~+#])?$", message = "Invalid Webhook URL format")
     private String url;
 
-    @NotNull(message = "事件列表不能为空")
+    @NotNull(message = "Event list must not be null")
     private List<String> events;
 
     private String description;

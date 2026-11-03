@@ -28,10 +28,10 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 /**
- * WebhookService 单元测试
+ * WebhookService unit tests
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("WebhookService 单元测试")
+@DisplayName("WebhookService unit tests")
 class WebhookServiceTest {
 
     @InjectMocks
@@ -55,14 +55,14 @@ class WebhookServiceTest {
         testConfig.setEvents("resume.uploaded,candidate.created");
         testConfig.setSecret("abcd1234efgh5678abcd1234efgh5678");
         testConfig.setEnabled(true);
-        testConfig.setDescription("测试 Webhook");
+        testConfig.setDescription("Test Webhook");
         testConfig.setFailureCount(0);
         testConfig.setCreatedAt(LocalDateTime.now());
         testConfig.setUpdatedAt(LocalDateTime.now());
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建 Webhook
+    // Create Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -70,12 +70,12 @@ class WebhookServiceTest {
     class CreateWebhookTests {
 
         @Test
-        @DisplayName("创建成功")
+        @DisplayName("Creation succeeds")
         void shouldCreateSuccessfully() {
             WebhookCreateRequest request = new WebhookCreateRequest();
             request.setUrl("https://example.com/hook");
             request.setEvents(List.of("resume.uploaded", "candidate.created"));
-            request.setDescription("新 Webhook");
+            request.setDescription("New Webhook");
 
             given(webhookConfigMapper.insert(any(WebhookConfig.class))).willAnswer(invocation -> {
                 WebhookConfig c = invocation.getArgument(0);
@@ -99,7 +99,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("无效事件类型抛异常")
+        @DisplayName("Invalid event type throws")
         void shouldThrowWhenInvalidEventType() {
             WebhookCreateRequest request = new WebhookCreateRequest();
             request.setUrl("https://example.com/hook");
@@ -110,7 +110,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("混合有效和无效事件类型抛异常")
+        @DisplayName("Mix of valid and invalid event types throws")
         void shouldThrowWhenMixedEventTypes() {
             WebhookCreateRequest request = new WebhookCreateRequest();
             request.setUrl("https://example.com/hook");
@@ -122,7 +122,7 @@ class WebhookServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询用户 Webhooks
+    // Query user Webhooks
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -130,7 +130,7 @@ class WebhookServiceTest {
     class GetUserWebhooksTests {
 
         @Test
-        @DisplayName("返回用户的所有Webhook配置")
+        @DisplayName("Returns all Webhook configurations of the user")
         void shouldReturnUserWebhooks() {
             given(webhookConfigMapper.selectList(any(LambdaQueryWrapper.class)))
                     .willReturn(List.of(testConfig));
@@ -143,7 +143,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("无配置时返回空列表")
+        @DisplayName("Returns an empty list when no configurations exist")
         void shouldReturnEmptyListWhenNoWebhooks() {
             given(webhookConfigMapper.selectList(any(LambdaQueryWrapper.class)))
                     .willReturn(List.of());
@@ -155,7 +155,7 @@ class WebhookServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 删除 Webhook
+    // Delete Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -163,7 +163,7 @@ class WebhookServiceTest {
     class DeleteWebhookTests {
 
         @Test
-        @DisplayName("删除成功")
+        @DisplayName("Deletion succeeds")
         void shouldDeleteSuccessfully() {
             given(webhookConfigMapper.delete(any(LambdaQueryWrapper.class))).willReturn(1);
 
@@ -173,7 +173,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("删除不存在的webhook不抛异常")
+        @DisplayName("Deleting a nonexistent Webhook does not throw")
         void shouldNotThrowWhenNotExist() {
             given(webhookConfigMapper.delete(any(LambdaQueryWrapper.class))).willReturn(0);
 
@@ -183,7 +183,7 @@ class WebhookServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 测试 Webhook
+    // Test Webhook
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -191,7 +191,7 @@ class WebhookServiceTest {
     class TestWebhookTests {
 
         @Test
-        @DisplayName("Webhook不存在抛异常")
+        @DisplayName("Nonexistent Webhook throws")
         void shouldThrowWhenWebhookNotFound() {
             given(webhookConfigMapper.selectOne(any(LambdaQueryWrapper.class))).willReturn(null);
 
@@ -201,15 +201,15 @@ class WebhookServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // toResponse 转换
+    // toResponse conversion
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("toResponse 转换")
+    @DisplayName("toResponse conversion")
     class ToResponseTests {
 
         @Test
-        @DisplayName("secret脱敏正确显示前4后4")
+        @DisplayName("Secret masking correctly shows the first 4 and last 4 characters")
         void shouldMaskSecretCorrectly() {
             given(webhookConfigMapper.selectList(any(LambdaQueryWrapper.class)))
                     .willReturn(List.of(testConfig));
@@ -223,7 +223,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("events逗号分隔正确转为List")
+        @DisplayName("Comma-separated events are converted to a List correctly")
         void shouldSplitEventsCorrectly() {
             given(webhookConfigMapper.selectList(any(LambdaQueryWrapper.class)))
                     .willReturn(List.of(testConfig));
@@ -236,7 +236,7 @@ class WebhookServiceTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // WebhookEventType 枚举测试
+    // WebhookEventType enum tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -244,7 +244,7 @@ class WebhookServiceTest {
     class EventTypeTests {
 
         @Test
-        @DisplayName("有效事件码解析成功")
+        @DisplayName("Valid event codes parse successfully")
         void shouldParseValidEventCode() {
             assertThat(WebhookEventType.fromCode("resume.uploaded"))
                     .isEqualTo(WebhookEventType.RESUME_UPLOADED);
@@ -253,7 +253,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("无效事件码返回null")
+        @DisplayName("Invalid event codes return null")
         void shouldReturnNullForInvalidCode() {
             assertThat(WebhookEventType.fromCode("invalid.event")).isNull();
             assertThat(WebhookEventType.fromCode("")).isNull();
@@ -261,7 +261,7 @@ class WebhookServiceTest {
         }
 
         @Test
-        @DisplayName("共有12种事件类型")
+        @DisplayName("There are 12 event types in total")
         void shouldHave12EventTypes() {
             assertThat(WebhookEventType.values()).hasSize(12);
         }

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 审计日志响应 DTO
+ * Audit log response DTO
  */
 @Data
 public class AuditLogResponse {
@@ -17,37 +17,37 @@ public class AuditLogResponse {
 
     private String username;
 
-    /** 业务模块 */
+    /** Business module */
     private String module;
 
-    /** 操作类型 */
+    /** Operation type */
     private String operation;
 
-    /** 操作描述 */
+    /** Operation description */
     private String description;
 
-    /** 方法签名 */
+    /** Method signature */
     private String method;
 
-    /** 请求 URL */
+    /** Request URL */
     private String requestUrl;
 
-    /** HTTP 方法 */
+    /** HTTP method */
     private String requestMethod;
 
-    /** 请求参数 */
+    /** Request parameters */
     private String requestParams;
 
-    /** 请求 IP */
+    /** Request IP */
     private String requestIp;
 
-    /** 操作结果：SUCCESS / FAILED */
+    /** Operation result: SUCCESS / FAILED */
     private String status;
 
-    /** 错误消息 */
+    /** Error message */
     private String errorMessage;
 
-    /** 执行耗时（ms） */
+    /** Execution duration (ms) */
     private Long duration;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

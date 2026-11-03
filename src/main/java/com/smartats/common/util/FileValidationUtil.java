@@ -8,16 +8,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 文件验证工具类
- * 通过文件头（魔数）验证真实文件类型，防止伪造文件类型攻击
+ * File validation utility
+ * Verifies the real file type via the file header (magic number) to prevent file-type spoofing attacks
  */
 @Slf4j
 public class FileValidationUtil {
 
     /**
-     * 常见文件类型的魔数（文件头标识）
-     * Key: 文件扩展名
-     * Value: 文件头十六进制签名
+     * Magic numbers (file header signatures) of common file types
+     * Key: file extension
+     * Value: hexadecimal file-header signature
      */
     private static final Map<String, String> FILE_SIGNATURES = new HashMap<>();
 
@@ -28,16 +28,16 @@ public class FileValidationUtil {
         // DOC (Microsoft Word 97-2003): D0 CF 11 E0 A1 B1 1A E1
         FILE_SIGNATURES.put(".doc", "D0 CF 11 E0");
 
-        // DOCX (Microsoft Word 2007+): PK (50 4B 03 04) - ZIP 格式
+        // DOCX (Microsoft Word 2007+): PK (50 4B 03 04) - ZIP format
         FILE_SIGNATURES.put(".docx", "50 4B 03 04");
     }
 
     /**
-     * 获取文件的真实 MIME 类型（字节数组版本，推荐使用）
+     * Get the real MIME type of a file (byte array version, recommended)
      *
-     * @param fileBytes 文件字节数组
-     * @param originalFilename 原始文件名（用于辅助判断）
-     * @return 真实的 MIME 类型，如果无法识别则返回 null
+     * @param fileBytes the file byte array
+     * @param originalFilename the original file name (used as a hint)
+     * @return the real MIME type, or null when it cannot be recognised
      */
     public static String detectRealMimeType(byte[] fileBytes, String originalFilename) {
         if (fileBytes == null || fileBytes.length < 4) {
@@ -48,12 +48,12 @@ public class FileValidationUtil {
     }
 
     /**
-     * 获取文件的真实 MIME 类型
-     * 根据文件内容判断，而不是依赖文件扩展名或 Content-Type
+     * Get the real MIME type of a file
+     * Determined from the file content rather than the extension or the Content-Type
      *
-     * @param inputStream 文件输入流
-     * @param originalFilename 原始文件名（用于辅助判断）
-     * @return 真实的 MIME 类型，如果无法识别则返回 null
+     * @param inputStream the file input stream
+     * @param originalFilename the original file name (used as a hint)
+     * @return the real MIME type, or null when it cannot be recognised
      */
     public static String detectRealMimeType(InputStream inputStream, String originalFilename) {
         try {
@@ -62,26 +62,26 @@ public class FileValidationUtil {
             return parseMimeType(header, originalFilename);
 
         } catch (IOException e) {
-            log.error("读取文件头失败", e);
+            log.error("Failed to read the file header", e);
             return null;
         }
     }
 
     /**
-     * 根据文件头字节解析 MIME 类型（内部公共逻辑）
+     * Parse the MIME type from the file header bytes (shared internal logic)
      */
     private static String parseMimeType(byte[] header, String originalFilename) {
-        // 检查是否为 PDF
+        // Check whether it is a PDF
         if (header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46) {
             return "application/pdf";
         }
 
-        // 检查是否为 DOC (旧版 Word)
+        // Check whether it is DOC (legacy Word)
         if (header[0] == (byte) 0xD0 && header[1] == (byte) 0xCF && header[2] == 0x11 && header[3] == (byte) 0xE0) {
             return "application/msword";
         }
 
-        // 检查是否为 DOCX (新版 Word，实际是 ZIP 格式)
+        // Check whether it is DOCX (modern Word, which is really a ZIP archive)
         if (header[0] == 0x50 && header[1] == 0x4B && header[2] == 0x03 && header[3] == 0x04) {
             if (originalFilename != null && originalFilename.toLowerCase().endsWith(".docx")) {
                 return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -89,7 +89,7 @@ public class FileValidationUtil {
             return "application/zip";
         }
 
-        log.warn("无法识别的文件类型，文件头: 0x{} 0x{} 0x{} 0x{}",
+        log.warn("Unrecognised file type, file header: 0x{} 0x{} 0x{} 0x{}",
                 Integer.toHexString(header[0] & 0xFF),
                 Integer.toHexString(header[1] & 0xFF),
                 Integer.toHexString(header[2] & 0xFF),
@@ -98,12 +98,12 @@ public class FileValidationUtil {
     }
 
     /**
-     * 验证文件是否为声明的类型（字节数组版本，推荐使用，避免流 mark/reset 问题）
+     * Validate that the file matches its declared type (byte array version, recommended as it avoids stream mark/reset issues)
      *
-     * @param fileBytes 文件字节数组
-     * @param declaredContentType 声明的 Content-Type
-     * @param originalFilename 原始文件名
-     * @return true 如果文件真实类型与声明一致
+     * @param fileBytes the file byte array
+     * @param declaredContentType the declared Content-Type
+     * @param originalFilename the original file name
+     * @return true if the real file type matches the declared one
      */
     public static boolean validateFileType(byte[] fileBytes, String declaredContentType, String originalFilename) {
         String realMimeType = detectRealMimeType(fileBytes, originalFilename);
@@ -111,12 +111,12 @@ public class FileValidationUtil {
     }
 
     /**
-     * 验证文件是否为声明的类型
+     * Validate that the file matches its declared type
      *
-     * @param inputStream 文件输入流
-     * @param declaredContentType 声明的 Content-Type
-     * @param originalFilename 原始文件名
-     * @return true 如果文件真实类型与声明一致
+     * @param inputStream the file input stream
+     * @param declaredContentType the declared Content-Type
+     * @param originalFilename the original file name
+     * @return true if the real file type matches the declared one
      */
     public static boolean validateFileType(InputStream inputStream, String declaredContentType, String originalFilename) {
         String realMimeType = detectRealMimeType(inputStream, originalFilename);
@@ -140,13 +140,13 @@ public class FileValidationUtil {
             default -> false;
         };
         if (!isValid) {
-            log.warn("文件类型不匹配: 声明={}, 真实={}, 文件名={}", declaredContentType, realMimeType, originalFilename);
+            log.warn("File type mismatch: declared={}, real={}, fileName={}", declaredContentType, realMimeType, originalFilename);
         }
         return isValid;
     }
 
     /**
-     * 读取文件头（前 8 字节），使用 BufferedInputStream 包装以支持 mark/reset
+     * Read the file header (the first 8 bytes), wrapping the stream in a BufferedInputStream to support mark/reset
      */
     private static byte[] readFileHeader(InputStream inputStream) throws IOException {
         java.io.BufferedInputStream buffered = new java.io.BufferedInputStream(inputStream);
@@ -156,36 +156,36 @@ public class FileValidationUtil {
         buffered.reset();
 
         if (bytesRead < 4) {
-            throw new IOException("文件太小，无法读取文件头");
+            throw new IOException("The file is too small to read its header");
         }
 
         return header;
     }
 
     /**
-     * 消毒文件名，防止路径遍历攻击
-     * - 移除路径分隔符
-     * - 移除特殊字符
-     * - 限制文件名长度
+     * Sanitize a file name to prevent path traversal attacks
+     * - Strip path separators
+     * - Strip special characters
+     * - Limit the file name length
      *
-     * @param filename 原始文件名
-     * @return 消毒后的文件名
+     * @param filename the original file name
+     * @return the sanitized file name
      */
     public static String sanitizeFilename(String filename) {
         if (filename == null || filename.isEmpty()) {
             return "unnamed";
         }
 
-        // 移除路径信息（只保留文件名部分）
+        // Strip path information (keep only the file name part)
         String sanitized = filename.replaceAll(".*/", "")
                                    .replaceAll(".*\\\\", "");
 
-        // 移除危险字符
-        sanitized = sanitized.replaceAll("[\\x00-\\x1f\\x7f]", ""); // 控制字符
-        sanitized = sanitized.replaceAll("[<>:\"|?*]", ""); // Windows 不允许的字符
-        sanitized = sanitized.replaceAll("\\.\\.", ""); // 防止路径遍历
+        // Strip dangerous characters
+        sanitized = sanitized.replaceAll("[\\x00-\\x1f\\x7f]", ""); // control characters
+        sanitized = sanitized.replaceAll("[<>:\"|?*]", ""); // characters not allowed on Windows
+        sanitized = sanitized.replaceAll("\\.\\.", ""); // prevent path traversal
 
-        // 限制文件名长度（255 字节是大多数文件系统的限制）
+        // Limit the file name length (255 bytes is the limit on most file systems)
         if (sanitized.length() > 200) {
             String extension = "";
             int dotIndex = sanitized.lastIndexOf('.');
@@ -201,7 +201,7 @@ public class FileValidationUtil {
             return "unnamed";
         }
 
-        log.debug("文件名消毒: {} -> {}", filename, sanitized);
+        log.debug("Sanitized file name: {} -> {}", filename, sanitized);
         return sanitized;
     }
 }

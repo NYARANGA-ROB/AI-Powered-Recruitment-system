@@ -36,11 +36,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * CandidateController 集成测试
+ * CandidateController integration tests
  */
 @WebMvcTest(CandidateController.class)
 @Import(SecurityConfig.class)
-@DisplayName("CandidateController 集成测试")
+@DisplayName("CandidateController integration tests")
 class CandidateControllerTest {
 
     @Autowired
@@ -71,13 +71,13 @@ class CandidateControllerTest {
         testCandidate = new Candidate();
         testCandidate.setId(1L);
         testCandidate.setResumeId(100L);
-        testCandidate.setName("张三");
+        testCandidate.setName("Zhang San");
         testCandidate.setPhone("13800138000");
         testCandidate.setEmail("zhangsan@test.com");
         testCandidate.setGender("MALE");
         testCandidate.setAge(28);
-        testCandidate.setEducation("本科");
-        testCandidate.setSchool("清华大学");
+        testCandidate.setEducation("Bachelor");
+        testCandidate.setSchool("Tsinghua University");
         testCandidate.setWorkYears(5);
         testCandidate.setSkills(List.of("Java", "Spring"));
     }
@@ -90,7 +90,7 @@ class CandidateControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 根据简历ID查询候选人
+    // Query candidate by resume ID
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -98,7 +98,7 @@ class CandidateControllerTest {
     class GetByResumeIdTests {
 
         @Test
-        @DisplayName("查询成功（手机号邮箱脱敏）")
+        @DisplayName("Query succeeds (phone and email are masked)")
         void shouldReturnCandidateWithMaskedData() throws Exception {
             given(candidateService.getByResumeId(100L)).willReturn(testCandidate);
 
@@ -106,14 +106,14 @@ class CandidateControllerTest {
                             .with(authentication(mockAuth(1L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.name").value("张三"))
-                    // 脱敏后手机号和邮箱不应为原始值
+                    .andExpect(jsonPath("$.data.name").value("Zhang San"))
+                    // Masked phone and email must not equal the original values
                     .andExpect(jsonPath("$.data.phone").value(org.hamcrest.Matchers.containsString("*")))
                     .andExpect(jsonPath("$.data.email").value(org.hamcrest.Matchers.containsString("*")));
         }
 
         @Test
-        @DisplayName("候选人不存在 - 404")
+        @DisplayName("Candidate not found - 404")
         void shouldReturnErrorWhenNotFound() throws Exception {
             given(candidateService.getByResumeId(999L)).willReturn(null);
 
@@ -125,7 +125,7 @@ class CandidateControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询候选人详情
+    // Query candidate details
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -133,7 +133,7 @@ class CandidateControllerTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("查询成功")
+        @DisplayName("Query succeeds")
         void shouldReturnCandidate() throws Exception {
             given(candidateService.getById(1L)).willReturn(testCandidate);
 
@@ -141,12 +141,12 @@ class CandidateControllerTest {
                             .with(authentication(mockAuth(1L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.name").value("张三"));
+                    .andExpect(jsonPath("$.data.name").value("Zhang San"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 更新候选人
+    // Update candidate
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -154,14 +154,14 @@ class CandidateControllerTest {
     class UpdateTests {
 
         @Test
-        @DisplayName("更新成功")
+        @DisplayName("Update succeeds")
         void shouldUpdateSuccessfully() throws Exception {
             CandidateUpdateRequest request = new CandidateUpdateRequest();
-            request.setName("李四");
+            request.setName("Li Si");
 
             Candidate updated = new Candidate();
             updated.setId(1L);
-            updated.setName("李四");
+            updated.setName("Li Si");
             updated.setPhone("13800138000");
             updated.setEmail("test@test.com");
 
@@ -175,12 +175,12 @@ class CandidateControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.name").value("李四"));
+                    .andExpect(jsonPath("$.data.name").value("Li Si"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 删除候选人
+    // Delete candidate
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -188,7 +188,7 @@ class CandidateControllerTest {
     class DeleteTests {
 
         @Test
-        @DisplayName("删除成功")
+        @DisplayName("Delete succeeds")
         void shouldDeleteSuccessfully() throws Exception {
             given(candidateService.getById(1L)).willReturn(testCandidate);
             willDoNothing().given(candidateService).deleteById(1L);
@@ -201,7 +201,7 @@ class CandidateControllerTest {
         }
 
         @Test
-        @DisplayName("候选人不存在 - 业务异常")
+        @DisplayName("Candidate not found - business exception")
         void shouldReturnErrorWhenNotFound() throws Exception {
             given(candidateService.getById(999L)).willReturn(null);
 
@@ -214,7 +214,7 @@ class CandidateControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 候选人列表
+    // Candidate list
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -222,7 +222,7 @@ class CandidateControllerTest {
     class ListTests {
 
         @Test
-        @DisplayName("分页查询成功")
+        @DisplayName("Paged query succeeds")
         void shouldReturnPagedResults() throws Exception {
             Page<Candidate> page = new Page<>(1, 10);
             page.setTotal(1);
@@ -239,7 +239,7 @@ class CandidateControllerTest {
         }
 
         @Test
-        @DisplayName("未认证 - 401")
+        @DisplayName("Unauthenticated - 401")
         void shouldReturn401WhenNotAuthenticated() throws Exception {
             mockMvc.perform(get("/candidates"))
                     .andExpect(status().isForbidden());

@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 候选人更新请求 DTO
+ * Candidate update request DTO
  */
 @Data
 public class CandidateUpdateRequest {

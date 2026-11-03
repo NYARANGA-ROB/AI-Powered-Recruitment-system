@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SmartATS** is an intelligent recruitment management system for HR professionals. The system enables resume uploads, AI-powered automatic parsing of structured information (via 智谱AI), full recruitment workflow management (applications, interviews), and Webhook event notifications.
+**SmartATS** is an intelligent recruitment management system for HR professionals. The system enables resume uploads, AI-powered automatic parsing of structured information (via Zhipu AI), full recruitment workflow management (applications, interviews), and Webhook event notifications.
 
 **Current State** (2026-02-25):
 - ✅ All 11 business modules implemented and functional (including vector search)
 - ✅ 47 API endpoints across auth, job, resume, candidate, application, interview, webhook, smart-search, audit, analytics
-- ✅ AI resume parsing complete (智谱AI via Spring AI OpenAI-compatible mode)
+- ✅ AI resume parsing complete (Zhipu AI via Spring AI OpenAI-compatible mode)
 - ✅ Async processing pipeline (RabbitMQ + Redisson distributed lock + retry + DLQ)
 - ✅ Redis caching with cache-aside pattern, delayed double-delete, atomic counters
 - ✅ Comprehensive code quality optimization (34 issues fixed: security, N+1, exceptions, MQ)
@@ -19,9 +19,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ✅ 193 unit/integration tests across 19 test classes (Service + Controller layers)
 - ✅ Environment profiles: dev / test / prod
 - ✅ Production deployment documentation
-- ✅ **NEW** 审计日志模块（AOP + Custom Annotation 自动采集）
-- ✅ **NEW** AI 智能匹配打分（多维度匹配：语义相似度30% + 技能匹配35% + 经验匹配20% + 学历匹配15%）
-- ✅ **NEW** 招聘漏斗分析 + SSE 实时推送
+- ✅ **NEW** Audit log module (AOP + custom annotation for automatic capture)
+- ✅ **NEW** AI intelligent match scoring (multi-dimensional match: semantic similarity 30% + skill match 35% + experience match 20% + education match 15%)
+- ✅ **NEW** Recruitment funnel analytics + SSE real-time push
 
 **Overall Progress: 100%** (all TODOs resolved, production-ready)
 
@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Distributed Lock | Redisson | 3.25.0 | ✅ Implemented |
 | Message Queue | RabbitMQ | 3.12 | ✅ |
 | File Storage | MinIO | 8.5.10 | ✅ |
-| AI Integration | Spring AI + 智谱AI | 1.0.0-M4 | ✅ |
+| AI Integration | Spring AI + Zhipu AI | 1.0.0-M4 | ✅ |
 | Document Parsing | Apache POI + PDFBox | 5.2.5 / 2.0.29 | ✅ |
 | Security | Spring Security + JWT (jjwt 0.11.5) | - | ✅ |
 | Email | Spring Mail | - | ✅ |
@@ -120,7 +120,7 @@ src/main/java/com/smartats/
 │   ├── MinioConfig.java                    # MinIO client
 │   ├── AsyncConfig.java                    # @Async thread pools (asyncExecutor, webhookExecutor)
 │   ├── RedissonConfig.java                 # Redisson distributed lock client
-│   ├── ZhipuAiConfig.java                  # 智谱AI (OpenAI-compatible)
+│   ├── ZhipuAiConfig.java                  # Zhipu AI (OpenAI-compatible)
 │   ├── MilvusConfig.java                   # Milvus vector database client
 │   └── OpenApiConfig.java                  # SpringDoc + JWT Bearer scheme
 ├── infrastructure/                         # Infrastructure (6 files)
@@ -168,7 +168,7 @@ src/main/java/com/smartats/
 Upload → MD5 Hash → Redis Dedup → MinIO Storage → DB Record → Task Status (Redis) → MQ Message → Return taskId
                                                        ↓
                                      Consumer → Idempotency Check → Redisson Lock → Extract Content (POI/PDFBox)
-                                       → AI Parse (智谱AI) → Save Candidate → Webhook Notify → Task Complete
+                                       → AI Parse (Zhipu AI) → Save Candidate → Webhook Notify → Task Complete
                                        ↓ (fail, retryCount < 3)
                                      Republish with retryCount+1, ACK original
                                        ↓ (retryCount >= 3)
@@ -364,7 +364,7 @@ String json = objectMapper.writeValueAsString(obj);
 stringRedisTemplate.opsForValue().set(key, json, ttl, TimeUnit.SECONDS);
 
 // ✅ Correct exception handling
-throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在");
+throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found");
 
 // ✅ Correct transaction annotation
 @Transactional(rollbackFor = Exception.class)
@@ -396,7 +396,7 @@ throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在");
 - `docs/project-progress-summary.md` — Detailed module analysis and statistics
 - `docs/next-steps-plan-2026-02-23.md` — Development priorities and technical decisions
 - `docs/SmartATS-Design-Document.md` — Complete technical specification, database schema, API definitions
-- `docs/SmartATS-从0到1开发教学手册.md` — Step-by-step development tutorial
+- `docs/SmartATS-development-handbook-from-zero.md` — Step-by-step development tutorial
 - `docs/deployment-guide.md` — Production deployment guide (Docker Compose, Nginx, monitoring)
 
 ## Git Workflow
@@ -404,9 +404,9 @@ throw new BusinessException(ResultCode.NOT_FOUND, "候选人不存在");
 ### Commit Message Format (Chinese)
 
 ```
-type(scope): 中文描述
+type(scope): Chinese description
 
-详细说明（可选）
+Detailed description (optional)
 ```
 
 Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `security`, `test`, `chore`
@@ -415,8 +415,8 @@ Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `security`, `test`, `chore`
 
 | Hash | Description |
 |------|-------------|
-| `b31725f` | refactor: 全面优化代码质量（34项问题） |
-| `2f8e0fd` | feat(application,interview): 职位申请和面试记录模块 |
-| `6290576` | feat(candidate): 高级筛选、Redis缓存、脱敏 |
-| `23fe2ea` | feat(auth/webhook): RefreshToken 刷新 + Webhook 测试 |
-| `6f5beb6` | feat(resume/candidate): AI 简历解析及候选人模块 |
+| `b31725f` | refactor: comprehensive code quality improvements (34 issues) |
+| `2f8e0fd` | feat(application,interview): job application and interview record modules |
+| `6290576` | feat(candidate): advanced filtering, Redis cache, data masking |
+| `23fe2ea` | feat(auth/webhook): RefreshToken refresh + Webhook testing |
+| `6f5beb6` | feat(resume/candidate): AI resume parsing and candidate modules |

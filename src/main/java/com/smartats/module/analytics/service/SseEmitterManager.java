@@ -15,22 +15,22 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * SSE 长连接管理器
+ * SSE long-connection manager
  * <p>
- * 核心职责：
+ * Core responsibilities:
  * <ul>
- *   <li>管理所有已连接的 SseEmitter 实例（线程安全的 CopyOnWriteArrayList）</li>
- *   <li>监听 {@link AnalyticsUpdateEvent}，将更新推送到所有已连接客户端</li>
- *   <li>定时心跳（每 30 秒），防止代理/防火墙断开空闲连接</li>
- *   <li>异常自动清理死连接</li>
+ *   <li>Manages all connected SseEmitter instances (thread-safe CopyOnWriteArrayList)</li>
+ *   <li>Listens for {@link AnalyticsUpdateEvent} and pushes updates to all connected clients</li>
+ *   <li>Periodic heartbeat (every 30 seconds) to keep proxies/firewalls from dropping idle connections</li>
+ *   <li>Automatically removes dead connections on errors</li>
  * </ul>
  *
  * <p>
- * 企业最佳实践：
+ * Enterprise best practices:
  * <ul>
- *   <li>使用 CopyOnWriteArrayList 保证并发安全（读多写少场景）</li>
- *   <li>心跳机制兼容 Nginx/ALB 等反向代理的 idle timeout</li>
- *   <li>通过 Spring ApplicationEvent 与业务层解耦</li>
+ *   <li>CopyOnWriteArrayList provides concurrency safety (read-heavy, write-light scenarios)</li>
+ *   <li>The heartbeat mechanism stays compatible with idle timeouts of reverse proxies such as Nginx/ALB</li>
+ *   <li>Decoupled from the business layer via Spring ApplicationEvent</li>
  * </ul>
  */
 @Slf4j
@@ -39,60 +39,60 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SseEmitterManager {
 
     /**
-     * SSE 超时时间：30 分钟
+     * SSE timeout: 30 minutes
      */
     private static final long SSE_TIMEOUT = 30 * 60 * 1000L;
 
     /**
-     * 所有活跃的 SSE 连接
+     * All active SSE connections
      */
     private final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     private final ObjectMapper objectMapper;
 
     /**
-     * 创建并注册新的 SSE 连接
+     * Create and register a new SSE connection
      *
-     * @return 绑定了生命周期回调的 SseEmitter
+     * @return an SseEmitter with lifecycle callbacks bound
      */
     public SseEmitter createEmitter() {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 
         emitter.onCompletion(() -> {
             emitters.remove(emitter);
-            log.debug("SSE 连接正常关闭，当前连接数: {}", emitters.size());
+            log.debug("SSE connection closed normally, active connections: {}", emitters.size());
         });
 
         emitter.onTimeout(() -> {
             emitters.remove(emitter);
-            log.debug("SSE 连接超时断开，当前连接数: {}", emitters.size());
+            log.debug("SSE connection timed out, active connections: {}", emitters.size());
         });
 
         emitter.onError(ex -> {
             emitters.remove(emitter);
-            log.debug("SSE 连接异常断开: {}，当前连接数: {}", ex.getMessage(), emitters.size());
+            log.debug("SSE connection failed: {}, active connections: {}", ex.getMessage(), emitters.size());
         });
 
         emitters.add(emitter);
-        log.info("新 SSE 连接建立，当前连接数: {}", emitters.size());
+        log.info("New SSE connection established, active connections: {}", emitters.size());
 
-        // 发送初始连接成功事件
+        // Send the initial connection-success event
         try {
             emitter.send(SseEmitter.event()
                     .name("connected")
-                    .data(Map.of("message", "SSE 连接已建立", "timeout", SSE_TIMEOUT)));
+                    .data(Map.of("message", "SSE connection established", "timeout", SSE_TIMEOUT)));
         } catch (IOException e) {
             emitters.remove(emitter);
-            log.warn("发送初始事件失败，移除连接");
+            log.warn("Failed to send initial event, removing connection");
         }
 
         return emitter;
     }
 
     /**
-     * 监听分析数据更新事件，推送到所有已连接客户端
+     * Listen for analytics update events and push them to all connected clients
      * <p>
-     * 使用 @Async 异步执行，避免阻塞业务线程
+     * Executed asynchronously with @Async to avoid blocking business threads
      */
     @Async("asyncExecutor")
     @EventListener
@@ -107,15 +107,15 @@ public class SseEmitterManager {
                 "timestamp", System.currentTimeMillis()
         );
 
-        log.info("推送 SSE 事件: {} -> {} 个客户端", event.getEventType(), emitters.size());
+        log.info("Pushing SSE event: {} -> {} clients", event.getEventType(), emitters.size());
         broadcast("analytics_update", payload);
     }
 
     /**
-     * 心跳机制：每 30 秒发送空注释帧
+     * Heartbeat: sends an empty comment frame every 30 seconds
      * <p>
-     * 防止 Nginx、ALB 等反向代理因空闲超时断开连接。
-     * SSE 规范中，以冒号开头的行是注释帧，客户端会忽略但连接保持活跃。
+     * Prevents reverse proxies such as Nginx and ALB from closing connections due to idle timeouts.
+     * In the SSE specification, lines starting with a colon are comment frames; clients ignore them while the connection stays alive.
      */
     @Scheduled(fixedRate = 30_000)
     public void heartbeat() {
@@ -123,19 +123,19 @@ public class SseEmitterManager {
             return;
         }
 
-        log.debug("发送 SSE 心跳，当前连接数: {}", emitters.size());
+        log.debug("Sending SSE heartbeat, active connections: {}", emitters.size());
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().comment("heartbeat"));
             } catch (Exception e) {
                 emitters.remove(emitter);
-                log.debug("心跳失败，移除死连接");
+                log.debug("Heartbeat failed, removing dead connection");
             }
         }
     }
 
     /**
-     * 广播事件到所有连接
+     * Broadcast an event to all connections
      */
     private void broadcast(String eventName, Object data) {
         for (SseEmitter emitter : emitters) {
@@ -145,13 +145,13 @@ public class SseEmitterManager {
                         .data(objectMapper.writeValueAsString(data)));
             } catch (Exception e) {
                 emitters.remove(emitter);
-                log.debug("广播失败，移除死连接: {}", e.getMessage());
+                log.debug("Broadcast failed, removing dead connection: {}", e.getMessage());
             }
         }
     }
 
     /**
-     * 获取当前活跃连接数（监控用）
+     * Get the current number of active connections (for monitoring)
      */
     public int getActiveCount() {
         return emitters.size();

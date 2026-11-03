@@ -5,75 +5,75 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 更新职位请求
+ * Update job request
  */
 @Data
 public class UpdateJobRequest {
 
     /**
-     * 职位ID
+     * Job ID
      */
-    @NotNull(message = "职位ID不能为空")
+    @NotNull(message = "Job ID must not be empty")
     private Long id;
 
     /**
-     * 职位标题
+     * Job title
      */
     private String title;
 
     /**
-     * 部门
+     * Department
      */
     private String department;
 
     /**
-     * 职位描述
+     * Job description
      */
     private String description;
 
     /**
-     * 任职要求
+     * Job requirements
      */
     private String requirements;
 
     /**
-     * 必需技能标签
+     * Required skill tags
      */
     private java.util.List<String> requiredSkills;
 
     /**
-     * 薪资下限(K)
-     * 如果提供了此字段，必须 >= 0
+     * Minimum salary (K)
+     * If this field is provided, it must be >= 0
      */
-    @Min(value = 0, message = "薪资下限不能小于0")
+    @Min(value = 0, message = "Minimum salary must not be less than 0")
     private Integer salaryMin;
 
     /**
-     * 薪资上限(K)
-     * 如果提供了此字段，必须 >= 0
+     * Maximum salary (K)
+     * If this field is provided, it must be >= 0
      */
-    @Min(value = 0, message = "薪资上限不能小于0")
+    @Min(value = 0, message = "Maximum salary must not be less than 0")
     private Integer salaryMax;
 
     /**
-     * 最低经验年限
+     * Minimum years of experience
      */
-    @Min(value = 0, message = "经验年限不能小于0")
+    @Min(value = 0, message = "Years of experience must not be less than 0")
     private Integer experienceMin;
 
     /**
-     * 最高经验年限
+     * Maximum years of experience
      */
-    @Min(value = 0, message = "经验年限不能小于0")
+    @Min(value = 0, message = "Years of experience must not be less than 0")
     private Integer experienceMax;
 
     /**
-     * 学历要求
+     * Education requirement
      */
     private String education;
 
     /**
-     * 职位类型
+     * Job type
      */
     private String jobType;
 }

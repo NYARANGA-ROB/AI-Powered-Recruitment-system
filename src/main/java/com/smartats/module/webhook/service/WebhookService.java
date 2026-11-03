@@ -26,8 +26,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Webhook 服务
- * 负责 Webhook 配置管理和事件发送
+ * Webhook service
+ * Responsible for Webhook configuration management and event delivery
  */
 @Slf4j
 @Service
@@ -39,7 +39,7 @@ public class WebhookService {
     private final ObjectMapper objectMapper;
 
     /**
-     * HTTP 客户端（带连接池和超时配置）
+     * HTTP client (with connection pool and timeout configuration)
      */
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -48,23 +48,23 @@ public class WebhookService {
             .build();
 
     /**
-     * 最大连续失败次数
+     * Maximum number of consecutive failures
      */
     private static final int MAX_FAILURES = 5;
 
     /**
-     * 创建 Webhook 配置
+     * Create Webhook configuration
      */
     @Transactional(rollbackFor = Exception.class)
     public WebhookResponse createWebhook(Long userId, WebhookCreateRequest request) {
-        // 验证事件类型
+        // Validate the event types
         for (String event : request.getEvents()) {
             if (WebhookEventType.fromCode(event) == null) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "无效的事件类型: " + event);
+            throw new BusinessException(ResultCode.BAD_REQUEST, "Invalid event type: " + event);
             }
         }
 
-        // 生成随机密钥
+        // Generate a random secret
         String secret = UUID.randomUUID().toString().replace("-", "");
 
         WebhookConfig config = new WebhookConfig();
@@ -80,13 +80,13 @@ public class WebhookService {
 
         webhookConfigMapper.insert(config);
 
-        log.info("创建 Webhook 配置: userId={}, webhookId={}, url={}", userId, config.getId(), request.getUrl());
+        log.info("Created Webhook configuration: userId={}, webhookId={}, url={}", userId, config.getId(), request.getUrl());
 
         return toResponse(config);
     }
 
     /**
-     * 获取用户的所有 Webhook 配置
+     * List all Webhook configurations of the user
      */
     public List<WebhookResponse> getUserWebhooks(Long userId) {
         LambdaQueryWrapper<WebhookConfig> wrapper = new LambdaQueryWrapper<>();
@@ -100,7 +100,7 @@ public class WebhookService {
     }
 
     /**
-     * 删除 Webhook 配置
+     * Delete Webhook configuration
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteWebhook(Long userId, Long webhookId) {
@@ -111,53 +111,53 @@ public class WebhookService {
         int deleted = webhookConfigMapper.delete(wrapper);
 
         if (deleted > 0) {
-            log.info("删除 Webhook 配置: userId={}, webhookId={}", userId, webhookId);
+            log.info("Deleted Webhook configuration: userId={}, webhookId={}", userId, webhookId);
         }
     }
 
     /**
-     * 发送 Webhook 事件（异步）
+     * Send a Webhook event (asynchronous)
      */
     @Async("webhookExecutor")
     public void sendEvent(WebhookEventType eventType, Map<String, Object> data) {
         String eventCode = eventType.getCode();
 
-        // 查询所有订阅此事件的 Webhook 配置
+        // Query all Webhook configurations subscribed to this event
         List<WebhookConfig> webhooks = findWebhooksByEventType(eventType);
 
         if (webhooks.isEmpty()) {
-            log.debug("没有 Webhook 订阅事件: {}", eventCode);
+            log.debug("No Webhook subscribed to event: {}", eventCode);
             return;
         }
 
-        log.info("发送 Webhook 事件: {}, 订阅者数: {}", eventCode, webhooks.size());
+        log.info("Sending Webhook event: {}, subscriber count: {}", eventCode, webhooks.size());
 
-        // 并发发送给所有订阅者
+        // Deliver concurrently to all subscribers
         webhooks.forEach(webhook -> {
             try {
                 sendWebhook(webhook, eventType, data);
             } catch (Exception e) {
-                log.error("发送 Webhook 失败: webhookId={}, event={}", webhook.getId(), eventCode, e);
+                log.error("Failed to send Webhook: webhookId={}, event={}", webhook.getId(), eventCode, e);
             }
         });
     }
 
     /**
-     * 发送单个 Webhook
+     * Send a single Webhook
      */
     private void sendWebhook(WebhookConfig webhook, WebhookEventType eventType, Map<String, Object> data) {
         String eventCode = eventType.getCode();
         long startTime = System.currentTimeMillis();
 
-        // 检查是否启用
+        // Check whether the configuration is enabled
         if (!webhook.getEnabled()) {
-            log.debug("Webhook 已禁用，跳过发送: webhookId={}", webhook.getId());
+            log.debug("Webhook disabled, skipping delivery: webhookId={}", webhook.getId());
             return;
         }
 
-        // 检查失败次数
+        // Check the failure count
         if (webhook.getFailureCount() != null && webhook.getFailureCount() >= MAX_FAILURES) {
-            log.warn("Webhook 失败次数过多，自动禁用: webhookId={}, failureCount={}",
+            log.warn("Webhook failure count too high, auto-disabling: webhookId={}, failureCount={}",
                     webhook.getId(), webhook.getFailureCount());
             webhook.setEnabled(false);
             webhookConfigMapper.updateById(webhook);
@@ -165,17 +165,17 @@ public class WebhookService {
         }
 
         try {
-            // 构建负载
+            // Build the payload
             WebhookPayload payload = buildPayload(eventType, data);
 
-            // 生成签名
+            // Generate the signature
             String signature = generateSignature(payload, webhook.getSecret());
             payload.setSignature(signature);
 
-            // 序列化为 JSON
+            // Serialize to JSON
             String jsonPayload = objectMapper.writeValueAsString(payload);
 
-            // 发送 HTTP 请求
+            // Send the HTTP request
             RequestBody body = RequestBody.create(
                     jsonPayload,
                     MediaType.parse("application/json; charset=utf-8")
@@ -207,18 +207,18 @@ public class WebhookService {
     }
 
     /**
-     * 处理发送成功
+     * Handle successful delivery
      */
     private void handleSuccess(WebhookConfig webhook, WebhookEventType eventType,
                                String payload, Response response, long duration) {
         String eventCode = eventType.getCode();
 
-        // 重置失败计数
+        // Reset the failure count
         webhook.setFailureCount(0);
         webhook.setLastSuccessAt(LocalDateTime.now());
         webhookConfigMapper.updateById(webhook);
 
-        // 记录日志
+        // Record the log
         WebhookLog webhookLog = new WebhookLog();
         webhookLog.setWebhookId(webhook.getId());
         webhookLog.setEventType(eventCode);
@@ -230,32 +230,32 @@ public class WebhookService {
         webhookLog.setCreatedAt(LocalDateTime.now());
         webhookLogMapper.insert(webhookLog);
 
-        log.info("Webhook 发送成功: webhookId={}, event={}, duration={}ms",
+        log.info("Webhook delivered successfully: webhookId={}, event={}, duration={}ms",
                 webhook.getId(), eventCode, duration);
     }
 
     /**
-     * 处理发送失败
+     * Handle delivery failure
      */
     private void handleFailure(WebhookConfig webhook, WebhookEventType eventType,
                                String payload, Response response, long duration, String errorMessage) {
         String eventCode = eventType.getCode();
 
-        // 增加失败计数
+        // Increment the failure count
         int newFailureCount = (webhook.getFailureCount() == null ? 0 : webhook.getFailureCount()) + 1;
         webhook.setFailureCount(newFailureCount);
         webhook.setLastFailureAt(LocalDateTime.now());
 
-        // 达到阈值，自动禁用
+        // Threshold reached, disable automatically
         if (newFailureCount >= MAX_FAILURES) {
             webhook.setEnabled(false);
-            log.error("Webhook 失败次数达到阈值，自动禁用: webhookId={}, failures={}",
+            log.error("Webhook failure count reached the threshold, auto-disabling: webhookId={}, failures={}",
                     webhook.getId(), newFailureCount);
         }
 
         webhookConfigMapper.updateById(webhook);
 
-        // 记录日志
+        // Record the log
         WebhookLog webhookLog = new WebhookLog();
         webhookLog.setWebhookId(webhook.getId());
         webhookLog.setEventType(eventCode);
@@ -268,12 +268,12 @@ public class WebhookService {
         webhookLog.setCreatedAt(LocalDateTime.now());
         webhookLogMapper.insert(webhookLog);
 
-        log.error("Webhook 发送失败: webhookId={}, event={}, error={}",
+        log.error("Webhook delivery failed: webhookId={}, event={}, error={}",
                 webhook.getId(), eventCode, errorMessage);
     }
 
     /**
-     * 查询订阅指定事件的所有 Webhook
+     * Query all Webhooks subscribed to the given event
      */
     private List<WebhookConfig> findWebhooksByEventType(WebhookEventType eventType) {
         LambdaQueryWrapper<WebhookConfig> wrapper = new LambdaQueryWrapper<>();
@@ -283,7 +283,7 @@ public class WebhookService {
     }
 
     /**
-     * 构建负载
+     * Build the payload
      */
     private WebhookPayload buildPayload(WebhookEventType eventType, Map<String, Object> data) {
         return WebhookPayload.builder()
@@ -295,28 +295,28 @@ public class WebhookService {
     }
 
     /**
-     * 生成签名
-     * 使用 HMAC-SHA256 算法
+     * Generate the signature
+     * Using the HMAC-SHA256 algorithm
      */
     private String generateSignature(WebhookPayload payload, String secret) {
         try {
-            // 将 payload 转换为 JSON（不含 signature 字段）
+            // Convert the payload to JSON (without the signature field)
             String json = objectMapper.writeValueAsString(payload);
 
-            // HMAC-SHA256 签名
+            // HMAC-SHA256 signature
             return "sha256=" + SecureUtil.hmacSha256(secret).digestHex(json);
         } catch (Exception e) {
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "生成签名失败");
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to generate signature");
         }
     }
 
     /**
-     * 转换为响应对象
+     * Convert to the response object
      */
     private WebhookResponse toResponse(WebhookConfig config) {
         List<String> events = Arrays.asList(config.getEvents().split(","));
 
-        // 密钥提示（只显示前 4 位和后 4 位）
+        // Secret hint (only the first 4 and last 4 characters are shown)
         String secretHint = "";
         if (config.getSecret() != null && config.getSecret().length() > 8) {
             secretHint = config.getSecret().substring(0, 4) + "****" +
@@ -339,23 +339,23 @@ public class WebhookService {
     }
 
     /**
-     * 测试 Webhook（同步发送，立即返回结果）
+     * Test the Webhook (synchronous delivery, returns the result immediately)
      *
-     * @param userId    当前用户 ID（用于权限校验）
-     * @param webhookId Webhook 配置 ID
+     * @param userId    current user ID (used for authorization checks)
+     * @param webhookId Webhook configuration ID
      */
     public boolean testWebhook(Long userId, Long webhookId) {
-        // 查询 Webhook 配置（同时验证归属权）
+        // Query the Webhook configuration (also verifying ownership)
         LambdaQueryWrapper<WebhookConfig> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(WebhookConfig::getId, webhookId)
                .eq(WebhookConfig::getUserId, userId);
         WebhookConfig config = webhookConfigMapper.selectOne(wrapper);
 
         if (config == null) {
-            throw new BusinessException(ResultCode.NOT_FOUND, "Webhook 不存在或无权限: webhookId=" + webhookId);
+            throw new BusinessException(ResultCode.NOT_FOUND, "Webhook not found or not accessible: webhookId=" + webhookId);
         }
 
-        // 构造测试数据
+        // Build the test data
         Map<String, Object> testData = new HashMap<>();
         testData.put("message", "This is a test event from SmartATS");
         testData.put("webhookId", webhookId);
@@ -387,12 +387,12 @@ public class WebhookService {
 
             try (Response response = httpClient.newCall(request).execute()) {
                 boolean success = response.isSuccessful();
-                log.info("测试 Webhook {}: webhookId={}, url={}, status={}",
-                        success ? "成功" : "失败", webhookId, config.getUrl(), response.code());
+                log.info("Test Webhook {}: webhookId={}, url={}, status={}",
+                        success ? "succeeded" : "failed", webhookId, config.getUrl(), response.code());
                 return success;
             }
         } catch (Exception e) {
-            log.error("测试 Webhook 失败: webhookId={}, url={}, error={}",
+            log.error("Test Webhook failed: webhookId={}, url={}, error={}",
                     webhookId, config.getUrl(), e.getMessage());
             return false;
         }
@@ -400,7 +400,7 @@ public class WebhookService {
 
     @PreDestroy
     public void destroy() {
-        // 关闭 HTTP 客户端连接池
+        // Shut down the HTTP client connection pool
         httpClient.dispatcher().executorService().shutdown();
         httpClient.connectionPool().evictAll();
     }

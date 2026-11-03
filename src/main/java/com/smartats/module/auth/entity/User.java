@@ -6,58 +6,58 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类
+ * User entity
  *
- * @TableName: 对应数据库表名 users
- * @Data: Lombok 自动生成 getter/setter/toString/equals
+ * @TableName: the mapped database table, users
+ * @Data: Lombok generates getter/setter/toString/equals
  */
 @Data
 @TableName("users")
 public class User {
 
     /**
-     * 主键 ID（自增）
+     * Primary key ID (auto-increment)
      */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户名（唯一）
+     * Username (unique)
      */
     private String username;
 
     /**
-     * 密码（BCrypt 加密存储）
+     * Password (stored BCrypt-encrypted)
      */
     private String password;
 
     /**
-     * 邮箱（唯一）
+     * Email (unique)
      */
     private String email;
 
     /**
-     * 角色：ADMIN/HR/INTERVIEWER
+     * Role: ADMIN/HR/INTERVIEWER
      */
     private String role;
 
     /**
-     * 每日 AI 调用配额
+     * Daily AI call quota
      */
     private Integer dailyAiQuota;
 
     /**
-     * 账号状态：0-禁用 1-启用
+     * Account status: 0-disabled, 1-enabled
      */
     private Integer status;
 
     /**
-     * 创建时间
+     * Created at
      */
     private LocalDateTime createdAt;
 
     /**
-     * 更新时间
+     * Updated at
      */
     private LocalDateTime updatedAt;
 }

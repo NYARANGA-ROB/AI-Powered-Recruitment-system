@@ -2,11 +2,11 @@ import type { ThemeConfig } from 'antd';
 
 /**
  * SmartATS Design System
- * 现代专业配色 - Cyan 主色调
+ * Modern professional palette - Cyan primary
  */
 const theme: ThemeConfig = {
   token: {
-    // Color - Cyan 为主色，更现代清新的配色
+    // Color - Cyan as the primary color for a more modern, fresh palette
     colorPrimary: '#06B6D4',
     colorPrimaryHover: '#0891B2',
     colorPrimaryActive: '#0E7490',
@@ -58,7 +58,7 @@ const theme: ThemeConfig = {
     motionEaseInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
     motionEaseOut: 'cubic-bezier(0.16, 1, 0.3, 1)',
 
-    // Shadow - 更柔和的阴影
+    // Shadow - softer shadows
     boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
     boxShadowSecondary: '0 2px 6px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
     boxShadowTertiary: '0 4px 12px 0 rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',

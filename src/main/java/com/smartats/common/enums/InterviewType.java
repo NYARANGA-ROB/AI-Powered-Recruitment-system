@@ -3,15 +3,15 @@ package com.smartats.common.enums;
 import lombok.Getter;
 
 /**
- * 面试类型枚举
+ * Interview type enum
  */
 @Getter
 public enum InterviewType {
 
-    PHONE("PHONE", "电话面试"),
-    VIDEO("VIDEO", "视频面试"),
-    ONSITE("ONSITE", "现场面试"),
-    WRITTEN_TEST("WRITTEN_TEST", "笔试");
+    PHONE("PHONE", "Phone interview"),
+    VIDEO("VIDEO", "Video interview"),
+    ONSITE("ONSITE", "Onsite interview"),
+    WRITTEN_TEST("WRITTEN_TEST", "Written test");
 
     private final String code;
     private final String description;

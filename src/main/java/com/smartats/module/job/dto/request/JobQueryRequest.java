@@ -5,57 +5,57 @@ import lombok.Data;
 @Data
 public class JobQueryRequest {
     /**
-     * 关键词搜索（标题、描述、要求）
+     * Keyword search (title, description, requirements)
      */
     private String keyword;
 
     /**
-     * 部门
+     * Department
      */
     private String department;
 
     /**
-     * 职位类型
+     * Job type
      */
     private String jobType;
 
     /**
-     * 学历要求
+     * Education requirement
      */
     private String education;
 
     /**
-     * 最低经验要求
+     * Minimum experience requirement
      */
     private Integer experienceMin;
 
     /**
-     * 薪资下限
+     * Minimum salary
      */
     private Integer salaryMin;
 
     /**
-     * 职位状态
+     * Job status
      */
     private String status;
 
     /**
-     * 页码（从1开始）
+     * Page number (starts from 1)
      */
     private Integer pageNum = 1;
 
     /**
-     * 每页大小
+     * Page size
      */
     private Integer pageSize = 10;
 
     /**
-     * 排序字段：created_at, salary_max, view_count
+     * Sort field: created_at, salary_max, view_count
      */
     private String orderBy = "created_at";
 
     /**
-     * 排序方向：asc, desc
+     * Sort direction: asc, desc
      */
     private String orderDirection = "desc";
 }

@@ -12,7 +12,7 @@ const request = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ==================== 请求拦截器 ====================
+// ==================== Request Interceptor ====================
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken;
@@ -24,7 +24,7 @@ request.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ==================== 响应拦截器 ====================
+// ==================== Response Interceptor ====================
 let isRefreshing = false;
 let pendingRequests: Array<(token: string) => void> = [];
 
@@ -37,9 +37,9 @@ request.interceptors.response.use(
   (response) => {
     const data = response.data as Result<unknown>;
 
-    // 业务错误码处理
+    // Business error code handling
     if (data.code !== 200) {
-      message.error(data.message || '请求失败');
+      message.error(data.message || 'Request failed');
       return Promise.reject(new Error(data.message));
     }
 
@@ -48,7 +48,7 @@ request.interceptors.response.use(
   async (error: AxiosError<Result<unknown>>) => {
     const originalRequest = error.config;
 
-    // 401 → 自动刷新 Token
+    // 401 → Auto-refresh token
     if (error.response?.status === 401 && originalRequest) {
       const authStore = useAuthStore.getState();
       const refreshToken = authStore.refreshToken;
@@ -93,12 +93,12 @@ request.interceptors.response.use(
 
     // 403
     if (error.response?.status === 403) {
-      message.error('无权限访问');
+      message.error('Access denied');
     }
 
-    // 网络错误
+    // Network error
     if (!error.response) {
-      message.error('网络连接失败，请检查网络');
+      message.error('Network connection failed, please check your connection');
     }
 
     return Promise.reject(error);

@@ -1,5 +1,5 @@
-# ==================== SmartATS 测试环境配置 ====================
-# @WebMvcTest 切片测试使用，仅加载 Web 层所需最小配置
+# ==================== SmartATS test environment configuration ====================
+# Used by @WebMvcTest slice tests; loads only the minimal configuration the web layer needs
 
 spring:
   config:
@@ -11,7 +11,7 @@ server:
   servlet:
     context-path: /api/v1
 
-# JWT 密钥（测试用固定值）
+# JWT secret (fixed value for tests)
 smartats:
   jwt:
     secret: TestSecretKeyForJWTMustBeLongEnoughForHS256Algorithm
@@ -29,7 +29,7 @@ smartats:
   verification-code:
     expire-time: 300
 
-# Milvus 配置（测试环境 — Bean 将由 Mock 替代）
+# Milvus configuration (test environment — the bean is replaced by a mock)
 milvus:
   host: localhost
   port: 19530

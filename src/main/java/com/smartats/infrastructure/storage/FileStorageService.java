@@ -5,65 +5,65 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 
 /**
- * 文件存储服务接口
- * 设计原则：面向接口编程，方便后续切换到阿里云 OSS
+ * File storage service interface
+ * Design principle: program against an interface so the implementation can later switch to Aliyun OSS
  */
 public interface FileStorageService {
 
     /**
-     * 上传文件
+     * Upload a file
      *
-     * @param file       文件
-     * @param objectName 对象名（文件路径）
-     * @return 文件访问路径
+     * @param file       the file
+     * @param objectName the object name (file path)
+     * @return the file access path
      */
     String uploadFile(MultipartFile file, String objectName);
 
     /**
-     * 上传文件流
+     * Upload a file stream
      *
-     * @param inputStream 文件流
-     * @param objectName  对象名
-     * @param size        文件大小
-     * @param contentType 文件类型
-     * @return 文件访问路径
+     * @param inputStream the file stream
+     * @param objectName  the object name
+     * @param size        the file size
+     * @param contentType the file type
+     * @return the file access path
      */
     String uploadFile(InputStream inputStream, String objectName, long size, String contentType);
 
     /**
-     * 删除文件
+     * Delete a file
      *
-     * @param objectName 对象名
+     * @param objectName the object name
      */
     void deleteFile(String objectName);
 
     /**
-     * 获取文件访问 URL
+     * Get the file access URL
      *
-     * @param objectName 对象名
-     * @return 访问 URL
+     * @param objectName the object name
+     * @return the access URL
      */
     String getFileUrl(String objectName);
 
     /**
-     * 生成预签名 URL（临时访问链接）
+     * Generate a presigned URL (a temporary access link)
      *
-     * @param objectName 对象名
-     * @param expires    过期时间（秒）
-     * @return 预签名 URL
+     * @param objectName the object name
+     * @param expires    the expiry time (seconds)
+     * @return the presigned URL
      */
     String getPresignedUrl(String objectName, int expires);
 
     /**
-     * 检查文件是否存在
+     * Check whether the file exists
      *
-     * @param objectName 对象名
-     * @return 是否存在
+     * @param objectName the object name
+     * @return whether it exists
      */
     boolean fileExists(String objectName);
 
     /**
-     * 确保 Bucket 存在
+     * Ensure the bucket exists
      */
     void ensureBucketExists();
 }

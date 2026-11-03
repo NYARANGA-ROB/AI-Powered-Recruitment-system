@@ -4,25 +4,25 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 创建职位申请请求 DTO
+ * Create job application request DTO
  */
 @Data
 public class CreateApplicationRequest {
 
     /**
-     * 职位 ID
+     * Job ID
      */
-    @NotNull(message = "职位 ID 不能为空")
+    @NotNull(message = "Job ID must not be empty")
     private Long jobId;
 
     /**
-     * 候选人 ID
+     * Candidate ID
      */
-    @NotNull(message = "候选人 ID 不能为空")
+    @NotNull(message = "Candidate ID must not be empty")
     private Long candidateId;
 
     /**
-     * HR 备注（可选）
+     * HR notes (optional)
      */
     private String hrNotes;
 }

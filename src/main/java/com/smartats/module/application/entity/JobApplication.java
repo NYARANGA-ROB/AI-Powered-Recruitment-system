@@ -7,10 +7,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 职位申请实体
+ * Job application entity
  * <p>
- * 对应数据库表 job_applications，是候选人与职位之间的桥梁。
- * 状态流转：PENDING → SCREENING → INTERVIEW → OFFER / REJECTED / WITHDRAWN
+ * Maps to the job_applications database table and bridges candidates with jobs.
+ * Status flow: PENDING → SCREENING → INTERVIEW → OFFER / REJECTED / WITHDRAWN
  */
 @Data
 @TableName("job_applications")
@@ -20,47 +20,47 @@ public class JobApplication {
     private Long id;
 
     /**
-     * 职位 ID（关联 jobs 表）
+     * Job ID (references the jobs table)
      */
     private Long jobId;
 
     /**
-     * 候选人 ID（关联 candidates 表）
+     * Candidate ID (references the candidates table)
      */
     private Long candidateId;
 
     /**
-     * AI 匹配分数（0-100）
+     * AI match score (0-100)
      */
     private BigDecimal matchScore;
 
     /**
-     * AI 匹配原因（JSON 格式）
+     * AI match reasons (JSON format)
      */
     private String matchReasons;
 
     /**
-     * 匹配计算时间
+     * Match calculation time
      */
     private LocalDateTime matchCalculatedAt;
 
     /**
-     * 申请状态：PENDING / SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN
+     * Application status: PENDING / SCREENING / INTERVIEW / OFFER / REJECTED / WITHDRAWN
      */
     private String status;
 
     /**
-     * HR 备注
+     * HR notes
      */
     private String hrNotes;
 
     /**
-     * 申请时间
+     * Applied at
      */
     private LocalDateTime appliedAt;
 
     /**
-     * 更新时间
+     * Updated at
      */
     private LocalDateTime updatedAt;
 }

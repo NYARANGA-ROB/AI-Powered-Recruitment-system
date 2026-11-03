@@ -32,18 +32,18 @@ const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const moduleOptions = [
-  { value: '职位管理', label: '职位管理' },
-  { value: '简历管理', label: '简历管理' },
-  { value: '候选人管理', label: '候选人管理' },
-  { value: '职位申请', label: '职位申请' },
-  { value: '面试管理', label: '面试管理' },
+  { value: 'Job Management', label: 'Job Management' },
+  { value: 'Resume Management', label: 'Resume Management' },
+  { value: 'Candidate Management', label: 'Candidate Management' },
+  { value: 'Job Applications', label: 'Job Applications' },
+  { value: 'Interview Management', label: 'Interview Management' },
   { value: 'WEBHOOK', label: 'Webhook' },
-  { value: 'ANALYTICS', label: '招聘分析' },
+  { value: 'ANALYTICS', label: 'Recruiting Analytics' },
 ];
 
 const statusConfig = {
-  SUCCESS: { color: 'success', icon: <CheckCircleOutlined />, label: '成功' },
-  FAILED: { color: 'error', icon: <CloseCircleOutlined />, label: '失败' },
+  SUCCESS: { color: 'success', icon: <CheckCircleOutlined />, label: 'Success' },
+  FAILED: { color: 'error', icon: <CloseCircleOutlined />, label: 'Failed' },
 } as const;
 
 export default function AuditLogPage() {
@@ -76,7 +76,7 @@ export default function AuditLogPage() {
 
   const columns: ColumnsType<AuditLogResponse> = [
     {
-      title: '时间',
+      title: 'Time',
       dataIndex: 'createdAt',
       width: 170,
       render: (v: string) => (
@@ -87,30 +87,30 @@ export default function AuditLogPage() {
       ),
     },
     {
-      title: '用户',
+      title: 'User',
       dataIndex: 'username',
       width: 100,
       ellipsis: true,
     },
     {
-      title: '模块',
+      title: 'Module',
       dataIndex: 'module',
       width: 100,
       render: (v: string) => <Tag>{v}</Tag>,
     },
     {
-      title: '操作',
+      title: 'Action',
       dataIndex: 'operation',
       width: 120,
       render: (v: string) => <Tag color="blue">{v}</Tag>,
     },
     {
-      title: '描述',
+      title: 'Description',
       dataIndex: 'description',
       ellipsis: true,
     },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'status',
       width: 80,
       render: (status: 'SUCCESS' | 'FAILED') => {
@@ -123,7 +123,7 @@ export default function AuditLogPage() {
       },
     },
     {
-      title: '耗时',
+      title: 'Duration',
       dataIndex: 'duration',
       width: 80,
       render: (v: number) => {
@@ -138,7 +138,7 @@ export default function AuditLogPage() {
       render: (v: string) => <Text className="font-mono text-xs">{v}</Text>,
     },
     {
-      title: '操作',
+      title: 'Actions',
       width: 60,
       render: (_: unknown, record: AuditLogResponse) => (
         <EyeOutlined
@@ -168,50 +168,50 @@ export default function AuditLogPage() {
   return (
     <PageTransition>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 m-0">审计日志</h2>
+        <h2 className="text-xl font-semibold text-gray-900 m-0">Audit Logs</h2>
         <Text type="secondary" className="text-sm">
-          共 {total} 条记录
+          {total} records in total
         </Text>
       </div>
 
       <motion.div variants={staggerContainer} initial="initial" animate="animate">
-        {/* 统计卡片 */}
+        {/* Statistics cards */}
         <motion.div variants={staggerItem}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4">
             <Card bordered={false}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">{total}</div>
-                <div className="text-xs text-gray-500 mt-1">总记录数</div>
+                <div className="text-xs text-gray-500 mt-1">Total Records</div>
               </div>
             </Card>
             <Card bordered={false}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{successCount}</div>
-                <div className="text-xs text-gray-500 mt-1">成功（当页）</div>
+                <div className="text-xs text-gray-500 mt-1">Success (this page)</div>
               </div>
             </Card>
             <Card bordered={false}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-red-500">{failedCount}</div>
-                <div className="text-xs text-gray-500 mt-1">失败（当页）</div>
+                <div className="text-xs text-gray-500 mt-1">Failed (this page)</div>
               </div>
             </Card>
             <Card bordered={false}>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{avgDuration}ms</div>
-                <div className="text-xs text-gray-500 mt-1">平均耗时（当页）</div>
+                <div className="text-xs text-gray-500 mt-1">Avg. Duration (this page)</div>
               </div>
             </Card>
           </div>
         </motion.div>
 
-        {/* 筛选 */}
+        {/* Filters */}
         <motion.div variants={staggerItem}>
           <Card bordered={false} className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div className="md:col-span-2">
                 <Select
-                  placeholder="模块"
+                  placeholder="Module"
                   allowClear
                   className="w-full"
                   options={moduleOptions}
@@ -220,19 +220,19 @@ export default function AuditLogPage() {
               </div>
               <div className="md:col-span-2">
                 <Select
-                  placeholder="状态"
+                  placeholder="Status"
                   allowClear
                   className="w-full"
                   options={[
-                    { value: 'SUCCESS', label: '成功' },
-                    { value: 'FAILED', label: '失败' },
+                    { value: 'SUCCESS', label: 'Success' },
+                    { value: 'FAILED', label: 'Failed' },
                   ]}
                   onChange={(v) => setQuery((q) => ({ ...q, status: v, pageNum: 1 }))}
                 />
               </div>
               <div className="md:col-span-2">
                 <InputNumber
-                  placeholder="用户 ID"
+                  placeholder="User ID"
                   min={1}
                   className="w-full"
                   onChange={(v) =>
@@ -244,12 +244,12 @@ export default function AuditLogPage() {
                 <RangePicker
                   className="w-full"
                   onChange={handleDateChange}
-                  placeholder={['开始日期', '结束日期']}
+                  placeholder={['Start date', 'End date']}
                 />
               </div>
               <div className="md:col-span-3">
                 <Input
-                  placeholder="搜索描述关键词..."
+                  placeholder="Search description keywords..."
                   prefix={<SearchOutlined />}
                   allowClear
                   onPressEnter={(e) =>
@@ -270,7 +270,7 @@ export default function AuditLogPage() {
           </Card>
         </motion.div>
 
-        {/* 表格 */}
+        {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
             <Table
@@ -285,7 +285,7 @@ export default function AuditLogPage() {
                 pageSize: query.pageSize,
                 total,
                 showSizeChanger: true,
-                showTotal: (t) => `共 ${t} 条`,
+                showTotal: (t) => `${t} records in total`,
                 onChange: (p, s) =>
                   setQuery((q) => ({ ...q, pageNum: p, pageSize: s })),
               }}
@@ -294,9 +294,9 @@ export default function AuditLogPage() {
         </motion.div>
       </motion.div>
 
-      {/* 详情抽屉 */}
+      {/* Detail drawer */}
       <Drawer
-        title="审计日志详情"
+        title="Audit Log Details"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         width={560}
@@ -304,52 +304,52 @@ export default function AuditLogPage() {
         {selectedLog && (
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="ID">{selectedLog.id}</Descriptions.Item>
-            <Descriptions.Item label="时间">{selectedLog.createdAt}</Descriptions.Item>
-            <Descriptions.Item label="用户">
+            <Descriptions.Item label="Time">{selectedLog.createdAt}</Descriptions.Item>
+            <Descriptions.Item label="User">
               {selectedLog.username} (ID: {selectedLog.userId})
             </Descriptions.Item>
-            <Descriptions.Item label="模块">
+            <Descriptions.Item label="Module">
               <Tag>{selectedLog.module}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="操作">
+            <Descriptions.Item label="Action">
               <Tag color="blue">{selectedLog.operation}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="描述">{selectedLog.description}</Descriptions.Item>
-            <Descriptions.Item label="状态">
+            <Descriptions.Item label="Description">{selectedLog.description}</Descriptions.Item>
+            <Descriptions.Item label="Status">
               <Badge
                 status={selectedLog.status === 'SUCCESS' ? 'success' : 'error'}
-                text={selectedLog.status === 'SUCCESS' ? '成功' : '失败'}
+                text={selectedLog.status === 'SUCCESS' ? 'Success' : 'Failed'}
               />
             </Descriptions.Item>
             {selectedLog.errorMessage && (
-              <Descriptions.Item label="错误信息">
+              <Descriptions.Item label="Error Message">
                 <Text type="danger">{selectedLog.errorMessage}</Text>
               </Descriptions.Item>
             )}
-            <Descriptions.Item label="执行耗时">
+            <Descriptions.Item label="Execution Duration">
               <span
                 className={`font-mono ${selectedLog.duration > 1000 ? 'text-red-500' : selectedLog.duration > 300 ? 'text-amber-500' : 'text-green-600'}`}
               >
                 {selectedLog.duration}ms
               </span>
             </Descriptions.Item>
-            <Descriptions.Item label="请求方法">
+            <Descriptions.Item label="HTTP Method">
               <Tag color="purple">{selectedLog.requestMethod}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="请求路径">
+            <Descriptions.Item label="Request Path">
               <Text className="font-mono text-xs" copyable>
                 {selectedLog.requestUrl}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Java 方法">
+            <Descriptions.Item label="Java Method">
               <Text className="font-mono text-xs" ellipsis>
                 {selectedLog.method}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="请求 IP">
+            <Descriptions.Item label="Request IP">
               <Text className="font-mono">{selectedLog.requestIp}</Text>
             </Descriptions.Item>
-            <Descriptions.Item label="请求参数">
+            <Descriptions.Item label="Request Parameters">
               <div className="max-h-40 overflow-auto">
                 <pre className="text-xs bg-gray-50 p-2 rounded m-0 whitespace-pre-wrap">
                   {(() => {

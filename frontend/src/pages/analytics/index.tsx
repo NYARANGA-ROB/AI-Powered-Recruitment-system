@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
       loadOverview();
     }, []),
     onOpen: useCallback(() => {
-      message.success({ content: '实时推送已连接', key: 'sse', duration: 2 });
+      message.success({ content: 'Real-time updates connected', key: 'sse', duration: 2 });
     }, []),
   });
 
@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
       tooltip: {
         trigger: 'item',
         formatter: (params: { name: string; value: number; percent: number }) =>
-          `${params.name}<br/>数量: <b>${params.value}</b><br/>占比: <b>${params.percent}%</b>`,
+          `${params.name}<br/>Count: <b>${params.value}</b><br/>Share: <b>${params.percent}%</b>`,
       },
       color: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ef4444'],
       series: [
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
       tooltip: {
         trigger: 'axis',
         formatter: (params: Array<{ name: string; value: number }>) =>
-          `${params[0].name}<br/>转化率: <b>${params[0].value}%</b>`,
+          `${params[0].name}<br/>Conversion Rate: <b>${params[0].value}%</b>`,
       },
       grid: { left: 80, right: 20, top: 10, bottom: 30 },
       xAxis: {
@@ -240,21 +240,21 @@ export default function AnalyticsPage() {
     if (!overview) return [];
     return [
       {
-        title: '总申请数',
+        title: 'Total Applications',
         value: overview.totalApplications,
         icon: <FileTextOutlined />,
         color: '#6366f1',
         bg: 'bg-indigo-50',
       },
       {
-        title: '候选人数',
+        title: 'Total Candidates',
         value: overview.totalCandidates,
         icon: <TeamOutlined />,
         color: '#3b82f6',
         bg: 'bg-blue-50',
       },
       {
-        title: '开放职位',
+        title: 'Open Jobs',
         value: overview.openJobs,
         suffix: ` / ${overview.totalJobs}`,
         icon: <RiseOutlined />,
@@ -262,21 +262,21 @@ export default function AnalyticsPage() {
         bg: 'bg-purple-50',
       },
       {
-        title: '面试安排',
+        title: 'Interviews Scheduled',
         value: overview.interviewsScheduled,
         icon: <ClockCircleOutlined />,
         color: '#f59e0b',
         bg: 'bg-amber-50',
       },
       {
-        title: 'Offer 发出',
+        title: 'Offers Extended',
         value: overview.offersExtended,
         icon: <TrophyOutlined />,
         color: '#10b981',
         bg: 'bg-emerald-50',
       },
       {
-        title: 'Offer 转化率',
+        title: 'Offer Conversion Rate',
         value: overview.offerRate,
         suffix: '%',
         precision: 1,
@@ -288,22 +288,22 @@ export default function AnalyticsPage() {
   }, [overview]);
 
   const sseStatusConfig = {
-    connecting: { color: 'processing' as const, text: '连接中' },
-    connected: { color: 'success' as const, text: '已连接' },
-    disconnected: { color: 'default' as const, text: '已断开' },
-    error: { color: 'error' as const, text: '连接失败' },
+    connecting: { color: 'processing' as const, text: 'Connecting' },
+    connected: { color: 'success' as const, text: 'Connected' },
+    disconnected: { color: 'default' as const, text: 'Disconnected' },
+    error: { color: 'error' as const, text: 'Connection Failed' },
   };
 
   return (
     <PageTransition>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-semibold text-gray-900 m-0">招聘分析</h2>
+          <h2 className="text-xl font-semibold text-gray-900 m-0">Recruiting Analytics</h2>
           <Tooltip
             title={
               sseStatus === 'connected'
-                ? '实时推送已连接，数据将自动刷新'
-                : '点击重新连接实时推送'
+                ? 'Real-time updates connected; data refreshes automatically'
+                : 'Click to reconnect real-time updates'
             }
           >
             <Badge
@@ -336,10 +336,10 @@ export default function AnalyticsPage() {
         <Space>
           <RangePicker
             onChange={handleDateChange}
-            placeholder={['开始日期', '结束日期']}
+            placeholder={['Start date', 'End date']}
           />
           <Select
-            placeholder="筛选职位"
+            placeholder="Filter by job"
             allowClear
             style={{ width: 140 }}
             onChange={(v) => setQuery((q) => ({ ...q, jobId: v }))}
@@ -351,7 +351,7 @@ export default function AnalyticsPage() {
       <Spin spinning={loading && !overview}>
         {overview ? (
           <motion.div variants={staggerContainer} initial="initial" animate="animate">
-            {/* ===== KPI 卡片 ===== */}
+            {/* ===== KPI cards ===== */}
             <motion.div variants={staggerItem}>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-5">
                 {kpiCards.map((kpi) => (
@@ -382,12 +382,12 @@ export default function AnalyticsPage() {
               </div>
             </motion.div>
 
-            {/* ===== 额外 KPI: 匹配分 + 招聘周期 ===== */}
+            {/* ===== Additional KPIs: match score + time to offer ===== */}
             <motion.div variants={staggerItem}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <Card bordered={false}>
                   <Statistic
-                    title="平均 AI 匹配分"
+                    title="Average AI Match Score"
                     value={overview.avgMatchScore ?? '-'}
                     precision={1}
                     suffix="/ 100"
@@ -404,60 +404,60 @@ export default function AnalyticsPage() {
                 </Card>
                 <Card bordered={false}>
                   <Statistic
-                    title="平均招聘周期"
+                    title="Average Time to Offer"
                     value={overview.avgDaysToOffer ?? '-'}
                     precision={1}
-                    suffix="天"
+                    suffix="days"
                     valueStyle={{ color: '#6366f1', fontWeight: 700 }}
                   />
                 </Card>
               </div>
             </motion.div>
 
-            {/* ===== 漏斗 + 转化率 ===== */}
+            {/* ===== Funnel + conversion rate ===== */}
             <motion.div variants={staggerItem}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-                <Card bordered={false} title="招聘漏斗">
+                <Card bordered={false} title="Recruiting Funnel">
                   {funnelOption ? (
                     <ReactECharts option={funnelOption} style={{ height: 340 }} />
                   ) : (
-                    <Empty description="暂无漏斗数据" />
+                    <Empty description="No funnel data available" />
                   )}
                 </Card>
-                <Card bordered={false} title="阶段转化率">
+                <Card bordered={false} title="Stage Conversion Rate">
                   {conversionOption ? (
                     <ReactECharts option={conversionOption} style={{ height: 340 }} />
                   ) : (
-                    <Empty description="暂无转化率数据" />
+                    <Empty description="No conversion data available" />
                   )}
                 </Card>
               </div>
             </motion.div>
 
-            {/* ===== 月度趋势 ===== */}
+            {/* ===== Monthly trend ===== */}
             <motion.div variants={staggerItem}>
-              <Card bordered={false} title="月度申请趋势">
+              <Card bordered={false} title="Monthly Application Trend">
                 {trendOption ? (
                   <ReactECharts option={trendOption} style={{ height: 300 }} />
                 ) : (
-                  <Empty description="暂无趋势数据" />
+                  <Empty description="No trend data available" />
                 )}
               </Card>
             </motion.div>
 
-            {/* ===== 漏斗详情表格 ===== */}
+            {/* ===== Funnel stage detail table ===== */}
             <motion.div variants={staggerItem}>
-              <Card bordered={false} title="漏斗阶段明细" className="mt-5">
+              <Card bordered={false} title="Funnel Stage Breakdown" className="mt-5">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-100">
-                        <th className="text-left py-3 px-4 text-gray-500 font-medium">阶段</th>
-                        <th className="text-right py-3 px-4 text-gray-500 font-medium">数量</th>
-                        <th className="text-right py-3 px-4 text-gray-500 font-medium">占比</th>
-                        <th className="text-right py-3 px-4 text-gray-500 font-medium">转化率</th>
+                        <th className="text-left py-3 px-4 text-gray-500 font-medium">Stage</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Count</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Share</th>
+                        <th className="text-right py-3 px-4 text-gray-500 font-medium">Conversion Rate</th>
                         <th className="text-left py-3 px-4 text-gray-500 font-medium w-1/3">
-                          分布
+                          Distribution
                         </th>
                       </tr>
                     </thead>
@@ -512,7 +512,7 @@ export default function AnalyticsPage() {
             </motion.div>
           </motion.div>
         ) : (
-          !loading && <Empty description="暂无分析数据" className="mt-20" />
+          !loading && <Empty description="No analytics data available" className="mt-20" />
         )}
       </Spin>
     </PageTransition>

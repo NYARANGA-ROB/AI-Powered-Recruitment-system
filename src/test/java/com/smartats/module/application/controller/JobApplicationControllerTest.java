@@ -38,14 +38,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * JobApplicationController 集成测试
+ * JobApplicationController integration tests
  * <p>
- * 所有申请接口均需认证（anyRequest().authenticated()）。
- * 使用 @Import SecurityConfig 加载自定义安全规则。
+ * All application endpoints require authentication (anyRequest().authenticated()).
+ * Uses @Import SecurityConfig to load the custom security rules.
  */
 @WebMvcTest(JobApplicationController.class)
 @Import(SecurityConfig.class)
-@DisplayName("JobApplicationController 集成测试")
+@DisplayName("JobApplicationController integration tests")
 class JobApplicationControllerTest {
 
     @Autowired
@@ -75,7 +75,7 @@ class JobApplicationControllerTest {
                 .doFilter(any(HttpServletRequest.class), any(HttpServletResponse.class), any(FilterChain.class));
     }
 
-    // ━━━━━━━━━━━━━━ 工具方法 ━━━━━━━━━━━━━━
+    // ━━━━━━━━━━━━━━ Utility methods ━━━━━━━━━━━━━━
 
     private static UsernamePasswordAuthenticationToken mockAuth(Long userId) {
         return new UsernamePasswordAuthenticationToken(
@@ -88,28 +88,28 @@ class JobApplicationControllerTest {
         ApplicationResponse resp = new ApplicationResponse();
         resp.setId(1L);
         resp.setJobId(10L);
-        resp.setJobTitle("Java 高级工程师");
+        resp.setJobTitle("Senior Java Engineer");
         resp.setCandidateId(20L);
-        resp.setCandidateName("张三");
+        resp.setCandidateName("Zhang San");
         resp.setStatus("PENDING");
-        resp.setStatusDesc("待筛选");
+        resp.setStatusDesc("Pending screening");
         resp.setMatchScore(new BigDecimal("85.5"));
-        resp.setMatchReasons(List.of("技能匹配度高", "经验符合要求"));
+        resp.setMatchReasons(List.of("High skill match", "Experience meets the requirement"));
         resp.setAppliedAt(LocalDateTime.of(2026, 2, 24, 10, 0, 0));
         resp.setUpdatedAt(LocalDateTime.of(2026, 2, 24, 10, 0, 0));
         return resp;
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 创建申请
+    // Create application
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("POST /applications - 创建申请")
+    @DisplayName("POST /applications - create application")
     class CreateApplicationTests {
 
         @Test
-        @DisplayName("认证用户创建申请 - 200")
+        @DisplayName("Authenticated user creates an application - 200")
         void create_authenticated_success() throws Exception {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(10L);
@@ -129,7 +129,7 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("未认证创建申请 - 401/403")
+        @DisplayName("Unauthenticated application creation - 401/403")
         void create_unauthenticated() throws Exception {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(10L);
@@ -143,10 +143,10 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("参数校验失败 - 缺少 jobId")
+        @DisplayName("Validation failure - missing jobId")
         void create_validationFail() throws Exception {
             CreateApplicationRequest request = new CreateApplicationRequest();
-            // jobId 和 candidateId 为空，违反 @NotNull
+            // jobId and candidateId are empty, violating @NotNull
 
             mockMvc.perform(post("/applications")
                             .with(authentication(mockAuth(1L)))
@@ -158,14 +158,14 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("重复申请 - 业务异常")
+        @DisplayName("Duplicate application - business exception")
         void create_duplicate() throws Exception {
             CreateApplicationRequest request = new CreateApplicationRequest();
             request.setJobId(10L);
             request.setCandidateId(20L);
 
             given(jobApplicationService.createApplication(any(CreateApplicationRequest.class)))
-                    .willThrow(new BusinessException(ResultCode.BAD_REQUEST, "该候选人已申请过此职位"));
+                    .willThrow(new BusinessException(ResultCode.BAD_REQUEST, "This candidate has already applied for the position"));
 
             mockMvc.perform(post("/applications")
                             .with(authentication(mockAuth(1L)))
@@ -174,24 +174,24 @@ class JobApplicationControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(ResultCode.BAD_REQUEST.getCode()))
-                    .andExpect(jsonPath("$.message").value("该候选人已申请过此职位"));
+                    .andExpect(jsonPath("$.message").value("This candidate has already applied for the position"));
         }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 更新申请状态
+    // Update application status
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("PUT /applications/{id}/status - 更新状态")
+    @DisplayName("PUT /applications/{id}/status - update status")
     class UpdateStatusTests {
 
         @Test
-        @DisplayName("合法状态变更 - 200")
+        @DisplayName("Legal status change - 200")
         void updateStatus_success() throws Exception {
             UpdateApplicationStatusRequest request = new UpdateApplicationStatusRequest();
             request.setStatus("SCREENING");
-            request.setHrNotes("初步筛选通过");
+            request.setHrNotes("Passed initial screening");
 
             willDoNothing().given(jobApplicationService).updateStatus(eq(1L), any(UpdateApplicationStatusRequest.class));
 
@@ -205,12 +205,12 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("非法状态变更 - 业务异常")
+        @DisplayName("Illegal status change - business exception")
         void updateStatus_invalidTransition() throws Exception {
             UpdateApplicationStatusRequest request = new UpdateApplicationStatusRequest();
             request.setStatus("OFFER");
 
-            willThrow(new BusinessException(ResultCode.APPLICATION_STATUS_INVALID, "不允许从当前状态变更"))
+            willThrow(new BusinessException(ResultCode.APPLICATION_STATUS_INVALID, "Transition from the current status is not allowed"))
                     .given(jobApplicationService).updateStatus(eq(1L), any(UpdateApplicationStatusRequest.class));
 
             mockMvc.perform(put("/applications/1/status")
@@ -223,10 +223,10 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("参数校验 - 非法状态值")
+        @DisplayName("Parameter validation - illegal status value")
         void updateStatus_invalidValue() throws Exception {
             UpdateApplicationStatusRequest request = new UpdateApplicationStatusRequest();
-            request.setStatus("INVALID");  // 不在 @Pattern 允许值中
+            request.setStatus("INVALID");  // Not among the @Pattern allowed values
 
             mockMvc.perform(put("/applications/1/status")
                             .with(authentication(mockAuth(1L)))
@@ -239,15 +239,15 @@ class JobApplicationControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 查询
+    // Query
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
-    @DisplayName("GET /applications - 查询")
+    @DisplayName("GET /applications - query")
     class QueryTests {
 
         @Test
-        @DisplayName("查询申请详情 - 200")
+        @DisplayName("Query application detail - 200")
         void getById_success() throws Exception {
             given(jobApplicationService.getById(1L)).willReturn(sampleResponse());
 
@@ -255,26 +255,26 @@ class JobApplicationControllerTest {
                             .with(authentication(mockAuth(1L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
-                    .andExpect(jsonPath("$.data.jobTitle").value("Java 高级工程师"))
-                    .andExpect(jsonPath("$.data.candidateName").value("张三"))
+                    .andExpect(jsonPath("$.data.jobTitle").value("Senior Java Engineer"))
+                    .andExpect(jsonPath("$.data.candidateName").value("Zhang San"))
                     .andExpect(jsonPath("$.data.status").value("PENDING"));
         }
 
         @Test
-        @DisplayName("申请不存在 - 业务异常")
+        @DisplayName("Application not found - business exception")
         void getById_notFound() throws Exception {
             given(jobApplicationService.getById(999L))
-                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "申请记录不存在"));
+                    .willThrow(new BusinessException(ResultCode.NOT_FOUND, "Application record not found"));
 
             mockMvc.perform(get("/applications/999")
                             .with(authentication(mockAuth(1L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(ResultCode.NOT_FOUND.getCode()))
-                    .andExpect(jsonPath("$.message").value("申请记录不存在"));
+                    .andExpect(jsonPath("$.message").value("Application record not found"));
         }
 
         @Test
-        @DisplayName("按职位查询申请列表 - 200")
+        @DisplayName("Query application list by job - 200")
         void listByJobId_success() throws Exception {
             Page<ApplicationResponse> page = new Page<>(1, 10, 1);
             page.setRecords(List.of(sampleResponse()));
@@ -291,7 +291,7 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("按候选人查询申请列表 - 200")
+        @DisplayName("Query application list by candidate - 200")
         void listByCandidateId_success() throws Exception {
             Page<ApplicationResponse> page = new Page<>(1, 10, 1);
             page.setRecords(List.of(sampleResponse()));
@@ -308,7 +308,7 @@ class JobApplicationControllerTest {
         }
 
         @Test
-        @DisplayName("综合查询申请列表 - 200")
+        @DisplayName("Comprehensive query of the application list - 200")
         void listApplications_success() throws Exception {
             Page<ApplicationResponse> page = new Page<>(1, 10, 1);
             page.setRecords(List.of(sampleResponse()));

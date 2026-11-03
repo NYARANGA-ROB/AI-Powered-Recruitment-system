@@ -45,12 +45,12 @@ export default function SmartSearchPage() {
 
   return (
     <PageTransition>
-      <h2 className="text-xl font-semibold text-zen-ink mb-1">智能候选人搜索</h2>
+      <h2 className="text-xl font-semibold text-zen-ink mb-1">Smart Candidate Search</h2>
       <p className="text-zen-muted mb-6">
-        使用自然语言描述您的需求，AI 将基于语义匹配为您推荐最合适的候选人
+        Describe your needs in natural language, and AI will recommend the best-fit candidates through semantic matching
       </p>
 
-      {/* 搜索区域 */}
+      {/* Search area */}
       <Card bordered={false} className="mb-6 bg-gradient-to-br from-zen-light to-blue-50/60">
         <div className="max-w-[800px] mx-auto">
           <div className="flex gap-3 items-start">
@@ -58,13 +58,13 @@ export default function SmartSearchPage() {
               <TextArea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="例如：找一位有 5 年以上 Java 开发经验，熟悉 Spring Boot 和微服务架构，有大型电商项目经历的候选人"
+                placeholder="e.g. Find a candidate with 5+ years of Java development experience, familiar with Spring Boot and microservices architecture, with large-scale e-commerce project background"
                 autoSize={{ minRows: 2, maxRows: 4 }}
                 className="!rounded-xl !text-[15px]"
                 onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); handleSearch(); } }}
               />
               <p className="text-zen-muted text-xs mt-1">
-                提示：描述越详细，匹配结果越精准。支持技能、经验、学历、项目经历等多维度搜索。
+                Tip: The more detailed your description, the more precise the matches. Supports multi-dimensional search across skills, experience, education, and project history.
               </p>
             </div>
             <Button
@@ -75,18 +75,18 @@ export default function SmartSearchPage() {
               onClick={handleSearch}
               className="!rounded-xl !h-14 !px-8"
             >
-              搜索
+              Search
             </Button>
           </div>
 
-          {/* 快捷示例 */}
+          {/* Quick examples */}
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <span className="text-zen-muted text-xs">试试：</span>
+            <span className="text-zen-muted text-xs">Try:</span>
             {[
-              '5年+ Java高级工程师',
-              '全栈开发，熟悉React和Node.js',
-              '数据分析师，精通Python和SQL',
-              '产品经理，有B端SaaS经验',
+              'Senior Java engineer with 5+ years of experience',
+              'Full-stack developer familiar with React and Node.js',
+              'Data analyst proficient in Python and SQL',
+              'Product manager with B2B SaaS experience',
             ].map((example) => (
               <Tag
                 key={example}
@@ -100,21 +100,21 @@ export default function SmartSearchPage() {
         </div>
       </Card>
 
-      {/* 加载中 */}
+      {/* Loading */}
       {loading && (
         <div className="text-center py-16">
           <Spin size="large" />
           <p className="mt-4 text-zen-muted">
-            <RobotOutlined className="mr-1" /> AI 正在为您匹配最佳候选人...
+            <RobotOutlined className="mr-1" /> AI is matching the best candidates for you...
           </p>
         </div>
       )}
 
-      {/* 搜索结果 */}
+      {/* Search results */}
       {!loading && result && (
         <>
           <p className="text-zen-muted mb-4">
-            共找到 <span className="font-semibold text-zen-ink">{result.totalMatches || 0}</span> 位匹配候选人
+            Found <span className="font-semibold text-zen-ink">{result.totalMatches || 0}</span> matching candidates
           </p>
 
           {result.candidates?.length > 0 ? (
@@ -131,16 +131,16 @@ export default function SmartSearchPage() {
               ))}
             </motion.div>
           ) : (
-            <Empty description="未找到匹配候选人，请调整搜索描述" />
+            <Empty description="No matching candidates found, please refine your search description" />
           )}
         </>
       )}
 
-      {/* 初始状态 */}
+      {/* Initial state */}
       {!loading && !result && (
         <div className="text-center py-16">
           <RobotOutlined className="text-6xl text-zen-border" />
-          <p className="mt-4 text-zen-muted text-base">输入描述开始智能搜索</p>
+          <p className="mt-4 text-zen-muted text-base">Enter a description to start smart search</p>
         </div>
       )}
     </PageTransition>
@@ -158,7 +158,7 @@ function CandidateCard({ candidate, rank }: { candidate: MatchedCandidate; rank:
   return (
     <Card bordered={false} hoverable className="h-full !border !border-zen-border">
       <div className="flex gap-4">
-        {/* 排名 */}
+        {/* Rank */}
         <div
           className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
             rank <= 3 ? 'bg-zen-ink text-white' : 'bg-zen-light text-zen-muted'
@@ -168,7 +168,7 @@ function CandidateCard({ candidate, rank }: { candidate: MatchedCandidate; rank:
         </div>
 
         <div className="flex-1 min-w-0">
-          {/* 头部 */}
+          {/* Header */}
           <div className="flex justify-between items-start">
             <div>
               <Text strong className="text-base">
@@ -177,7 +177,7 @@ function CandidateCard({ candidate, rank }: { candidate: MatchedCandidate; rank:
               <div className="mt-1 text-zen-muted text-sm">
                 {candidate.education && <span><BookOutlined className="mr-1" />{candidate.education}</span>}
                 {candidate.workYears !== undefined && candidate.workYears !== null && (
-                  <span className="ml-3"><TrophyOutlined className="mr-1" />{candidate.workYears} 年经验</span>
+                  <span className="ml-3"><TrophyOutlined className="mr-1" />{candidate.workYears} yrs experience</span>
                 )}
               </div>
             </div>
@@ -189,18 +189,18 @@ function CandidateCard({ candidate, rank }: { candidate: MatchedCandidate; rank:
                 strokeColor={getScoreColor(candidate.matchScore)}
                 format={() => `${scorePercent}`}
               />
-              <div className="text-[11px] text-zen-muted mt-0.5">匹配度</div>
+              <div className="text-[11px] text-zen-muted mt-0.5">Match</div>
             </div>
           </div>
 
-          {/* 当前职位 */}
+          {/* Current position */}
           {(candidate.currentPosition || candidate.currentCompany) && (
             <p className="mt-2 text-zen-muted text-xs">
               {candidate.currentPosition}{candidate.currentCompany && ` @ ${candidate.currentCompany}`}
             </p>
           )}
 
-          {/* 技能 */}
+          {/* Skills */}
           {candidate.skills?.length > 0 && (
             <div className="mt-2.5 flex flex-wrap gap-1">
               {candidate.skills.slice(0, 6).map((s) => (
@@ -210,7 +210,7 @@ function CandidateCard({ candidate, rank }: { candidate: MatchedCandidate; rank:
             </div>
           )}
 
-          {/* AI 摘要 */}
+          {/* AI summary */}
           {candidate.aiSummary && (
             <div className="mt-2.5 p-2 px-3 rounded-lg bg-accent-light/30 text-sm text-zen-secondary">
               <BulbOutlined className="text-accent mr-1.5" />

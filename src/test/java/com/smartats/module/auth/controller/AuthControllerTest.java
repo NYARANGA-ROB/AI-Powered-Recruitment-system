@@ -38,11 +38,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * AuthController 集成测试
+ * Integration tests for AuthController
  */
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfig.class)
-@DisplayName("AuthController 集成测试")
+@DisplayName("AuthController integration tests")
 class AuthControllerTest {
 
     @Autowired
@@ -98,7 +98,7 @@ class AuthControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 注册
+    // Registration
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -106,7 +106,7 @@ class AuthControllerTest {
     class RegisterTests {
 
         @Test
-        @DisplayName("注册成功 - 200")
+        @DisplayName("Registration succeeds - 200")
         void shouldRegisterSuccessfully() throws Exception {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("newuser");
@@ -125,7 +125,7 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("参数校验失败 - 400")
+        @DisplayName("Parameter validation fails - 400")
         void shouldReturn400WhenValidationFails() throws Exception {
             RegisterRequest request = new RegisterRequest();
             // missing required fields
@@ -138,7 +138,7 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("业务异常返回错误码")
+        @DisplayName("Business exception returns an error code")
         void shouldReturnErrorWhenBusinessException() throws Exception {
             RegisterRequest request = new RegisterRequest();
             request.setUsername("existuser");
@@ -159,7 +159,7 @@ class AuthControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 登录
+    // Login
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -167,7 +167,7 @@ class AuthControllerTest {
     class LoginTests {
 
         @Test
-        @DisplayName("登录成功返回Token")
+        @DisplayName("Successful login returns a token")
         void shouldLoginSuccessfully() throws Exception {
             LoginRequest request = new LoginRequest();
             request.setUsername("testuser");
@@ -188,7 +188,7 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("缺少用户名 - 校验失败")
+        @DisplayName("Username missing - validation fails")
         void shouldFailWhenUsernameMissing() throws Exception {
             LoginRequest request = new LoginRequest();
             request.setPassword("password123");
@@ -202,7 +202,7 @@ class AuthControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 发送验证码
+    // Send verification code
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -210,7 +210,7 @@ class AuthControllerTest {
     class SendVerificationCodeTests {
 
         @Test
-        @DisplayName("发送验证码成功")
+        @DisplayName("Sending the verification code succeeds")
         void shouldSendCodeSuccessfully() throws Exception {
             SendVerificationCodeRequest request = new SendVerificationCodeRequest();
             request.setEmail("test@example.com");
@@ -227,7 +227,7 @@ class AuthControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Token 刷新
+    // Token refresh
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -235,7 +235,7 @@ class AuthControllerTest {
     class RefreshTokenTests {
 
         @Test
-        @DisplayName("刷新Token成功")
+        @DisplayName("Refreshing the token succeeds")
         void shouldRefreshSuccessfully() throws Exception {
             RefreshTokenRequest request = new RefreshTokenRequest();
             request.setRefreshToken("old-refresh-token");
@@ -252,7 +252,7 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("refreshToken为空 - 校验失败")
+        @DisplayName("refreshToken is blank - validation fails")
         void shouldFailWhenRefreshTokenBlank() throws Exception {
             RefreshTokenRequest request = new RefreshTokenRequest();
             // refreshToken is blank
@@ -266,7 +266,7 @@ class AuthControllerTest {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // 认证测试
+    // Authentication tests
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     @Nested
@@ -274,18 +274,18 @@ class AuthControllerTest {
     class TestAuthTests {
 
         @Test
-        @DisplayName("已认证用户可以访问")
+        @DisplayName("An authenticated user can access the endpoint")
         void shouldReturnSuccessWhenAuthenticated() throws Exception {
             mockMvc.perform(get("/auth/test")
                             .with(authentication(mockAuth(1L))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value(200))
                     .andExpect(jsonPath("$.data.userId").value(1))
-                    .andExpect(jsonPath("$.data.message").value("JWT 认证成功！"));
+                    .andExpect(jsonPath("$.data.message").value("JWT authentication succeeded!"));
         }
 
         @Test
-        @DisplayName("未认证用户返回401")
+        @DisplayName("An unauthenticated user receives 401")
         void shouldReturn401WhenNotAuthenticated() throws Exception {
             mockMvc.perform(get("/auth/test"))
                     .andExpect(status().isForbidden());

@@ -3,15 +3,15 @@ package com.smartats.common.enums;
 import lombok.Getter;
 
 /**
- * 面试状态枚举
+ * Interview status enum
  */
 @Getter
 public enum InterviewStatus {
 
-    SCHEDULED("SCHEDULED", "已安排"),
-    COMPLETED("COMPLETED", "已完成"),
-    CANCELLED("CANCELLED", "已取消"),
-    NO_SHOW("NO_SHOW", "未出席");
+    SCHEDULED("SCHEDULED", "Scheduled"),
+    COMPLETED("COMPLETED", "Completed"),
+    CANCELLED("CANCELLED", "Cancelled"),
+    NO_SHOW("NO_SHOW", "No-show");
 
     private final String code;
     private final String description;

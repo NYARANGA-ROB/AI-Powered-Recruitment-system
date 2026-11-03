@@ -1,119 +1,119 @@
--- ==================== SmartATS 候选人表创建脚本 ====================
--- 版本: v1.0
--- 创建日期: 2026-02-20
--- 说明: 存储 AI 解析的结构化候选人信息
+-- ==================== SmartATS candidates table creation script ====================
+-- Version: v1.0
+-- Created: 2026-02-20
+-- Purpose: Stores the structured candidate information produced by AI parsing
 -- ========================================================================
 
--- 如果表已存在，先删除（开发环境）
+-- Drop the table first if it already exists (development environment)
 -- DROP TABLE IF EXISTS candidates;
 
--- 创建候选人表
+-- Create the candidates table
 CREATE TABLE `candidates` (
-    -- 主键
-    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+    -- Primary key
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT 'Primary key ID',
 
-    -- 关联简历（1:1 关系）
-    `resume_id` BIGINT NOT NULL UNIQUE COMMENT '简历ID',
+    -- Related resume (1:1 relationship)
+    `resume_id` BIGINT NOT NULL UNIQUE COMMENT 'Resume ID',
 
-    -- ========== 基本信息 ==========
-    `name` VARCHAR(100) COMMENT '姓名',
-    `phone` VARCHAR(20) COMMENT '手机号',
-    `email` VARCHAR(100) COMMENT '邮箱',
-    `gender` VARCHAR(10) COMMENT '性别（男/女/其他）',
-    `age` INT COMMENT '年龄',
+    -- ========== Basic information ==========
+    `name` VARCHAR(100) COMMENT 'Full name',
+    `phone` VARCHAR(20) COMMENT 'Mobile phone number',
+    `email` VARCHAR(100) COMMENT 'Email address',
+    `gender` VARCHAR(10) COMMENT 'Gender (male/female/other)',
+    `age` INT COMMENT 'Age',
 
-    -- ========== 教育信息 ==========
-    `education` VARCHAR(50) COMMENT '学历（高中/专科/本科/硕士/博士）',
-    `school` VARCHAR(200) COMMENT '毕业院校',
-    `major` VARCHAR(200) COMMENT '专业',
-    `graduation_year` INT COMMENT '毕业年份',
+    -- ========== Education information ==========
+    `education` VARCHAR(50) COMMENT 'Education level (senior high school/college/bachelor/master/doctorate)',
+    `school` VARCHAR(200) COMMENT 'Graduating institution',
+    `major` VARCHAR(200) COMMENT 'Major',
+    `graduation_year` INT COMMENT 'Graduation year',
 
-    -- ========== 工作信息 ==========
-    `work_years` INT COMMENT '工作年限（年）',
-    `current_company` VARCHAR(200) COMMENT '当前公司',
-    `current_position` VARCHAR(200) COMMENT '当前职位',
+    -- ========== Work information ==========
+    `work_years` INT COMMENT 'Years of work experience',
+    `current_company` VARCHAR(200) COMMENT 'Current company',
+    `current_position` VARCHAR(200) COMMENT 'Current position',
 
-    -- ========== JSON 字段（复杂结构）==========
+    -- ========== JSON fields (complex structures)==========
 
     /**
-     * 技能列表
-     * 存储格式: ["Java", "Spring Boot", "MySQL", "Redis", "RabbitMQ"]
+     * Skill list
+     * Storage format: ["Java", "Spring Boot", "MySQL", "Redis", "RabbitMQ"]
      */
-    `skills` JSON COMMENT '技能列表（数组）',
+    `skills` JSON COMMENT 'Skill list (array)',
 
     /**
-     * 工作经历
-     * 存储格式:
+     * Work experience
+     * Storage format:
      * [
      *   {
-     *     "company": "腾讯科技",
-     *     "position": "后端开发工程师",
+     *     "company": "Example Technology Ltd.",
+     *     "position": "Back-end development engineer",
      *     "startDate": "2020-01",
      *     "endDate": "2023-06",
-     *     "description": "负责核心业务系统开发和维护..."
+     *     "description": "Responsible for developing and maintaining the core business system..."
      *   }
      * ]
      */
-    `work_experience` JSON COMMENT '工作经历（JSON数组）',
+    `work_experience` JSON COMMENT 'Work experience (JSON array)',
 
     /**
-     * 项目经历
-     * 存储格式:
+     * Project experience
+     * Storage format:
      * [
      *   {
-     *     "name": "电商平台重构",
-     *     "role": "核心开发",
+     *     "name": "E-commerce platform refactoring",
+     *     "role": "Core developer",
      *     "startDate": "2022-03",
      *     "endDate": "2022-12",
-     *     "description": "使用 Spring Cloud 重构旧系统...",
+     *     "description": "Refactored the legacy system using Spring Cloud...",
      *     "technologies": ["Java", "Spring Cloud", "MySQL", "Redis"]
      *   }
      * ]
      */
-    `project_experience` JSON COMMENT '项目经历（JSON数组）',
+    `project_experience` JSON COMMENT 'Project experience (JSON array)',
 
     /**
-     * 自我评价
+     * Self evaluation
      */
-    `self_evaluation` TEXT COMMENT '自我评价',
+    `self_evaluation` TEXT COMMENT 'Self evaluation',
 
-    -- ========== AI 解析元数据 ==========
+    -- ========== AI parsing metadata ==========
 
     /**
-     * AI 解析的原始 JSON
-     * 用途：调试、重新解析、审计
+     * Raw JSON returned by the AI parser
+     * Purpose: debugging, re-parsing, auditing
      */
-    `raw_json` TEXT COMMENT 'AI 解析的原始 JSON 结果',
+    `raw_json` TEXT COMMENT 'Raw JSON result produced by AI parsing',
 
     /**
-     * 置信度分数
-     * 范围：0.00 - 1.00
-     * 用途：判断解析质量，低于阈值需要人工审核
+     * Confidence score
+     * Range: 0.00 - 1.00
+     * Purpose: judges parsing quality; values below the threshold require manual review
      */
-    `confidence_score` DECIMAL(3,2) COMMENT '置信度分数',
+    `confidence_score` DECIMAL(3,2) COMMENT 'Confidence score',
 
     /**
-     * 解析时间
+     * Parsing time
      */
-    `parsed_at` DATETIME COMMENT 'AI 解析完成时间',
+    `parsed_at` DATETIME COMMENT 'Time when AI parsing completed',
 
-    -- ========== 审计字段 ==========
-    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    -- ========== Audit fields ==========
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Creation time',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Update time',
 
-    -- ========== 索引 ==========
-    INDEX idx_resume_id (resume_id) COMMENT '简历ID索引',
-    INDEX idx_name (name) COMMENT '姓名索引',
-    INDEX idx_phone (phone) COMMENT '手机号索引',
-    INDEX idx_email (email) COMMENT '邮箱索引',
-    INDEX idx_education (education) COMMENT '学历索引',
-    INDEX idx_work_years (work_years) COMMENT '工作年限索引',
-    INDEX idx_created_at (created_at) COMMENT '创建时间索引'
+    -- ========== Indexes ==========
+    INDEX idx_resume_id (resume_id) COMMENT 'Resume ID index',
+    INDEX idx_name (name) COMMENT 'Name index',
+    INDEX idx_phone (phone) COMMENT 'Mobile phone number index',
+    INDEX idx_email (email) COMMENT 'Email address index',
+    INDEX idx_education (education) COMMENT 'Education level index',
+    INDEX idx_work_years (work_years) COMMENT 'Years of experience index',
+    INDEX idx_created_at (created_at) COMMENT 'Creation time index'
 
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='候选人信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Candidate information table';
 
--- ========== 外键约束（可选）==========
--- 说明：外键可能影响性能，生产环境可以考虑应用层校验
+-- ========== Foreign key constraints (optional)==========
+-- Note: foreign keys can hurt performance; in production, validation at the application layer is a viable alternative
 
 -- ALTER TABLE candidates
 --     ADD CONSTRAINT fk_candidate_resume
@@ -121,8 +121,8 @@ CREATE TABLE `candidates` (
 --     REFERENCES resumes(id)
 --     ON DELETE CASCADE;
 
--- ========== 数据示例 ==========
--- 插入测试数据（可选）
+-- ========== Sample data ==========
+-- Insert test data (optional)
 -- INSERT INTO candidates (
 --     resume_id, name, phone, email, gender, age,
 --     education, school, major, graduation_year,
@@ -164,41 +164,41 @@ CREATE TABLE `candidates` (
 --         )
 --     ),
 --     '5年后端开发经验，熟悉高并发系统设计',
---     '{"name": "张三", ...}',  -- 完整的原始 JSON
+--     '{"name": "张三", ...}',  -- The complete raw JSON
 --     0.85,
 --     NOW()
 -- );
 
--- ========== 查询示例 ==========
+-- ========== Query examples ==========
 
--- 1. 查询所有候选人（按创建时间倒序）
+-- 1. Query all candidates (newest first by creation time)
 -- SELECT * FROM candidates ORDER BY created_at DESC;
 
--- 2. 根据姓名搜索
+-- 2. Search by name
 -- SELECT * FROM candidates WHERE name LIKE '%张三%';
 
--- 3. 查询特定学历的候选人
+-- 3. Query candidates with a specific education level
 -- SELECT * FROM candidates WHERE education = '本科';
 
--- 4. 查询工作年限 >= 3 年的候选人
+-- 4. Query candidates with 3 or more years of experience
 -- SELECT * FROM candidates WHERE work_years >= 3;
 
--- 5. 查询包含特定技能的候选人（JSON 查询）
+-- 5. Query candidates with a specific skill (JSON query)
 -- SELECT * FROM candidates WHERE JSON_CONTAINS(skills, '"Java"');
 
--- 6. 查询某个公司背景的候选人（JSON 查询）
+-- 6. Query candidates with a given employer background (JSON query)
 -- SELECT * FROM candidates WHERE JSON_CONTAINS(
 --     work_experience,
 --     JSON_OBJECT('company', '腾讯')
 -- );
 
--- 7. 统计各学历人数
+-- 7. Count candidates per education level
 -- SELECT education, COUNT(*) as count
 -- FROM candidates
 -- GROUP BY education
 -- ORDER BY count DESC;
 
--- 8. 关联查询候选人及其简历信息
+-- 8. Join candidates with their resume information
 -- SELECT
 --     c.id as candidate_id,
 --     c.name,

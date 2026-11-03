@@ -35,35 +35,35 @@ public class MinioFileStorageService implements FileStorageService {
 
             return uploadFile(inputStream, objectName, size, contentType);
         } catch (Exception e) {
-            log.error("上传文件失败: objectName={}", objectName, e);
-            throw new BusinessException(ResultCode.FILE_UPLOAD_ERROR, "文件上传失败");
+            log.error("Failed to upload the file: objectName={}", objectName, e);
+            throw new BusinessException(ResultCode.FILE_UPLOAD_ERROR, "File upload failed");
         }
     }
 
     @Override
     public String uploadFile(InputStream inputStream, String objectName, long size, String contentType) {
         try {
-            // 确保 Bucket 存在
+            // Ensure the bucket exists
             ensureBucketExists();
 
-            // 上传文件
+            // Upload the file
             PutObjectArgs putObjectArgs = PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(objectName)
-                    .stream(inputStream, size, -1)  // -1 表示不使用 part 上传
+                    .stream(inputStream, size, -1)  // -1 means part upload is not used
                     .contentType(contentType)
                     .build();
 
             minioClient.putObject(putObjectArgs);
 
-            log.info("文件上传成功: bucket={}, object={}", bucketName, objectName);
+            log.info("File uploaded successfully: bucket={}, object={}", bucketName, objectName);
 
-            // 返回访问路径
+            // Return the access path
             return getFileUrl(objectName);
 
         } catch (Exception e) {
-            log.error("上传文件流失败: objectName={}", objectName, e);
-            throw new BusinessException(ResultCode.FILE_UPLOAD_ERROR, "文件上传失败");
+            log.error("Failed to upload the file stream: objectName={}", objectName, e);
+            throw new BusinessException(ResultCode.FILE_UPLOAD_ERROR, "File upload failed");
         }
     }
 
@@ -77,17 +77,17 @@ public class MinioFileStorageService implements FileStorageService {
 
             minioClient.removeObject(removeObjectArgs);
 
-            log.info("文件删除成功: objectName={}", objectName);
+            log.info("File deleted successfully: objectName={}", objectName);
 
         } catch (Exception e) {
-            log.error("删除文件失败: objectName={}", objectName, e);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "文件删除失败");
+            log.error("Failed to delete the file: objectName={}", objectName, e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to delete the file");
         }
     }
 
     @Override
     public String getFileUrl(String objectName) {
-        // 公共访问 URL（需要 Bucket 设置为 Public）
+        // Public access URL (the bucket must be set to Public)
         return String.format("%s/%s/%s", endpoint, bucketName, objectName);
     }
 
@@ -104,8 +104,8 @@ public class MinioFileStorageService implements FileStorageService {
             return minioClient.getPresignedObjectUrl(args);
 
         } catch (Exception e) {
-            log.error("生成预签名URL失败: objectName={}", objectName, e);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "生成预签名URL失败");
+            log.error("Failed to generate the presigned URL: objectName={}", objectName, e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Failed to generate the presigned URL");
         }
     }
 
@@ -126,12 +126,12 @@ public class MinioFileStorageService implements FileStorageService {
     }
 
     /**
-     * 设置 Bucket 为公共读取（仅开发环境）
-     * 生产环境建议使用预签名 URL
+     * Set the bucket to public read (development environment only)
+     * In production, presigned URLs should be used instead
      */
     private void setBucketPublic() {
         try {
-            // 构建 Bucket 策略（只读）
+            // Build the bucket policy (read only)
             String policy = String.format(
                     "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":[\"s3:GetObject\"],\"Resource\":[\"arn:aws:s3:::%s/*\"]}]}",
                     bucketName
@@ -144,18 +144,18 @@ public class MinioFileStorageService implements FileStorageService {
                             .build()
             );
 
-            log.info("设置 Bucket 公共读取策略成功: {}", bucketName);
+            log.info("Bucket public read policy applied successfully: {}", bucketName);
 
         } catch (Exception e) {
-            // 如果策略已存在或设置失败，只记录警告，不影响程序运行
-            log.warn("设置 Bucket 公共策略失败（可能是已设置）: bucket={}, error={}", bucketName, e.getMessage());
+            // If the policy already exists or cannot be applied, only log a warning; the application keeps running
+            log.warn("Failed to set the bucket public policy (it may already be set): bucket={}, error={}", bucketName, e.getMessage());
         }
     }
 
     @Override
     public void ensureBucketExists() {
         try {
-            // 检查 Bucket 是否存在
+            // Check whether the bucket exists
             boolean found = minioClient.bucketExists(
                     BucketExistsArgs.builder()
                             .bucket(bucketName)
@@ -163,22 +163,22 @@ public class MinioFileStorageService implements FileStorageService {
             );
 
             if (!found) {
-                // 创建 Bucket
+                // Create the bucket
                 minioClient.makeBucket(
                         MakeBucketArgs.builder()
                                 .bucket(bucketName)
                                 .build()
                 );
-                log.info("创建 Bucket 成功: {}", bucketName);
+                log.info("Bucket created successfully: {}", bucketName);
             }
 
-            // 设置 Bucket 为公共读取（开发环境）
-            // 注意：每次启动都会尝试设置，如果已设置会跳过
+            // Set the bucket to public read (development environment)
+            // Note: this is attempted on every start and is skipped when it is already set
             setBucketPublic();
 
         } catch (Exception e) {
-            log.error("检查/创建 Bucket 失败: bucket={}", bucketName, e);
-            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Bucket 初始化失败");
+            log.error("Failed to check/create the bucket: bucket={}", bucketName, e);
+            throw new BusinessException(ResultCode.INTERNAL_ERROR, "Bucket initialisation failed");
         }
     }
 }
