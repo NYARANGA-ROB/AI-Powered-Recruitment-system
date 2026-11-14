@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { candidateApi } from '../../api';
+import { CANDIDATE_EDUCATION_OPTIONS, getEducationLabel } from '../../constants';
 import type { CandidateResponse, CandidateQueryParams, WorkExperienceItem } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
@@ -124,7 +125,7 @@ export default function CandidatesPage() {
       width: 140,
       render: (v: string) => <span className="text-gray-500">{v || '-'}</span>,
     },
-    { title: 'Education', dataIndex: 'education', width: 90, render: (v: string) => v || '-' },
+    { title: 'Education', dataIndex: 'education', width: 110, render: (v: string) => getEducationLabel(v) },
     {
       title: 'Years of Experience',
       dataIndex: 'workYears',
@@ -204,12 +205,7 @@ export default function CandidatesPage() {
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, education: v, page: 1 }))}
-                  options={[
-                    { value: '大专', label: 'Associate' },
-                    { value: '本科', label: "Bachelor's" },
-                    { value: '硕士', label: "Master's" },
-                    { value: '博士', label: 'PhD' },
-                  ]}
+                  options={CANDIDATE_EDUCATION_OPTIONS}
                 />
               </div>
               <div className="md:col-span-3">
@@ -319,7 +315,7 @@ export default function CandidatesPage() {
 
             <Descriptions column={2} size="small">
               <Descriptions.Item label="Education">
-                {detailDrawer.education || '-'}
+                {getEducationLabel(detailDrawer.education)}
               </Descriptions.Item>
               <Descriptions.Item label="Years of Experience">
                 {detailDrawer.workYears ?? '-'} yrs
@@ -419,12 +415,7 @@ export default function CandidatesPage() {
             <Form.Item name="education" label="Education">
               <Select
                 allowClear
-                options={[
-                  { value: '大专', label: 'Associate' },
-                  { value: '本科', label: "Bachelor's" },
-                  { value: '硕士', label: "Master's" },
-                  { value: '博士', label: 'PhD' },
-                ]}
+                options={CANDIDATE_EDUCATION_OPTIONS}
               />
             </Form.Item>
           </div>

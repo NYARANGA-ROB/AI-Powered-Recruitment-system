@@ -1,0 +1,39 @@
+ALTER TABLE `jobs`
+    MODIFY COLUMN `education` VARCHAR(32) NULL DEFAULT 'UNSPECIFIED'
+        COMMENT 'Normalized English education level';
+
+UPDATE `jobs`
+SET `education` = CASE TRIM(`education`)
+    WHEN '不限' THEN 'UNSPECIFIED'
+    WHEN '大专' THEN 'ASSOCIATE'
+    WHEN '本科' THEN 'BACHELOR'
+    WHEN '硕士' THEN 'MASTER'
+    WHEN '博士' THEN 'DOCTORATE'
+    ELSE `education`
+END
+WHERE `education` IS NOT NULL;
+
+UPDATE `candidates`
+SET `highest_education` = CASE UPPER(TRIM(`highest_education`))
+    WHEN '高中' THEN 'HIGH_SCHOOL'
+    WHEN 'HIGH SCHOOL' THEN 'HIGH_SCHOOL'
+    WHEN '专科' THEN 'ASSOCIATE'
+    WHEN '大专' THEN 'ASSOCIATE'
+    WHEN 'ASSOCIATE' THEN 'ASSOCIATE'
+    WHEN '本科' THEN 'BACHELOR'
+    WHEN 'BACHELOR' THEN 'BACHELOR'
+    WHEN 'BACHELOR''S' THEN 'BACHELOR'
+    WHEN '硕士' THEN 'MASTER'
+    WHEN '硕士研究生' THEN 'MASTER'
+    WHEN 'MASTER' THEN 'MASTER'
+    WHEN 'MASTER''S' THEN 'MASTER'
+    WHEN '博士' THEN 'DOCTORATE'
+    WHEN '博士研究生' THEN 'DOCTORATE'
+    WHEN 'DOCTORATE' THEN 'DOCTORATE'
+    WHEN 'PHD' THEN 'DOCTORATE'
+    WHEN '不限' THEN 'UNSPECIFIED'
+    WHEN 'UNSPECIFIED' THEN 'UNSPECIFIED'
+    WHEN 'UNKNOWN' THEN 'UNKNOWN'
+    ELSE `highest_education`
+END
+WHERE `highest_education` IS NOT NULL;

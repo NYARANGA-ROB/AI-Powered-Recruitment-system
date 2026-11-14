@@ -95,7 +95,7 @@ java -jar target/smartaps-1.0.0.jar \
   --server.port=8080
 ```
 
-Flyway applies versioned schema migrations at startup. Existing SmartAPS installations are baselined at version `0`; the migrations preserve existing tables and align the resume schema. Back up the database before upgrading.
+Flyway applies versioned schema migrations at startup. Existing SmartAPS installations are baselined at version `0`; the migrations preserve existing tables, align the resume schema, and normalize legacy education values to English codes. Back up the database before upgrading.
 
 ### 7. Verify the Deployment
 
@@ -266,7 +266,7 @@ SPRING_PROFILES_ACTIVE=prod
 
 ## Database Initialization and Upgrades
 
-Flyway creates or upgrades the schema when the application starts. Migrations live in `src/main/resources/db/migration`; do not run the old standalone SQL files or manually drop tables.
+Flyway creates or upgrades the schema when the application starts. Migrations live in `src/main/resources/db/migration`; they also convert legacy education values to English codes. Do not run the old standalone SQL files or manually drop tables.
 
 For an existing installation, use the [SmartAPS migration guide](./smartaps-migration-guide.md) to back up and move the database, RabbitMQ vhost, and object bucket before switching the application. Retain the old data until the new deployment passes verification.
 

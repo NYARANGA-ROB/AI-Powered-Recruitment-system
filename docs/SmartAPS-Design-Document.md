@@ -808,7 +808,7 @@ Query Parameters:
 - skills: string, optional, comma-separated skill filter
 - experienceMin: int, optional
 - experienceMax: int, optional
-- education: string, optional
+- education: CandidateEducationLevel, optional
 
 Response: paginated list
 ```

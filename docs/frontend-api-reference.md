@@ -264,8 +264,8 @@ interface CreateJobRequest {
   salaryMax: number;          // @NotNull, @Min(0), unit: K
   experienceMin?: number;     // @Min(0), years
   experienceMax?: number;     // @Min(0), years
-  education?: string;         // e.g. "Bachelor's", "Master's"
-  jobType?: string;           // e.g. "Full-time", "Part-time", "Internship"
+  education?: EducationLevel; // "UNSPECIFIED" | "HIGH_SCHOOL" | "ASSOCIATE" | "BACHELOR" | "MASTER" | "DOCTORATE"
+  jobType?: JobType;          // "FULL_TIME" | "PART_TIME" | "INTERN"
 }
 ```
 
@@ -292,8 +292,8 @@ interface UpdateJobRequest {
   salaryMax?: number;         // @Min(0)
   experienceMin?: number;     // @Min(0)
   experienceMax?: number;     // @Min(0)
-  education?: string;
-  jobType?: string;
+  education?: EducationLevel;
+  jobType?: JobType;
 }
 ```
 
@@ -323,10 +323,10 @@ interface JobResponse {
   experienceMin: number;
   experienceMax: number;
   experienceRange: string;     // formatted, e.g. "3-5 years"
-  education: string;
-  jobType: string;
+  education: EducationLevel;
+  jobType: JobType;
   status: string;              // "DRAFT" | "PUBLISHED" | "CLOSED"
-  statusDesc: string;          // localized status description
+  statusDesc: string;          // human-readable English status description
   creatorId: number;
   viewCount: number;
   createdAt: string;           // "yyyy-MM-dd HH:mm:ss"
@@ -347,8 +347,8 @@ Auth: ❌ (public)
 interface JobQueryRequest {
   keyword?: string;          // keyword search (title/description/requirements)
   department?: string;
-  jobType?: string;
-  education?: string;
+  jobType?: JobType;
+  education?: EducationLevel;
   experienceMin?: number;
   salaryMin?: number;
   status?: string;           // "DRAFT" | "PUBLISHED" | "CLOSED"
@@ -572,7 +572,7 @@ interface CandidateResponse {
   age: number;
 
   // Education information
-  education: string;      // highest education
+  education: CandidateEducationLevel; // normalized highest education code
   school: string;         // graduating institution
   major: string;
   graduationYear: number;
@@ -637,7 +637,7 @@ interface CandidateUpdateRequest {
   email?: string;
   gender?: string;
   age?: number;
-  education?: string;
+  education?: CandidateEducationLevel;
   school?: string;
   major?: string;
   graduationYear?: number;
@@ -680,7 +680,7 @@ interface CandidateQueryParams {
   page?: number;             // default 1
   pageSize?: number;         // default 10, maximum 100
   keyword?: string;          // fuzzy match: name/email/company/title
-  education?: string;        // exact match: "Bachelor's"/"Master's"/"Doctorate"
+  education?: CandidateEducationLevel; // exact match using the education codes above
   skill?: string;            // exact match against skill entries in JSON, e.g. "Java"
   minWorkYears?: number;     // minimum work experience inclusive
   maxWorkYears?: number;     // maximum work experience inclusive
@@ -729,7 +729,7 @@ interface MatchedCandidate {
   matchScore: number;       // 0~1, cosine similarity
   currentPosition: string;
   currentCompany: string;
-  education: string;
+  education: CandidateEducationLevel;
   workYears: number;
   skills: string[];
   aiSummary: string;
@@ -1373,6 +1373,18 @@ export interface UserInfo {
 
 // ==================== Job module ====================
 
+export type EducationLevel =
+  | 'UNSPECIFIED'
+  | 'HIGH_SCHOOL'
+  | 'ASSOCIATE'
+  | 'BACHELOR'
+  | 'MASTER'
+  | 'DOCTORATE';
+
+export type CandidateEducationLevel = EducationLevel | 'UNKNOWN';
+
+export type JobType = 'FULL_TIME' | 'PART_TIME' | 'INTERN';
+
 export interface CreateJobRequest {
   title: string;
   department?: string;
@@ -1383,8 +1395,8 @@ export interface CreateJobRequest {
   salaryMax: number;
   experienceMin?: number;
   experienceMax?: number;
-  education?: string;
-  jobType?: string;
+  education?: EducationLevel;
+  jobType?: JobType;
 }
 
 export interface UpdateJobRequest {
@@ -1398,15 +1410,15 @@ export interface UpdateJobRequest {
   salaryMax?: number;
   experienceMin?: number;
   experienceMax?: number;
-  education?: string;
-  jobType?: string;
+  education?: EducationLevel;
+  jobType?: JobType;
 }
 
 export interface JobQueryRequest {
   keyword?: string;
   department?: string;
-  jobType?: string;
-  education?: string;
+  jobType?: JobType;
+  education?: EducationLevel;
   experienceMin?: number;
   salaryMin?: number;
   status?: JobStatus;
@@ -1429,8 +1441,8 @@ export interface JobResponse {
   experienceMin: number;
   experienceMax: number;
   experienceRange: string;
-  education: string;
-  jobType: string;
+  education: EducationLevel;
+  jobType: JobType;
   status: JobStatus;
   statusDesc: string;
   creatorId: number;
@@ -1496,7 +1508,7 @@ export interface CandidateResponse {
   email: string;              // masked
   gender: string;
   age: number;
-  education: string;
+  education: CandidateEducationLevel;
   school: string;
   major: string;
   graduationYear: number;
@@ -1537,7 +1549,7 @@ export interface CandidateUpdateRequest {
   email?: string;
   gender?: string;
   age?: number;
-  education?: string;
+  education?: CandidateEducationLevel;
   school?: string;
   major?: string;
   graduationYear?: number;
@@ -1552,7 +1564,7 @@ export interface CandidateQueryParams {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  education?: string;
+  education?: CandidateEducationLevel;
   skill?: string;
   minWorkYears?: number;
   maxWorkYears?: number;
@@ -1579,7 +1591,7 @@ export interface MatchedCandidate {
   matchScore: number;
   currentPosition: string;
   currentCompany: string;
-  education: string;
+  education: CandidateEducationLevel;
   workYears: number;
   skills: string[];
   aiSummary: string;

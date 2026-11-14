@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { jobApi } from '../../api';
+import { JOB_EDUCATION_OPTIONS, JOB_TYPE_OPTIONS, getJobEducationLabel, getJobTypeLabel } from '../../constants';
 import type { JobResponse, JobStatus, JobQueryParams } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
@@ -247,11 +248,7 @@ export default function JobsPage() {
                   allowClear
                   className="w-full"
                   onChange={(v) => setQuery((q) => ({ ...q, jobType: v, pageNum: 1 }))}
-                  options={[
-                    { value: '全职', label: 'Full-time' },
-                    { value: '兼职', label: 'Part-time' },
-                    { value: '实习', label: 'Internship' },
-                  ]}
+                  options={JOB_TYPE_OPTIONS}
                 />
               </div>
             </div>
@@ -315,11 +312,7 @@ export default function JobsPage() {
             <Form.Item name="jobType" label="Job Type">
               <Select
                 placeholder="Select type"
-                options={[
-                  { value: '全职', label: 'Full-time' },
-                  { value: '兼职', label: 'Part-time' },
-                  { value: '实习', label: 'Internship' },
-                ]}
+                options={JOB_TYPE_OPTIONS}
               />
             </Form.Item>
           </div>
@@ -342,12 +335,7 @@ export default function JobsPage() {
               <Select
                 placeholder="Select education"
                 allowClear
-                options={[
-                  { value: '大专', label: 'Associate' },
-                  { value: '本科', label: "Bachelor's" },
-                  { value: '硕士', label: "Master's" },
-                  { value: '博士', label: 'PhD' },
-                ]}
+                options={JOB_EDUCATION_OPTIONS}
               />
             </Form.Item>
           </div>
@@ -374,12 +362,12 @@ export default function JobsPage() {
           <div className="space-y-6">
             <Descriptions column={2}>
               <Descriptions.Item label="Department">{detailDrawer.department || '-'}</Descriptions.Item>
-              <Descriptions.Item label="Type">{detailDrawer.jobType || 'Full-time'}</Descriptions.Item>
+              <Descriptions.Item label="Type">{getJobTypeLabel(detailDrawer.jobType, 'Full-time')}</Descriptions.Item>
               <Descriptions.Item label="Salary">
                 <span className="font-semibold text-amber-600">{detailDrawer.salaryRange}</span>
               </Descriptions.Item>
               <Descriptions.Item label="Experience">{detailDrawer.experienceRange}</Descriptions.Item>
-              <Descriptions.Item label="Education">{detailDrawer.education || 'Any'}</Descriptions.Item>
+              <Descriptions.Item label="Education">{getJobEducationLabel(detailDrawer.education, 'Any')}</Descriptions.Item>
               <Descriptions.Item label="Status">
                 <Tag color={statusConfig[detailDrawer.status]?.color}>
                   {statusConfig[detailDrawer.status]?.label}

@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -321,9 +322,9 @@ public class CandidateService {
         if (raw == null || raw.isBlank()) {
             return "UNKNOWN";
         }
-        return switch (raw.trim().toUpperCase()) {
-            case "男", "MALE", "M", "BOY", "MAN" -> "MALE";
-            case "女", "FEMALE", "F", "GIRL", "WOMAN" -> "FEMALE";
+        return switch (raw.trim().toUpperCase(Locale.ROOT)) {
+            case "MALE", "M", "BOY", "MAN" -> "MALE";
+            case "FEMALE", "F", "GIRL", "WOMAN" -> "FEMALE";
             default -> "UNKNOWN";
         };
     }

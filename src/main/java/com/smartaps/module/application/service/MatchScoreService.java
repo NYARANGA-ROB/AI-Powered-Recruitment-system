@@ -62,13 +62,18 @@ public class MatchScoreService {
     /** Education match weight */
     private static final double WEIGHT_EDUCATION = 0.15;
 
-    /** Education level mapping (values are the Chinese tokens stored in jobs.education and candidates.education) */
+    /** Education rank mapping for the normalized English codes stored in the database. */
     private static final Map<String, Integer> EDUCATION_LEVEL = Map.of(
-            "不限", 0,
-            "大专", 1,
-            "本科", 2,
-            "硕士", 3,
-            "博士", 4
+            "UNSPECIFIED", 0,
+            "UNKNOWN", 0,
+            "HIGH_SCHOOL", 1,
+            "ASSOCIATE", 2,
+            "BACHELOR", 3,
+            "BACHELOR'S", 3,
+            "MASTER", 4,
+            "MASTER'S", 4,
+            "DOCTORATE", 5,
+            "PHD", 5
     );
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -312,11 +317,11 @@ public class MatchScoreService {
     /**
      * Education match calculation
      */
-    private double calculateEducationScore(Job job, Candidate candidate, List<String> reasons) {
+    double calculateEducationScore(Job job, Candidate candidate, List<String> reasons) {
         String requiredEdu = job.getEducation();
         String candidateEdu = candidate.getEducation();
 
-        if (requiredEdu == null || "不限".equals(requiredEdu)) {
+        if (requiredEdu == null || educationLevel(requiredEdu) == 0) {
             reasons.add("Position has no education requirement, education match is full score");
             return 100.0;
         }
@@ -326,8 +331,8 @@ public class MatchScoreService {
             return 50.0;
         }
 
-        int required = EDUCATION_LEVEL.getOrDefault(requiredEdu, 0);
-        int actual = EDUCATION_LEVEL.getOrDefault(candidateEdu, 0);
+        int required = educationLevel(requiredEdu);
+        int actual = educationLevel(candidateEdu);
 
         if (actual >= required) {
             reasons.add(String.format("Education [%s] meets the requirement [%s]", candidateEdu, requiredEdu));
@@ -339,6 +344,10 @@ public class MatchScoreService {
         double score = Math.max(0, 100.0 - gap * 25.0);
         reasons.add(String.format("Education [%s] below the requirement [%s] (short by %d levels)", candidateEdu, requiredEdu, gap));
         return score;
+    }
+
+    private int educationLevel(String education) {
+        return EDUCATION_LEVEL.getOrDefault(education.trim().toUpperCase(Locale.ROOT), 0);
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

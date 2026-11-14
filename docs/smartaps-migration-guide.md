@@ -64,3 +64,5 @@ Verify login, resume downloads, queue processing, candidate search, and recruitm
 ## Local migration performed for this workspace
 
 The local MySQL data was copied into `smartaps` without removing the old `smartats` schema. The two seeded accounts were preserved. The new RabbitMQ vhost was created; its legacy queues were empty at migration time. The old schema and vhost remain available for rollback.
+
+Flyway migration V5 converts legacy education labels in jobs and candidate records to stable English codes. API clients should send and read those codes after upgrading.

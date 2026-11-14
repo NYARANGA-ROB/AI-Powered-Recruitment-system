@@ -54,6 +54,18 @@ export interface UserInfo {
   todayAiUsed: number;
 }
 
+export type EducationLevel =
+  | 'UNSPECIFIED'
+  | 'HIGH_SCHOOL'
+  | 'ASSOCIATE'
+  | 'BACHELOR'
+  | 'MASTER'
+  | 'DOCTORATE';
+
+export type CandidateEducationLevel = EducationLevel | 'UNKNOWN';
+
+export type JobType = 'FULL_TIME' | 'PART_TIME' | 'INTERN';
+
 // ==================== Job ====================
 
 export interface CreateJobRequest {
@@ -66,8 +78,8 @@ export interface CreateJobRequest {
   salaryMax: number;
   experienceMin?: number;
   experienceMax?: number;
-  education?: string;
-  jobType?: string;
+  education?: EducationLevel;
+  jobType?: JobType;
 }
 
 export interface UpdateJobRequest extends Partial<CreateJobRequest> {
@@ -87,8 +99,8 @@ export interface JobResponse {
   experienceMin: number;
   experienceMax: number;
   experienceRange: string;
-  education: string;
-  jobType: string;
+  education: EducationLevel;
+  jobType: JobType;
   status: JobStatus;
   statusDesc: string;
   creatorId: number;
@@ -102,8 +114,8 @@ export type JobStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
 export interface JobQueryParams {
   keyword?: string;
   department?: string;
-  jobType?: string;
-  education?: string;
+  jobType?: JobType;
+  education?: EducationLevel;
   experienceMin?: number;
   salaryMin?: number;
   status?: JobStatus;
@@ -170,7 +182,7 @@ export interface CandidateResponse {
   email: string;
   gender: string;
   age: number;
-  education: string;
+  education: CandidateEducationLevel;
   school: string;
   major: string;
   graduationYear: number;
@@ -211,7 +223,7 @@ export interface CandidateUpdateRequest {
   email?: string;
   gender?: string;
   age?: number;
-  education?: string;
+  education?: CandidateEducationLevel;
   school?: string;
   major?: string;
   graduationYear?: number;
@@ -226,7 +238,7 @@ export interface CandidateQueryParams {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  education?: string;
+  education?: CandidateEducationLevel;
   skill?: string;
   minWorkYears?: number;
   maxWorkYears?: number;
@@ -253,7 +265,7 @@ export interface MatchedCandidate {
   matchScore: number;
   currentPosition: string;
   currentCompany: string;
-  education: string;
+  education: CandidateEducationLevel;
   workYears: number;
   skills: string[];
   aiSummary: string;

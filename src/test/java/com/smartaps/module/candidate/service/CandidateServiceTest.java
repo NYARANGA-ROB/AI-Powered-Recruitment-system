@@ -76,7 +76,7 @@ class CandidateServiceTest {
         testCandidateInfo.setName("Zhang San");
         testCandidateInfo.setPhone("13800138000");
         testCandidateInfo.setEmail("zhangsan@test.com");
-        testCandidateInfo.setGender("男");
+        testCandidateInfo.setGender("MALE");
         testCandidateInfo.setAge(28);
         testCandidateInfo.setEducation("Bachelor");
         testCandidateInfo.setSchool("Tsinghua University");

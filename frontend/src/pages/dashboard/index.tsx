@@ -13,6 +13,7 @@ import {
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { jobApi, applicationApi, candidateApi } from '../../api';
+import { getJobEducationLabel, getJobTypeLabel } from '../../constants';
 import { useAuthStore } from '../../store/auth';
 import type { JobResponse, ApplicationResponse } from '../../types';
 import PageTransition from '../../components/PageTransition';
@@ -206,7 +207,7 @@ export default function DashboardPage() {
                       }
                       description={
                         <span className="text-gray-400 text-sm">
-                          {job.department || '-'} · {job.jobType || 'Full-time'} · {job.education || 'Any'}
+                          {job.department || '-'} · {getJobTypeLabel(job.jobType, 'Full-time')} · {getJobEducationLabel(job.education, 'Any')}
                         </span>
                       }
                     />

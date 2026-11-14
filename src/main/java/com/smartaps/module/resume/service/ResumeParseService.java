@@ -53,7 +53,7 @@ public class ResumeParseService {
 
         try {
             // 1. Build the prompt (optimized for Chinese resumes)
-            String prompt = buildPromptForChineseResume(resumeContent);
+            String prompt = buildResumeExtractionPrompt(resumeContent);
 
             // 2. Call Zhipu AI
             Prompt aiPrompt = new Prompt(new UserMessage(prompt));
@@ -93,7 +93,7 @@ public class ResumeParseService {
         }
     }
 
-    private String buildPromptForChineseResume(String resumeContent) {
+    private String buildResumeExtractionPrompt(String resumeContent) {
         return """
                 You are a professional resume information extraction assistant. Please extract structured information from the following Chinese resume content and return it in JSON format.
 
@@ -103,11 +103,11 @@ public class ResumeParseService {
                 - name: full name
                 - phone: mobile number (11 digits)
                 - email: email address
-                - gender: gender (MALE/FEMALE)
+                - gender: one of MALE, FEMALE, or UNKNOWN
                 - age: age
 
                 ### Education information
-                - education: education level, use one of the stored values (高中/专科/本科/硕士研究生/博士研究生)
+                - education: use one of HIGH_SCHOOL, ASSOCIATE, BACHELOR, MASTER, DOCTORATE, or UNKNOWN
                 - school: graduated school
                 - major: major
                 - graduationYear: graduation year (4-digit integer)
