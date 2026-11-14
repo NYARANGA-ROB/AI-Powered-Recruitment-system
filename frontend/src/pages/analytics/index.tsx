@@ -5,7 +5,6 @@ import {
   Tag,
   Select,
   DatePicker,
-  Typography,
   Statistic,
   Badge,
   Tooltip,
@@ -26,14 +25,12 @@ import {
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { motion } from 'framer-motion';
-import dayjs from 'dayjs';
 import { analyticsApi, getAnalyticsSseUrl } from '../../api';
 import type { RecruitmentOverviewDTO, AnalyticsQueryRequest, FunnelStageDTO } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
 import { useSse } from '../../hooks/useSse';
 
-const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const stageColors: Record<string, string> = {
@@ -50,20 +47,6 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState<AnalyticsQueryRequest>({});
 
-  // ---------- SSE real-time updates ----------
-  const sseUrl = useMemo(() => getAnalyticsSseUrl(), []);
-  const { status: sseStatus, reconnect: sseReconnect } = useSse({
-    url: sseUrl,
-    onMessage: useCallback(() => {
-      // When a pipeline change event arrives, reload the overview
-      loadOverview();
-    }, []),
-    onOpen: useCallback(() => {
-      message.success({ content: 'Real-time updates connected', key: 'sse', duration: 2 });
-    }, []),
-  });
-
-  // Use a ref-based approach to ensure loadOverview is stable for SSE callback
   const loadOverview = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,6 +58,19 @@ export default function AnalyticsPage() {
       setLoading(false);
     }
   }, [query]);
+
+  // ---------- SSE real-time updates ----------
+  const sseUrl = useMemo(() => getAnalyticsSseUrl(), []);
+  const { status: sseStatus, reconnect: sseReconnect } = useSse({
+    url: sseUrl,
+    onMessage: useCallback(() => {
+      // When a pipeline change event arrives, reload the overview
+      loadOverview();
+    }, [loadOverview]),
+    onOpen: useCallback(() => {
+      message.success({ content: 'Real-time updates connected', key: 'sse', duration: 2 });
+    }, []),
+  });
 
   useEffect(() => {
     loadOverview();

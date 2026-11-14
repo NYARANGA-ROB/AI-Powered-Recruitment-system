@@ -1,4 +1,4 @@
-# SmartATS Frontend API Complete Reference Manual
+# SmartAPS Frontend API Complete Reference Manual
 
 > Automatically generated on 2026-02-24 based on a full analysis of the backend source code.
 

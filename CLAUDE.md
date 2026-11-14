@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SmartATS** is an intelligent recruitment management system for HR professionals. The system enables resume uploads, AI-powered automatic parsing of structured information (via Zhipu AI), full recruitment workflow management (applications, interviews), and Webhook event notifications.
+**SmartAPS** is an intelligent recruitment management system for HR professionals. The system enables resume uploads, AI-powered automatic parsing of structured information (via Zhipu AI), full recruitment workflow management (applications, interviews), and Webhook event notifications.
 
 **Current State** (2026-02-25):
 - ✅ All 11 business modules implemented and functional (including vector search)
@@ -60,18 +60,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Start all infrastructure services
-docker-compose up -d
+docker compose up -d
 
 # Check services status
-docker-compose ps
+docker compose ps
 ```
 
 | Service | Port | Credentials |
 |---------|------|-------------|
-| MySQL | 3307 | smartats / smartats123 |
-| Redis | 6379 | password: redis123 |
-| RabbitMQ | 5672 (AMQP), 15672 (UI) | admin / admin123, VHost: smartats |
-| MinIO | 9000 (API), 9001 (Console) | admin / admin123456 |
+| MySQL | 127.0.0.1:3307 | Local Compose credentials only |
+| Redis | 127.0.0.1:6379 | Local Compose credentials only |
+| RabbitMQ | 127.0.0.1:5672, 15672 | Local Compose credentials only |
+| MinIO | 127.0.0.1:9000, 9001 | Local Compose credentials only |
 
 ### Build and Run
 
@@ -82,11 +82,7 @@ mvn spring-boot:run
 
 ### Database Initialization
 
-```bash
-mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < docker/mysql/init/01-init-database.sql
-mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < src/main/resources/db/webhook_tables.sql
-mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < src/main/resources/db/audit_logs.sql
-```
+Flyway applies versioned schema migrations from `src/main/resources/db/migration` on application startup. Do not initialize tables by running standalone SQL files. Back up existing data before schema upgrades.
 
 ### Environment Variables
 
@@ -104,8 +100,8 @@ JWT_SECRET=your_production_secret_key_minimum_32_characters
 ## Module Structure
 
 ```
-src/main/java/com/smartats/
-├── SmartAtsApplication.java
+src/main/java/com/smartaps/
+├── SmartApsApplication.java
 ├── common/                                 # Shared (10 files)
 │   ├── annotation/AuditLog.java            # Custom audit annotation
 │   ├── aspect/AuditLogAspect.java          # AOP Around advice for audit
@@ -172,7 +168,7 @@ Upload → MD5 Hash → Redis Dedup → MinIO Storage → DB Record → Task Sta
                                        ↓ (fail, retryCount < 3)
                                      Republish with retryCount+1, ACK original
                                        ↓ (retryCount >= 3)
-                                     NACK → DLQ (smartats.dlx → resume.parse.dlq)
+                                     NACK → DLQ (smartaps.dlx → resume.parse.dlq)
 ```
 
 ### Caching Strategy
@@ -235,9 +231,9 @@ All key prefixes are centralized in `RedisKeyConstants.java`.
 
 ## RabbitMQ Topology
 
-- **Exchange**: `smartats.exchange` (Direct, durable)
+- **Exchange**: `smartaps.exchange` (Direct, durable)
 - **Queue**: `resume.parse.queue`
-- **DLX**: `smartats.dlx` (Dead Letter Exchange)
+- **DLX**: `smartaps.dlx` (Dead Letter Exchange)
 - **DLQ**: `resume.parse.dlq`
 - **Routing Key**: `resume.parse`
 - **Retry**: Republish with incremented retryCount (max 3), then NACK to DLQ
@@ -355,6 +351,9 @@ All key prefixes are centralized in `RedisKeyConstants.java`.
 7. **@Async methods must be in a separate class** (not self-call)
    - Use `CacheEvictionService` pattern for delayed double-delete
    - Spring AOP proxy only works on inter-bean calls
+8. **Candidate resumes must remain private**
+   - Do not make MinIO buckets public or log resume content, contact information, or presigned URLs
+   - Use server-side object reads and short-lived presigned download URLs
 
 ### Code Quality Standards
 
@@ -385,7 +384,7 @@ throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found");
 - ~~Environment Separation~~ → dev / test / prod profiles configured
 - ~~LoginResponse.todayAiUsed TODO~~ → Implemented via Redis `rate:ai:{userId}:{date}`
 - ~~Batch Upload Missing~~ → `POST /resumes/batch-upload` (max 20 files, rate-limited 5/min)
-- ~~CORS Configuration~~ → Configurable via `smartats.cors.allowed-origins`, prod reads `CORS_ALLOWED_ORIGINS` env
+- ~~CORS Configuration~~ → Configurable via `smartaps.cors.allowed-origins`, prod reads `CORS_ALLOWED_ORIGINS` env
 - ~~MinIO Integration Test~~ → Annotated with `@Tag("integration")` + `@DisabledIfEnvironmentVariable(CI=true)`
 - ~~Deployment Documentation~~ → `docs/deployment-guide.md` (Docker Compose, env vars, health checks, backup)
 
@@ -395,9 +394,10 @@ throw new BusinessException(ResultCode.NOT_FOUND, "Candidate not found");
 
 - `docs/project-progress-summary.md` — Detailed module analysis and statistics
 - `docs/next-steps-plan-2026-02-23.md` — Development priorities and technical decisions
-- `docs/SmartATS-Design-Document.md` — Complete technical specification, database schema, API definitions
-- `docs/SmartATS-development-handbook-from-zero.md` — Step-by-step development tutorial
+- `docs/SmartAPS-Design-Document.md` — Complete technical specification, database schema, API definitions
+- `docs/SmartAPS-development-handbook-from-zero.md` — Step-by-step development tutorial
 - `docs/deployment-guide.md` — Production deployment guide (Docker Compose, Nginx, monitoring)
+- `docs/smartaps-migration-guide.md` — Safe database and infrastructure rename steps
 
 ## Git Workflow
 

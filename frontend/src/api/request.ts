@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth';
 import { message, notification } from 'antd';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const SUCCESS_CODE = 200;
 
 const request = axios.create({
   baseURL: BASE_URL,
@@ -12,22 +13,24 @@ const request = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-const getErrorMessage = (error: AxiosError<Result<unknown>> | Error): string => {
-  const payload = (error as AxiosError<Result<unknown>>)?.response?.data;
-
-  if (payload?.message) return payload.message;
-  if (payload?.error) return payload.error;
-  if ((error as AxiosError)?.code === 'ERR_NETWORK') {
+const getErrorMessage = (error: AxiosError<Result<unknown>>): string => {
+  const body: unknown = error.response?.data;
+  if (body && typeof body === 'object') {
+    const responseBody = body as { message?: unknown; error?: unknown };
+    if (typeof responseBody.message === 'string' && responseBody.message.trim()) {
+      return responseBody.message;
+    }
+    if (typeof responseBody.error === 'string' && responseBody.error.trim()) {
+      return responseBody.error;
+    }
+  }
+  if (error.code === 'ERR_NETWORK') {
     return 'Unable to reach the backend service. Please check your connection and server status.';
   }
-  if ((error as AxiosError)?.code === 'ECONNABORTED') {
+  if (error.code === 'ECONNABORTED') {
     return 'Request timed out. Please try again.';
   }
-  if (error.message) {
-    return error.message;
-  }
-
-  return 'Something went wrong. Please try again.';
+  return error.message || 'Something went wrong. Please try again.';
 };
 
 request.interceptors.request.use(
@@ -46,103 +49,107 @@ request.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-let pendingRequests: Array<(token: string) => void> = [];
+let refreshPromise: Promise<string> | null = null;
+let sessionExpiryHandled = false;
 
-const processQueue = (token: string) => {
-  pendingRequests.forEach((cb) => cb(token));
-  pendingRequests = [];
+const expireSession = () => {
+  const authStore = useAuthStore.getState();
+  authStore.logout();
+  if (!sessionExpiryHandled) {
+    sessionExpiryHandled = true;
+    notification.warning({
+      message: 'Session expired',
+      description: 'Please sign in again to continue.',
+      duration: 4,
+    });
+  }
+  if (window.location.pathname !== '/login') {
+    window.location.href = '/login';
+  }
+};
+
+const refreshAccessToken = (refreshToken: string): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post(`${BASE_URL}/auth/refresh`, { refreshToken })
+      .then((response) => {
+        const result = response.data as Result<{ accessToken: string; refreshToken: string }>;
+        const accessToken = result?.data?.accessToken;
+        const newRefreshToken = result?.data?.refreshToken;
+
+        if (result?.code !== SUCCESS_CODE || !accessToken || !newRefreshToken) {
+          throw new Error(result?.message || 'The server returned an invalid refresh response.');
+        }
+
+        useAuthStore.getState().setTokens(accessToken, newRefreshToken);
+        sessionExpiryHandled = false;
+        return accessToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
 };
 
 request.interceptors.response.use(
   (response) => {
-    const payload = response.data as Result<unknown> | undefined;
+    const payload: unknown = response.data;
 
-    if (payload && payload.code !== undefined && payload.code !== 200 && payload.code !== 201) {
-      const messageText = payload.message || 'Request failed';
-      message.error(messageText);
-      return Promise.reject(new Error(messageText));
+    if (payload && typeof payload === 'object' && 'code' in payload) {
+      const result = payload as Partial<Result<unknown>>;
+      if (typeof result.code !== 'number' || result.code !== SUCCESS_CODE) {
+        const messageText = result.message || 'Request failed';
+        message.error(messageText);
+        return Promise.reject(new Error(messageText));
+      }
     }
 
     return response;
   },
   async (error: AxiosError<Result<unknown>>) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean } | undefined;
-    const errorMessage = getErrorMessage(error);
+    const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const requestUrl = originalRequest?.url || '';
 
-    if (error.response?.status === 401 && originalRequest) {
-      originalRequest._retry = true;
-      const authStore = useAuthStore.getState();
-      const refreshToken = authStore.refreshToken;
-
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry &&
+      !/\/auth\/(login|register|send-verification-code|refresh)(\?|$)/.test(requestUrl)) {
+      const refreshToken = useAuthStore.getState().refreshToken;
       if (!refreshToken) {
-        authStore.logout();
-        notification.warning({
-          message: 'Session expired',
-          description: 'Please sign in again to continue.',
-          duration: 4,
-        });
-        window.location.href = '/login';
+        expireSession();
         return Promise.reject(error);
       }
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          pendingRequests.push((token: string) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            request(originalRequest)
-              .then(resolve)
-              .catch(reject);
-          });
-        });
-      }
-
-      isRefreshing = true;
-
+      originalRequest._retry = true;
       try {
-        const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-        const payload = res.data as Result<{ accessToken: string; refreshToken: string }>;
-        const accessToken = payload.data?.accessToken;
-        const newRefresh = payload.data?.refreshToken;
-
-        if (!accessToken || !newRefresh) {
-          throw new Error('Invalid refresh response');
-        }
-
-        authStore.setTokens(accessToken, newRefresh);
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        }
-
-        processQueue(accessToken);
+        const accessToken = await refreshAccessToken(refreshToken);
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return request(originalRequest);
       } catch (refreshError) {
-        authStore.logout();
-        notification.error({
-          message: 'Session refresh failed',
-          description: 'Your session has expired. Please sign in again.',
-          duration: 4,
-        });
-        window.location.href = '/login';
+        expireSession();
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
 
+    if (error.response?.status === 401 &&
+      (originalRequest?._retry || requestUrl.includes('/auth/refresh'))) {
+      expireSession();
+      return Promise.reject(error);
+    }
+
+    const errorMessage = getErrorMessage(error);
     if (error.response?.status === 403) {
       message.warning('Access denied. You do not have permission for this action.');
     } else if (error.response?.status === 404) {
       message.warning('The requested resource could not be found.');
+    } else if (error.response?.status === 429) {
+      message.warning('Too many requests. Please wait a moment and try again.');
+    } else if (error.response && error.response.status >= 500) {
+      message.error('The service is temporarily unavailable. Please try again later.');
     } else if (!error.response) {
-      message.error('Network connection failed. Please check your connection and try again.');
+      message.error(errorMessage);
     } else {
       message.error(errorMessage);
     }
-
     return Promise.reject(error);
   },
 );

@@ -89,11 +89,13 @@ const menuItems: MenuProps['items'] = [
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState({ pathname: '', open: false });
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { userInfo, logout } = useAuthStore();
+  const mobileMenuOpen = mobileMenu.pathname === location.pathname && mobileMenu.open;
+  const sidebarCollapsed = isMobile || collapsed;
 
   // Detect mobile screen
   useEffect(() => {
@@ -103,24 +105,10 @@ export default function AppLayout() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-collapse sidebar on mobile
-  useEffect(() => {
-    if (isMobile) {
-      setCollapsed(true);
-    }
-  }, [isMobile]);
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    if (isMobile) {
-      setMobileMenuOpen(false);
-    }
-  }, [location.pathname, isMobile]);
-
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     navigate(key);
     if (isMobile) {
-      setMobileMenuOpen(false);
+      setMobileMenu({ pathname: location.pathname, open: false });
     }
   };
 
@@ -163,7 +151,7 @@ export default function AppLayout() {
   // Toggle sidebar - for mobile use overlay instead of collapse
   const handleToggleSidebar = () => {
     if (isMobile) {
-      setMobileMenuOpen(!mobileMenuOpen);
+      setMobileMenu({ pathname: location.pathname, open: !mobileMenuOpen });
     } else {
       setCollapsed(!collapsed);
     }
@@ -181,7 +169,7 @@ export default function AppLayout() {
             transition={{ duration: prefersReducedMotion() ? 0 : 0.2 }}
             className="fixed inset-0 bg-black/50 lg:hidden"
             style={{ zIndex: Z_INDEX.overlay }}
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => setMobileMenu({ pathname: location.pathname, open: false })}
           />
         )}
       </AnimatePresence>
@@ -190,7 +178,7 @@ export default function AppLayout() {
       <Sider
         trigger={null}
         collapsible
-        collapsed={collapsed}
+        collapsed={sidebarCollapsed}
         width={240}
         theme="dark"
         className="!fixed left-0 top-0 bottom-0 overflow-auto transition-transform duration-300"
@@ -208,15 +196,15 @@ export default function AppLayout() {
         <div
           className="h-16 flex items-center border-b border-white/[0.06]"
           style={{
-            padding: collapsed ? '0' : '0 20px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: sidebarCollapsed ? '0' : '0 20px',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
           }}
         >
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
             <span className="text-white font-bold text-sm">S</span>
           </div>
           <AnimatePresence>
-            {!collapsed && (
+            {!sidebarCollapsed && (
               <motion.span
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
@@ -224,7 +212,7 @@ export default function AppLayout() {
                 transition={{ duration: prefersReducedMotion() ? 0 : 0.2 }}
                 className="text-white text-lg font-semibold ml-3 tracking-tight overflow-hidden whitespace-nowrap"
               >
-                SmartATS
+                SmartAPS
               </motion.span>
             )}
           </AnimatePresence>
@@ -262,7 +250,15 @@ export default function AppLayout() {
           <button
             onClick={handleToggleSidebar}
             className="text-lg text-gray-600 hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none p-1 rounded hover:bg-gray-100"
-            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+            aria-label={
+              isMobile
+                ? mobileMenuOpen
+                  ? 'Close menu'
+                  : 'Open menu'
+                : collapsed
+                  ? 'Expand menu'
+                  : 'Collapse menu'
+            }
           >
             {isMobile ? (
               mobileMenuOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />

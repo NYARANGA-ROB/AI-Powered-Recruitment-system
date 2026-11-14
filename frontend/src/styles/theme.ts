@@ -1,7 +1,7 @@
 import type { ThemeConfig } from 'antd';
 
 /**
- * SmartATS Design System
+ * SmartAPS Design System
  * Modern professional palette - Cyan primary
  */
 const theme: ThemeConfig = {
@@ -117,7 +117,6 @@ const theme: ThemeConfig = {
     Menu: {
       darkItemBg: 'transparent',
       darkSubMenuItemBg: 'transparent',
-      darkItemSelectedBg: 'rgba(6, 182, 212, 0.15)',
       darkItemHoverBg: 'rgba(255, 255, 255, 0.06)',
       itemBorderRadius: 8,
       itemMarginInline: 6,

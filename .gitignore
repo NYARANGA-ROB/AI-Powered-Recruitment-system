@@ -87,7 +87,6 @@ data/minio/
 # Commit configuration examples as application.yml.example instead
 application-local.yml
 application-dev.yml
-application-prod.yml
 .env
 .env.local
 .env.*.local

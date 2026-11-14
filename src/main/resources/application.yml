@@ -1,4 +1,4 @@
-# ==================== SmartATS application configuration ====================
+# ==================== SmartAPS application configuration ====================
 #
 # 📌 Environment configuration notes:
 #    - Development: application-dev.yml (active by default)
@@ -39,14 +39,14 @@ spring:
     default-encoding: UTF-8
 
   application:
-    name: smartats              # Application name (shown in logs and monitoring)
+    name: smartaps              # Application name (shown in logs and monitoring)
 
   # ==================== Database configuration ====================
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver    # MySQL driver class
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartats}?useSSL=false&serverTimezone=Asia/Shanghai
-    username: ${DB_USERNAME:smartats}                     # Database username
-    password: ${DB_PASSWORD:smartats123}                          # Database password (read from an environment variable)
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartaps}?useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:smartaps}                     # Database username
+    password: ${DB_PASSWORD:smartaps123}                          # Database password (read from an environment variable)
 
     # 📌 HikariCP connection pool settings (the Spring Boot default pool)
     hikari:
@@ -55,12 +55,17 @@ spring:
       connection-timeout: 30000   # Timeout when obtaining a connection (milliseconds)
       idle-timeout: 600000       # Idle connection timeout (10 minutes)
 
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    clean-disabled: true
+
   # ==================== Redis configuration ====================
   data:
     redis:
       host: ${REDIS_HOST:localhost}            # Redis server address
       port: ${REDIS_PORT:6379}                # Redis port
-      password: ${REDIS_PASSWORD:}                # Redis password (read from an environment variable)
+      password: ${REDIS_PASSWORD:redis123}    # Local-development password; production profile requires a secret
       database: 0               # Redis database index (0-15, 16 databases in total)
       timeout: 5000             # Connection timeout (milliseconds)
 
@@ -77,7 +82,8 @@ spring:
     port: ${RABBITMQ_PORT:5672}                 # AMQP protocol port (the management UI uses 15672)
     username: ${RABBITMQ_USERNAME:admin}            # Username
     password: ${RABBITMQ_PASSWORD:admin123}                # Password (read from an environment variable)
-    virtual-host: ${RABBITMQ_VHOST:smartats}    # Virtual host (analogous to a MySQL database)
+    virtual-host: ${RABBITMQ_VHOST:smartaps}    # Virtual host (analogous to a MySQL database)
+    publisher-confirm-type: correlated
     listener:
       simple:
         acknowledge-mode: manual  # Acknowledge messages manually (prevents message loss)
@@ -110,6 +116,15 @@ server:
 
 # ==================== Actuator health check configuration ====================
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
   health:
     mail:
       enabled: false  # Disable the mail health check (the mail service does not affect core application functionality)
@@ -118,7 +133,7 @@ management:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true    # Database snake_case → Java camelCase (user_name → userName)
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # Print SQL logs (development)
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl  # Keep SQL logging under the application log-level controls
   global-config:
     db-config:
       id-type: auto                    # Auto-increment primary key (auto for MySQL, assign_id for PostgreSQL)
@@ -130,15 +145,14 @@ mybatis-plus:
 logging:
   level:
     root: INFO                       # Global log level
-    com.smartats: DEBUG              # Log level for this project (DEBUG during development)
-    com.smartats.mapper: DEBUG       # Mapper interface logs (prints SQL)
+    com.smartaps: INFO
   pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'  # Log format
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [task:%X{taskId:-}] %logger{36} - %msg%n'
 
 # ==================== Application-specific configuration ====================
-smartats:
+smartaps:
   jwt:
-    secret: ${JWT_SECRET:SmartATS2026SecretKeyMustBeLongEnoughForHS256}    # JWT secret (must be changed in production!)
+    secret: ${JWT_SECRET:SmartAPS2026SecretKeyMustBeLongEnoughForHS256}    # JWT secret (must be changed in production!)
     expiration: 7200              # Access Token expiry (2 hours, in seconds)
     refresh-expiration: 604800    # Refresh Token expiry (7 days)
 
@@ -152,7 +166,7 @@ smartats:
       model: ${ZHIPU_EMBEDDING_MODEL:embedding-3}  # Zhipu embedding-3, 1024 dimensions
 
   cors:
-    allowed-origins: "*"          # Allow all origins in development; set this through an environment variable in production
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
 
   verification-code:
     expire-time: 300              # Verification code expiry (5 minutes = 300 seconds)
@@ -161,7 +175,7 @@ minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:admin}
   secret-key: ${MINIO_SECRET_KEY:admin123456}
-  bucket-name: smartats-resumes
+  bucket-name: ${MINIO_BUCKET_NAME:smartaps-resumes}
   connect-timeout: 10000  # 10 seconds
   write-timeout: 60000     # 60 seconds
   read-timeout: 10000      # 10 seconds

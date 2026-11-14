@@ -16,6 +16,7 @@ import {
   Popconfirm,
   Divider,
   InputNumber,
+  Empty,
 } from 'antd';
 import {
   SearchOutlined,
@@ -31,6 +32,7 @@ import { candidateApi } from '../../api';
 import type { CandidateResponse, CandidateQueryParams, WorkExperienceItem } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
+import TableLoadingSkeleton from '../../components/TableLoadingSkeleton';
 
 const { Text, Paragraph } = Typography;
 
@@ -38,6 +40,7 @@ export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<CandidateResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [query, setQuery] = useState<CandidateQueryParams>({ page: 1, pageSize: 10 });
   const [detailDrawer, setDetailDrawer] = useState<CandidateResponse | null>(null);
   const [editModal, setEditModal] = useState<CandidateResponse | null>(null);
@@ -45,10 +48,13 @@ export default function CandidatesPage() {
 
   const loadCandidates = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const { data } = await candidateApi.list(query);
       setCandidates(data.data?.records || []);
       setTotal(data.data?.total || 0);
+    } catch {
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -60,7 +66,11 @@ export default function CandidatesPage() {
 
   const handleEdit = (record: CandidateResponse) => {
     setEditModal(record);
-    form.setFieldsValue({ ...record, skills: record.skills?.join(', ') });
+    form.setFieldsValue({
+      ...record,
+      skills: record.skills?.join(', '),
+      summary: record.selfEvaluation,
+    });
   };
 
   const handleUpdate = async () => {
@@ -68,7 +78,12 @@ export default function CandidatesPage() {
     const skills = values.skills
       ? values.skills.split(/[,，]/).map((s: string) => s.trim()).filter(Boolean)
       : undefined;
-    await candidateApi.update(editModal!.id, { ...values, skills });
+    const { summary, ...candidateValues } = values;
+    await candidateApi.update(editModal!.id, {
+      ...candidateValues,
+      selfEvaluation: summary,
+      skills,
+    });
     message.success('Updated successfully');
     setEditModal(null);
     loadCandidates();
@@ -233,21 +248,36 @@ export default function CandidatesPage() {
         {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={candidates}
-              loading={loading}
-              scroll={{ x: true }}
-              pagination={{
-                current: query.page,
-                pageSize: query.pageSize,
-                total,
-                showSizeChanger: true,
-                showTotal: (t) => `${t} records in total`,
-                onChange: (p, s) => setQuery((q) => ({ ...q, page: p, pageSize: s })),
-              }}
-            />
+            {loading && candidates.length === 0 ? (
+              <TableLoadingSkeleton columns={8} />
+            ) : (
+              <Table
+                rowKey="id"
+                columns={columns}
+                dataSource={candidates}
+                loading={loading}
+                size="middle"
+                showSorterTooltip
+                locale={{
+                  emptyText: loadFailed ? (
+                    <Empty description="Candidates could not be loaded">
+                      <Button type="link" onClick={loadCandidates}>Try again</Button>
+                    </Empty>
+                  ) : (
+                    <Empty description="No candidates match these filters" />
+                  ),
+                }}
+                scroll={{ x: 1100 }}
+                pagination={{
+                  current: query.page,
+                  pageSize: query.pageSize,
+                  total,
+                  showSizeChanger: true,
+                  showTotal: (count, range) => `Showing ${range[0]}-${range[1]} of ${count} candidates`,
+                  onChange: (page, size) => setQuery((q) => ({ ...q, page, pageSize: size })),
+                }}
+              />
+            )}
           </Card>
         </motion.div>
       </motion.div>

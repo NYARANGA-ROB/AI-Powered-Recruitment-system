@@ -16,6 +16,7 @@ import {
   Drawer,
   Descriptions,
   Divider,
+  Empty,
 } from 'antd';
 import {
   PlusOutlined,
@@ -31,6 +32,7 @@ import { jobApi } from '../../api';
 import type { JobResponse, JobStatus, JobQueryParams } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
+import TableLoadingSkeleton from '../../components/TableLoadingSkeleton';
 
 const { Paragraph } = Typography;
 
@@ -44,6 +46,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<JobResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [query, setQuery] = useState<JobQueryParams>({ pageNum: 1, pageSize: 10 });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobResponse | null>(null);
@@ -52,10 +55,13 @@ export default function JobsPage() {
 
   const loadJobs = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const { data } = await jobApi.list(query);
       setJobs(data.data?.records || []);
       setTotal(data.data?.total || 0);
+    } catch {
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -255,21 +261,36 @@ export default function JobsPage() {
         {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={jobs}
-              loading={loading}
-              scroll={{ x: true }}
-              pagination={{
-                current: query.pageNum,
-                pageSize: query.pageSize,
-                total,
-                showSizeChanger: true,
-                showTotal: (t) => `${t} records in total`,
-                onChange: (page, size) => setQuery((q) => ({ ...q, pageNum: page, pageSize: size })),
-              }}
-            />
+            {loading && jobs.length === 0 ? (
+              <TableLoadingSkeleton columns={8} />
+            ) : (
+              <Table
+                rowKey="id"
+                columns={columns}
+                dataSource={jobs}
+                loading={loading}
+                size="middle"
+                showSorterTooltip
+                locale={{
+                  emptyText: loadFailed ? (
+                    <Empty description="Jobs could not be loaded">
+                      <Button type="link" onClick={loadJobs}>Try again</Button>
+                    </Empty>
+                  ) : (
+                    <Empty description="No jobs match these filters" />
+                  ),
+                }}
+                scroll={{ x: 1000 }}
+                pagination={{
+                  current: query.pageNum,
+                  pageSize: query.pageSize,
+                  total,
+                  showSizeChanger: true,
+                  showTotal: (count, range) => `Showing ${range[0]}-${range[1]} of ${count} jobs`,
+                  onChange: (page, size) => setQuery((q) => ({ ...q, pageNum: page, pageSize: size })),
+                }}
+              />
+            )}
           </Card>
         </motion.div>
       </motion.div>

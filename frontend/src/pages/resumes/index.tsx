@@ -6,7 +6,6 @@ import {
   Space,
   Tag,
   Upload,
-  Modal,
   Progress,
   Typography,
   message,
@@ -66,7 +65,6 @@ export default function ResumesPage() {
   const [loading, setLoading] = useState(false);
   const [pageNum, setPageNum] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [tasks, setTasks] = useState<UploadTask[]>([]);
   const [uploading, setUploading] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -178,7 +176,6 @@ export default function ResumesPage() {
         }
       }
       // Close the modal and clear the file list on success
-      setUploadModalOpen(false);
       setFileList([]);
     } catch (err: unknown) {
       message.error(err instanceof Error ? err.message : 'Upload failed');
@@ -387,7 +384,7 @@ export default function ResumesPage() {
                 </Upload.Dragger>
 
                 {/* Action buttons */}
-                <Space className="w-full" direction="vertical" className="!w-full">
+                <Space direction="vertical" className="!w-full">
                   <Button
                     type="primary"
                     icon={<UploadOutlined />}

@@ -1,4 +1,4 @@
-# SmartATS Next Steps Development Plan
+# SmartAPS Next Steps Development Plan
 
 **Plan Date**: 2026-02-23  
 **Current Progress**: ~92% (core business logic complete)

@@ -1,4 +1,4 @@
-# ==================== SmartATS application configuration template ====================
+# ==================== SmartAPS application configuration template ====================
 #
 # 📌 Usage instructions:
 # 1. Copy this file to application.yml and fill in the real configuration values
@@ -36,13 +36,13 @@ spring:
     default-encoding: UTF-8
 
   application:
-    name: smartats              # Application name (shown in logs and monitoring)
+    name: smartaps              # Application name (shown in logs and monitoring)
 
   # ==================== Database configuration ====================
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver    # MySQL driver class
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartats}?useSSL=false&serverTimezone=Asia/Shanghai
-    username: ${DB_USERNAME:smartats}                     # Database username
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/${DB_NAME:smartaps}?useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:smartaps}                     # Database username
     password: ${DB_PASSWORD}                          # Database password (read from an environment variable)
 
     # 📌 HikariCP connection pool settings (the Spring Boot default pool)
@@ -74,7 +74,7 @@ spring:
     port: ${RABBITMQ_PORT:5672}                 # AMQP protocol port (the management UI uses 15672)
     username: ${RABBITMQ_USERNAME:admin}            # Username
     password: ${RABBITMQ_PASSWORD}                # Password (read from an environment variable)
-    virtual-host: ${RABBITMQ_VHOST:smartats}    # Virtual host (analogous to a MySQL database)
+    virtual-host: ${RABBITMQ_VHOST:smartaps}    # Virtual host (analogous to a MySQL database)
     listener:
       simple:
         acknowledge-mode: manual  # Acknowledge messages manually (prevents message loss)
@@ -102,15 +102,15 @@ mybatis-plus:
 logging:
   level:
     root: INFO                       # Global log level
-    com.smartats: DEBUG              # Log level for this project (DEBUG during development)
-    com.smartats.mapper: DEBUG       # Mapper interface logs (prints SQL)
+    com.smartaps: DEBUG              # Log level for this project (DEBUG during development)
+    com.smartaps.mapper: DEBUG       # Mapper interface logs (prints SQL)
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'  # Log format
 
 # ==================== Application-specific configuration ====================
-smartats:
+smartaps:
   jwt:
-    secret: ${JWT_SECRET:SmartATS2026SecretKeyMustBeLongEnoughForHS256}    # JWT secret (must be changed in production!)
+    secret: ${JWT_SECRET:SmartAPS2026SecretKeyMustBeLongEnoughForHS256}    # JWT secret (must be changed in production!)
     expiration: 7200              # Access Token expiry (2 hours, in seconds)
     refresh-expiration: 604800    # Refresh Token expiry (7 days)
 
@@ -128,7 +128,7 @@ minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:admin}
   secret-key: ${MINIO_SECRET_KEY:admin123456}
-  bucket-name: smartats-resumes
+  bucket-name: smartaps-resumes
   connect-timeout: 10000  # 10 seconds
   write-timeout: 60000     # 60 seconds
   read-timeout: 10000      # 10 seconds

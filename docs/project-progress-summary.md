@@ -1,4 +1,4 @@
-# SmartATS Project Progress Summary Report
+# SmartAPS Project Progress Summary Report
 
 **Updated**: February 23, 2026  
 **Project Version**: 1.0.0  
@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-SmartATS is an intelligent recruitment management system for HR professionals, built on Spring Boot 3.2.5 + JDK 21 and integrating a modern technology stack with AI resume parsing (Zhipu AI), asynchronous task processing (RabbitMQ), distributed locks (Redisson) and caching (Redis).
+SmartAPS is an intelligent recruitment management system for HR professionals, built on Spring Boot 3.2.5 + JDK 21 and integrating a modern technology stack with AI resume parsing (Zhipu AI), asynchronous task processing (RabbitMQ), distributed locks (Redisson) and caching (Redis).
 
 ### Core Technology Stack
 

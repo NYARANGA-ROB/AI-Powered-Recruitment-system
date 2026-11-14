@@ -1,6 +1,6 @@
-﻿# SmartATS Frontend
+﻿# SmartAPS Frontend
 
-This is the React + TypeScript dashboard for SmartATS. It provides the management UI for jobs, resumes, candidates, interviews, analytics, and audit logs.
+This is the React + TypeScript dashboard for SmartAPS. It provides the management UI for jobs, resumes, candidates, interviews, analytics, and audit logs.
 
 ## What the frontend includes
 
@@ -27,7 +27,7 @@ Create a `.env` file based on the template below:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api/v1
-VITE_APP_TITLE=SmartATS
+VITE_APP_TITLE=SmartAPS
 ```
 
 ## Useful commands
@@ -37,6 +37,21 @@ npm run build
 npm run lint
 npm run dev -- --host 0.0.0.0
 ```
+
+## API response contract
+
+REST endpoints use the backend response envelope:
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {},
+  "timestamp": 0
+}
+```
+
+The shared Axios client treats code `200` as success, displays consistent messages for failed requests, and shares a single token-refresh request across concurrent `401` responses. Server-sent events use their dedicated `EventSource` flow rather than the JSON response envelope.
 
 ## Troubleshooting
 

@@ -110,7 +110,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-4xl xl:text-[42px] font-bold text-gray-900 tracking-tight leading-tight mb-4">
-            SmartATS
+            SmartAPS
           </h1>
           <p className="text-xl text-gray-600 font-light leading-relaxed mb-3">
             Intelligent Recruitment Management System
@@ -153,7 +153,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
               <span className="text-white font-bold">S</span>
             </div>
-            <span className="text-xl font-semibold text-gray-900 tracking-tight">SmartATS</span>
+            <span className="text-xl font-semibold text-gray-900 tracking-tight">SmartAPS</span>
           </div>
 
           <Tabs
@@ -305,7 +305,7 @@ export default function LoginPage() {
           />
 
           <p className="text-center mt-10 text-xs text-gray-400 tracking-wide">
-            SmartATS · Intelligent Recruitment Management System
+            SmartAPS · Intelligent Recruitment Management System
           </p>
         </div>
       </motion.div>

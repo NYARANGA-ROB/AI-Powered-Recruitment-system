@@ -1,4 +1,4 @@
-# ==================== SmartATS test environment configuration ====================
+# ==================== SmartAPS test environment configuration ====================
 # Used by @WebMvcTest slice tests; loads only the minimal configuration the web layer needs
 
 spring:
@@ -12,7 +12,7 @@ server:
     context-path: /api/v1
 
 # JWT secret (fixed value for tests)
-smartats:
+smartaps:
   jwt:
     secret: TestSecretKeyForJWTMustBeLongEnoughForHS256Algorithm
     expiration: 7200
@@ -25,7 +25,7 @@ smartats:
     embedding:
       model: embedding-3
   cors:
-    allowed-origins: "*"
+    allowed-origins: http://localhost:3000
   verification-code:
     expire-time: 300
 

@@ -1,6 +1,6 @@
-﻿# SmartATS
+﻿# SmartAPS
 
-SmartATS is an AI-powered recruiting platform for HR teams. It combines resume ingestion, structured candidate extraction, automated job-application workflows, interview management, analytics, and semantic search into a single Spring Boot + React system.
+SmartAPS is an AI-powered recruiting platform for HR teams. It combines resume ingestion, structured candidate extraction, automated job-application workflows, interview management, analytics, and semantic search into a single Spring Boot + React system.
 
 ## Highlights
 
@@ -22,7 +22,7 @@ SmartATS is an AI-powered recruiting platform for HR teams. It combines resume i
 ## Repository layout
 
 - `src/main/java` — backend services, controllers, security, MQ, AI integrations
-- `src/main/resources` — app config and SQL resources
+- `src/main/resources` — app configuration and Flyway database migrations
 - `src/test/java` — backend tests
 - `frontend` — React admin dashboard and API client
 - `docs` — architecture and deployment references
@@ -40,25 +40,26 @@ SmartATS is an AI-powered recruiting platform for HR teams. It combines resume i
 ### 2) Start infrastructure
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This starts:
 
-- MySQL: `localhost:3307`
-- Redis: `localhost:6379`
-- RabbitMQ: `localhost:5672` and UI at `http://localhost:15672`
-- MinIO: `localhost:9000` and Console at `http://localhost:9001`
+- MySQL: `127.0.0.1:3307`
+- Redis: `127.0.0.1:6379`
+- RabbitMQ: `127.0.0.1:5672` and UI at `http://localhost:15672`
+- MinIO: `127.0.0.1:9000` and Console at `http://localhost:9001`
+- Milvus: `127.0.0.1:19530`
+
+The Compose defaults are for local development only. For a fresh install, configure `.env` first; when reusing an existing data directory, keep the MySQL root password consistent with that database.
 
 ### 3) Configure environment variables
-
-Copy the example file and update the values for your environment:
 
 ```bash
 cp .env.example .env
 ```
 
-The project also includes a frontend example file:
+On Windows PowerShell, use `Copy-Item .env.example .env`. Set unique local passwords and a JWT secret of at least 32 bytes. Configure the frontend environment file if you need to change the API URL:
 
 ```bash
 cp frontend/.env.example frontend/.env
@@ -67,21 +68,23 @@ cp frontend/.env.example frontend/.env
 ### 4) Run the backend
 
 ```bash
-mvn clean install
-mvn spring-boot:run
+mvn -s settings.xml clean verify
+mvn -s settings.xml spring-boot:run
 ```
 
-The backend exposes the REST API under `/api/v1` and Swagger UI at:
+Flyway applies versioned schema migrations automatically at startup. The REST API is under `/api/v1`; local Swagger UI is at:
 
 ```text
-http://localhost:8080/api/v1/swagger-ui.html
+http://localhost:8080/api/v1/swagger-ui/index.html
 ```
+
+The local seed accounts are `admin` / `password123` and `hr01` / `password123`. Change or remove these accounts before any shared or production deployment.
 
 ### 5) Run the frontend
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -106,29 +109,31 @@ http://localhost:3000
 
 See the docs in `docs/` for deeper technical details:
 
-- `docs/SmartATS-Design-Document.md` — system design and architecture
-- `docs/SmartATS-development-handbook-from-zero.md` — implementation guidance
+- `docs/SmartAPS-Design-Document.md` — system design and architecture
+- `docs/SmartAPS-development-handbook-from-zero.md` — implementation guidance
 - `docs/project-progress-summary.md` — project status and module progress
 - `docs/deployment-guide.md` — production deployment instructions
+- `docs/smartaps-migration-guide.md` — safe database and infrastructure rename steps
 - `docs/frontend-api-reference.md` — frontend to backend API overview
 
 ## Suggested workflow
 
 1. Start Docker infrastructure
-2. Apply database schema and seed scripts if needed
-3. Run backend with environment variables
-4. Run frontend with local proxy configuration
-5. Use Swagger and the dashboard to validate flows end-to-end
+2. Run the backend; Flyway initializes or upgrades the schema
+3. Run the frontend
+4. Validate login, resume processing, and recruitment workflows end-to-end
 
 ## Troubleshooting
 
-- If Docker services do not start cleanly, check that port 3307, 6379, 5672, 9000, and 15672 are free.
-- If the backend fails to connect to MySQL or Redis, verify your `.env` values and ensure the containers are running with `docker-compose ps`.
+- If Docker services do not start cleanly, check that ports 3307, 6379, 5672, 9000, 9001, 15672, and 19530 are free.
+- If the backend fails to connect to infrastructure, verify `.env` values and check `docker compose ps`.
 - If the frontend cannot reach the API, confirm that the backend is running on `http://localhost:8080` and that `VITE_API_BASE_URL` points to the correct host.
-- If login or token refresh fails, verify that `JWT_SECRET` is set and consistent between app restarts.
+- If login or token refresh fails after a restart, use fresh credentials; changing `JWT_SECRET` intentionally invalidates existing tokens.
+- The production profile requires real credentials, an explicit CORS origin list, and a 32-byte JWT secret. Swagger is disabled in production.
 
 ## Notes
 
 - The backend uses environment variables for secrets and service credentials.
 - The frontend reads `VITE_API_BASE_URL` from `.env` and proxies `/api/v1` to the backend during local development.
-- The project is designed for development and learning-use deployment; production hardening should include secrets management, stricter network policies, and CI/CD checks.
+- Docker Compose is a local-development stack. Replace its archived MinIO fallback with a maintained object-storage service before production use.
+- Keep candidate documents private; SmartAPS uses private MinIO objects and short-lived presigned download URLs.

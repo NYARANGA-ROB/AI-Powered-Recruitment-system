@@ -17,6 +17,7 @@ import {
   Descriptions,
   Tooltip,
   Spin,
+  Empty,
 } from 'antd';
 import {
   PlusOutlined,
@@ -31,6 +32,7 @@ import { applicationApi } from '../../api';
 import type { ApplicationResponse, ApplicationStatus, ApplicationQueryParams, MatchScoreResponse } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
+import TableLoadingSkeleton from '../../components/TableLoadingSkeleton';
 
 const { Text } = Typography;
 
@@ -56,6 +58,7 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationResponse[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [query, setQuery] = useState<ApplicationQueryParams>({ pageNum: 1, pageSize: 10 });
   const [createModal, setCreateModal] = useState(false);
   const [form] = Form.useForm();
@@ -74,10 +77,13 @@ export default function ApplicationsPage() {
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const { data } = await applicationApi.list(query);
       setApplications(data.data?.records || []);
       setTotal(data.data?.total || 0);
+    } catch {
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -280,6 +286,9 @@ export default function ApplicationsPage() {
               </Card>
             ))}
           </div>
+          <p className="mb-0 -mt-2 text-right text-xs text-gray-400">
+            Counts reflect the current page of results
+          </p>
         </motion.div>
 
         {/* Filters */}
@@ -325,22 +334,37 @@ export default function ApplicationsPage() {
         {/* Table */}
         <motion.div variants={staggerItem}>
           <Card bordered={false}>
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={applications}
-              loading={loading}
-              scroll={{ x: true }}
-              pagination={{
-                current: query.pageNum,
-                pageSize: query.pageSize,
-                total,
-                showSizeChanger: true,
-                showTotal: (t) => `${t} records in total`,
-                onChange: (p, s) =>
-                  setQuery((q) => ({ ...q, pageNum: p, pageSize: s })),
-              }}
-            />
+            {loading && applications.length === 0 ? (
+              <TableLoadingSkeleton columns={7} />
+            ) : (
+              <Table
+                rowKey="id"
+                columns={columns}
+                dataSource={applications}
+                loading={loading}
+                size="middle"
+                showSorterTooltip
+                locale={{
+                  emptyText: loadFailed ? (
+                    <Empty description="Applications could not be loaded">
+                      <Button type="link" onClick={loadApplications}>Try again</Button>
+                    </Empty>
+                  ) : (
+                    <Empty description="No applications match these filters" />
+                  ),
+                }}
+                scroll={{ x: 900 }}
+                pagination={{
+                  current: query.pageNum,
+                  pageSize: query.pageSize,
+                  total,
+                  showSizeChanger: true,
+                  showTotal: (count, range) => `Showing ${range[0]}-${range[1]} of ${count} applications`,
+                  onChange: (page, size) =>
+                    setQuery((q) => ({ ...q, pageNum: page, pageSize: size })),
+                }}
+              />
+            )}
           </Card>
         </motion.div>
       </motion.div>

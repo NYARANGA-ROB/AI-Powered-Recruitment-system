@@ -57,6 +57,7 @@ export function useSse({
   const eventSourceRef = useRef<EventSource | null>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectRef = useRef<() => void>(() => {});
 
   const cleanup = useCallback(() => {
     if (retryTimerRef.current) {
@@ -101,7 +102,7 @@ export function useSse({
       if (autoReconnect && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
         retryTimerRef.current = setTimeout(() => {
-          connect();
+          connectRef.current();
         }, reconnectDelay);
       } else {
         setStatus('disconnected');
@@ -115,16 +116,24 @@ export function useSse({
     setStatus('disconnected');
   }, [cleanup]);
 
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
+
   const reconnect = useCallback(() => {
     retryCountRef.current = 0;
     connect();
   }, [connect]);
 
   useEffect(() => {
+    let startTimer: ReturnType<typeof setTimeout> | null = null;
     if (enabled) {
-      connect();
+      startTimer = setTimeout(connect, 0);
     }
     return () => {
+      if (startTimer) {
+        clearTimeout(startTimer);
+      }
       cleanup();
     };
   }, [enabled, connect, cleanup]);

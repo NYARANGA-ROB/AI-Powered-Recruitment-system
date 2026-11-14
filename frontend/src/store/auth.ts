@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
-      name: 'smartats-auth',
+      name: 'smartaps-auth',
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,

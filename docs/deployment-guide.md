@@ -1,4 +1,4 @@
-# SmartATS Production Deployment Guide
+# SmartAPS Production Deployment Guide
 
 ## Table of Contents
 
@@ -28,7 +28,7 @@
 
 | Service | Port | Purpose |
 |------|------|------|
-| SmartATS App | 8080 | API service |
+| SmartAPS App | 8080 | API service |
 | MySQL | 3306 | Database |
 | Redis | 6379 | Caching & distributed locks |
 | RabbitMQ AMQP | 5672 | Message queue |
@@ -39,6 +39,8 @@
 | Milvus Metrics | 9091 | Milvus health check |
 | etcd | 2379 | Milvus metadata |
 
+The local Compose file binds published service ports to loopback only. In production, keep databases, Redis, RabbitMQ, MinIO, Milvus, and etcd on private networks; expose only the application through a TLS-terminating reverse proxy.
+
 ---
 
 ## Quick Deployment (Docker Compose)
@@ -46,69 +48,60 @@
 ### 1. Clone the Project
 
 ```bash
-git clone https://github.com/NissonCX/SmartATS.git
-cd SmartATS
+git clone https://github.com/NYARANGA-ROB/AI-Powered-Recruitment-system.git
+cd AI-Powered-Recruitment-system
 ```
 
 ### 2. Configure Environment Variables
 
 ```bash
 cp .env.example .env
-vim .env
 ```
 
-Edit the `.env` file and set every required environment variable (see [Environment Variable Configuration](#environment-variable-configuration)).
+Set unique secrets in `.env`. On Windows PowerShell, copy the file with `Copy-Item .env.example .env`. Do not reuse the sample values in production.
 
 ### 3. Build the JAR
 
 ```bash
 # Requires JDK 21 + Maven 3.9+
-mvn clean package -DskipTests
+mvn -s settings.xml clean verify
 ```
 
 ### 4. Start All Infrastructure Services
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 5. Wait for Services to Be Ready
 
 ```bash
 # Check the status of all services
-docker-compose ps
+docker compose ps
 
 # Wait for MySQL to be ready
-docker-compose exec mysql mysqladmin ping -h localhost -uroot -proot123
+docker compose exec mysql mysqladmin ping -h localhost -uroot -p
 
 # Wait for Milvus to be ready (first startup takes 90 seconds)
 curl -sf http://localhost:9091/healthz
 ```
 
-### 6. Initialize the Database
-
-```bash
-# Run the table creation scripts
-mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < docker/mysql/init/01-init-database.sql
-mysql -h 127.0.0.1 -P 3307 -u smartats -psmartats123 smartats < src/main/resources/db/webhook_tables.sql
-```
-
-### 7. Start the Application
+### 6. Start the Application
 
 ```bash
 # Start with the production profile
-java -jar target/smartats-1.0.0.jar \
+java -jar target/smartaps-1.0.0.jar \
   --spring.profiles.active=prod \
   --server.port=8080
 ```
 
-### 8. Verify the Deployment
+Flyway applies versioned schema migrations at startup. Existing SmartAPS installations are baselined at version `0`; the migrations preserve existing tables and align the resume schema. Back up the database before upgrading.
+
+### 7. Verify the Deployment
 
 ```bash
-# Health check
-curl http://localhost:8080/api/v1/auth/test
-
-# Expected response: unauthenticated 403 (normal, it means the service is up)
+# Liveness/readiness health check; details are not public
+curl http://localhost:8080/api/v1/actuator/health
 ```
 
 ---
@@ -121,10 +114,10 @@ If you need to deploy the components on different servers, follow this order:
 
 ```bash
 docker run -d \
-  --name smartats-mysql \
+  --name smartaps-mysql \
   -e MYSQL_ROOT_PASSWORD=<strong_root_password> \
-  -e MYSQL_DATABASE=smartats \
-  -e MYSQL_USER=smartats \
+  -e MYSQL_DATABASE=smartaps \
+  -e MYSQL_USER=smartaps \
   -e MYSQL_PASSWORD=<strong_db_password> \
   -e TZ=Asia/Shanghai \
   -p 3306:3306 \
@@ -138,7 +131,7 @@ docker run -d \
 
 ```bash
 docker run -d \
-  --name smartats-redis \
+  --name smartaps-redis \
   -p 6379:6379 \
   -v /data/redis:/data \
   redis:7.0-alpine \
@@ -149,36 +142,26 @@ docker run -d \
 
 ```bash
 docker run -d \
-  --name smartats-rabbitmq \
+  --name smartaps-rabbitmq \
   -e RABBITMQ_DEFAULT_USER=admin \
   -e RABBITMQ_DEFAULT_PASS=<strong_mq_password> \
-  -e RABBITMQ_DEFAULT_VHOST=smartats \
+  -e RABBITMQ_DEFAULT_VHOST=smartaps \
   -p 5672:5672 \
   -p 15672:15672 \
   -v /data/rabbitmq:/var/lib/rabbitmq \
   rabbitmq:3.12-management
 ```
 
-### Step 4: MinIO
+### Step 4: Object Storage
 
-```bash
-docker run -d \
-  --name smartats-minio \
-  -e MINIO_ROOT_USER=admin \
-  -e MINIO_ROOT_PASSWORD=<strong_minio_password> \
-  -p 9000:9000 \
-  -p 9001:9001 \
-  -v /data/minio:/data \
-  minio/minio:latest \
-  server /data --console-address ":9001"
-```
+Use a maintained S3-compatible object-storage service or a supported MinIO release. Keep the resume bucket private; SmartAPS uses server-side reads and short-lived presigned download URLs. The archived Bitnami MinIO image in the local Compose file is for development only.
 
 ### Step 5: Milvus (with etcd)
 
 ```bash
 # etcd
 docker run -d \
-  --name smartats-etcd \
+  --name smartaps-etcd \
   -e ETCD_AUTO_COMPACTION_MODE=revision \
   -e ETCD_AUTO_COMPACTION_RETENTION=1000 \
   -e ETCD_QUOTA_BACKEND_BYTES=4294967296 \
@@ -188,7 +171,7 @@ docker run -d \
 
 # Milvus
 docker run -d \
-  --name smartats-milvus \
+  --name smartaps-milvus \
   -e ETCD_ENDPOINTS=<etcd_host>:2379 \
   -e MINIO_ADDRESS=<minio_host>:9000 \
   -e MINIO_ACCESS_KEY_ID=admin \
@@ -200,10 +183,10 @@ docker run -d \
   milvus run standalone
 ```
 
-### Step 6: SmartATS Application
+### Step 6: SmartAPS Application
 
 ```bash
-java -jar smartats-1.0.0.jar \
+java -jar smartaps-1.0.0.jar \
   --spring.profiles.active=prod \
   --server.port=8080
 ```
@@ -218,9 +201,10 @@ java -jar smartats-1.0.0.jar \
 # ==================== Database ====================
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=smartats
-DB_USERNAME=smartats
+DB_NAME=smartaps
+DB_USERNAME=smartaps
 DB_PASSWORD=<strong_db_password>
+MYSQL_ROOT_PASSWORD=<strong_mysql_root_password>
 
 # ==================== Redis ====================
 REDIS_HOST=localhost
@@ -232,12 +216,13 @@ RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USERNAME=admin
 RABBITMQ_PASSWORD=<strong_mq_password>
-RABBITMQ_VHOST=smartats
+RABBITMQ_VHOST=smartaps
 
 # ==================== MinIO ====================
 MINIO_ENDPOINT=http://localhost:9000
-MINIO_ACCESS_KEY=admin
+MINIO_ACCESS_KEY=<storage_access_key>
 MINIO_SECRET_KEY=<strong_minio_password>
+MINIO_BUCKET_NAME=smartaps-resumes
 
 # ==================== Milvus ====================
 MILVUS_HOST=localhost
@@ -247,7 +232,7 @@ MILVUS_DATABASE=default
 # ==================== AI (Zhipu) ====================
 ZHIPU_API_KEY=<your_zhipu_api_key>
 ZHIPU_MODEL=glm-4-flash-250414
-AI_EMBEDDING_MODEL=embedding-3
+ZHIPU_EMBEDDING_MODEL=embedding-3
 AI_DAILY_QUOTA=500
 
 # ==================== JWT ====================
@@ -262,8 +247,6 @@ MAIL_PASSWORD=<your_smtp_auth_code>
 # ==================== CORS ====================
 CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
 
-# ==================== Server ====================
-SERVER_PORT=8080
 SPRING_PROFILES_ACTIVE=prod
 ```
 
@@ -274,27 +257,18 @@ SPRING_PROFILES_ACTIVE=prod
 | `DB_PASSWORD` | ✅ | MySQL password, never use the default value |
 | `REDIS_PASSWORD` | ✅ | Redis password |
 | `ZHIPU_API_KEY` | ✅ | Zhipu AI API key ([get it from the console](https://open.bigmodel.cn)) |
-| `JWT_SECRET` | ✅ | JWT signing secret, a random string of ≥32 characters |
+| `JWT_SECRET` | ✅ | Random JWT signing secret of at least 32 UTF-8 bytes |
 | `MAIL_PASSWORD` | ✅ | SMTP authorization code (not the mailbox login password) |
 | `CORS_ALLOWED_ORIGINS` | ✅ | Frontend domains, separated by commas if there are several |
-| `AI_DAILY_QUOTA` | ❌ | Daily AI call limit, defaults to 500 |
-
 > ⚠️ **Security notice**: the `.env` file is excluded via `.gitignore`; never commit it to version control.
 
 ---
 
-## Database Initialization
+## Database Initialization and Upgrades
 
-### First Deployment
+Flyway creates or upgrades the schema when the application starts. Migrations live in `src/main/resources/db/migration`; do not run the old standalone SQL files or manually drop tables.
 
-The table creation script lives at `docker/mysql/init/01-init-database.sql`, and Docker Compose runs it automatically on first startup.
-
-To initialize manually:
-
-```bash
-mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < docker/mysql/init/01-init-database.sql
-mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < src/main/resources/db/webhook_tables.sql
-```
+For an existing installation, use the [SmartAPS migration guide](./smartaps-migration-guide.md) to back up and move the database, RabbitMQ vhost, and object bucket before switching the application. Retain the old data until the new deployment passes verification.
 
 ### Database Table Overview
 
@@ -308,6 +282,7 @@ mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < src/main/
 | `interview_records` | Interview records |
 | `webhook_configs` | Webhook configuration |
 | `webhook_logs` | Webhook delivery logs |
+| `audit_logs` | Administrative audit events |
 
 ---
 
@@ -316,8 +291,8 @@ mysql -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> smartats < src/main/
 ### Application Layer
 
 ```bash
-# Basic connectivity (an authenticated endpoint returning 403 means the service is healthy)
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/jobs
+# Health details are hidden; actuator metrics require an administrator token.
+curl http://localhost:8080/api/v1/actuator/health
 # Expected: 200
 
 # Swagger docs (available in the dev environment only, disabled in prod)
@@ -328,10 +303,10 @@ curl http://localhost:8080/api/v1/swagger-ui.html
 
 ```bash
 # MySQL
-docker exec smartats-mysql mysqladmin ping -h localhost -uroot -p<password>
+docker exec smartaps-mysql mysqladmin ping -h localhost -uroot -p<password>
 
 # Redis
-docker exec smartats-redis redis-cli -a <password> ping
+docker exec smartaps-redis redis-cli -a <password> ping
 
 # RabbitMQ
 curl -u admin:<password> http://localhost:15672/api/healthchecks/node
@@ -353,21 +328,21 @@ Milvus needs about 90 seconds on first startup, and `docker-compose.yml` already
 
 ### 2. RabbitMQ VHost Does Not Exist
 
-If you see the `NOT_ALLOWED - vhost smartats not found` error:
+If you see the `NOT_ALLOWED - vhost smartaps not found` error:
 
 ```bash
 # Create the VHost manually
-docker exec smartats-rabbitmq rabbitmqctl add_vhost smartats
-docker exec smartats-rabbitmq rabbitmqctl set_permissions -p smartats admin ".*" ".*" ".*"
+docker exec smartaps-rabbitmq rabbitmqctl add_vhost smartaps
+docker exec smartaps-rabbitmq rabbitmqctl set_permissions -p smartaps admin ".*" ".*" ".*"
 ```
 
 ### 3. MinIO Bucket Does Not Exist
 
-The application creates the `smartats-resumes` bucket automatically at startup. To create it manually:
+The application creates the `smartaps-resumes` bucket automatically at startup. To create it manually:
 
 ```bash
-docker exec smartats-minio mc alias set local http://localhost:9000 admin <password>
-docker exec smartats-minio mc mb local/smartats-resumes
+docker exec smartaps-minio mc alias set local http://localhost:9000 admin <password>
+docker exec smartaps-minio mc mb local/smartaps-resumes
 ```
 
 ### 4. AI Parsing Fails
@@ -390,16 +365,16 @@ Check the following:
 ### Logging Configuration
 
 Production logging:
-- Output path: `logs/smartats.log`
+- Output path: `logs/smartaps.log`
 - Rolling policy: maximum 100MB per file, retained for 30 days
-- Log levels: `root=WARN`, `com.smartats=INFO`
+- Log levels: `root=WARN`, `com.smartaps=INFO`
 
 ```bash
 # Follow the log in real time
-tail -f logs/smartats.log
+tail -f logs/smartaps.log
 
 # Search for errors
-grep ERROR logs/smartats.log
+grep ERROR logs/smartaps.log
 ```
 
 ### RabbitMQ Monitoring
@@ -429,12 +404,12 @@ redis-cli -a <password> SLOWLOG GET 10
 
 ```bash
 # Daily full backup (recommended as a cron job)
-mysqldump -h <DB_HOST> -P <DB_PORT> -u smartats -p<DB_PASSWORD> \
-  --single-transaction --routines --triggers smartats \
-  | gzip > /backup/smartats_$(date +%Y%m%d_%H%M%S).sql.gz
+mysqldump -h <DB_HOST> -P <DB_PORT> -u smartaps -p<DB_PASSWORD> \
+  --single-transaction --routines --triggers smartaps \
+  | gzip > /backup/smartaps_$(date +%Y%m%d_%H%M%S).sql.gz
 
 # Keep the last 7 days
-find /backup -name "smartats_*.sql.gz" -mtime +7 -delete
+find /backup -name "smartaps_*.sql.gz" -mtime +7 -delete
 ```
 
 ### MinIO Backup
@@ -443,7 +418,7 @@ find /backup -name "smartats_*.sql.gz" -mtime +7 -delete
 # Use mc mirror to sync to the backup storage
 mc alias set local http://localhost:9000 admin <password>
 mc alias set backup <backup_endpoint> <access_key> <secret_key>
-mc mirror local/smartats-resumes backup/smartats-resumes
+mc mirror local/smartaps-resumes backup/smartaps-resumes
 ```
 
 ### Redis Backup
@@ -455,7 +430,7 @@ Redis has AOF persistence enabled (`appendonly yes`) and stores its data in the 
 ## Nginx Reverse Proxy Configuration (Optional)
 
 ```nginx
-upstream smartats {
+upstream smartaps {
     server 127.0.0.1:8080;
 }
 
@@ -469,7 +444,7 @@ server {
     client_max_body_size 50M;
 
     location /api/v1/ {
-        proxy_pass http://smartats;
+        proxy_pass http://smartaps;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -508,5 +483,5 @@ java -Xms512m -Xmx2g \
   -XX:+UseG1GC \
   -XX:MaxGCPauseMillis=200 \
   -Dspring.profiles.active=prod \
-  -jar smartats-1.0.0.jar
+  -jar smartaps-1.0.0.jar
 ```

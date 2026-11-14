@@ -1,6 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* ==================== SmartATS Design System ==================== */
+/* ==================== SmartAPS Design System ==================== */
 /* Modern professional SaaS palette - Cyan primary */
 
 @theme {
@@ -125,9 +126,6 @@ body,
   color: var(--color-text-primary);
 }
 
-/* ==================== Inter Font ==================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 /* ==================== Layout ==================== */
 .app-layout {
   display: flex;
@@ -177,6 +175,23 @@ body,
 
 .ant-table-tbody > tr:hover > td {
   background: var(--color-gray-50) !important;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  transition: background-color var(--duration-fast) var(--ease-in-out);
+}
+
+.table-loading-skeleton {
+  overflow-x: auto;
+}
+
+.table-loading-skeleton > div {
+  min-width: 640px;
+}
+
+.table-loading-skeleton .ant-skeleton-button,
+.table-loading-skeleton .ant-skeleton-input {
+  max-width: 100%;
 }
 
 /* Button */

@@ -13,10 +13,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.smartats</groupId>
-    <artifactId>smartats</artifactId>
+    <groupId>com.smartaps</groupId>
+    <artifactId>smartaps</artifactId>
     <version>1.0.0</version>
-    <name>SmartATS</name>
+    <name>SmartAPS</name>
     <description>Intelligent applicant tracking system</description>
 
     <!-- ==================== Java version configuration ==================== -->
@@ -40,6 +40,7 @@
         <pdfbox.version>2.0.29</pdfbox.version>
         <springdoc.version>2.5.0</springdoc.version>
         <milvus-sdk.version>2.4.8</milvus-sdk.version>
+        <flyway.version>10.20.1</flyway.version>
     </properties>
 
     <!-- ==================== Dependencies ==================== -->
@@ -48,6 +49,23 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>${flyway.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>${flyway.version}</version>
         </dependency>
 
         <!-- 2️⃣ Spring Boot Validation (parameter validation - @Valid, @NotNull) -->
