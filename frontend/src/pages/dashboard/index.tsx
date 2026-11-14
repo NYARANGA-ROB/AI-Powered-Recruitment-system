@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Statistic, List, Tag, Space, Typography } from 'antd';
+import { Button, Card, Empty, List, Statistic, Tag, Space } from 'antd';
 import {
   FileTextOutlined,
   TeamOutlined,
@@ -17,8 +17,6 @@ import { useAuthStore } from '../../store/auth';
 import type { JobResponse, ApplicationResponse } from '../../types';
 import PageTransition from '../../components/PageTransition';
 import { staggerContainer, staggerItem } from '../../components/motionVariants';
-
-const { Text } = Typography;
 
 const statusColorMap: Record<string, string> = {
   PENDING: 'default',
@@ -112,31 +110,48 @@ export default function DashboardPage() {
 
   return (
     <PageTransition>
-      {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {greetingTime()}, {userInfo?.username}
-        </h1>
-        <p className="text-gray-500 mt-1">This is your recruiting workspace — track hiring progress in real time</p>
+      <div className="mb-6">
+        <Card
+          bordered={false}
+          className="!border-0 !shadow-sm overflow-hidden"
+          styles={{ body: { padding: '24px 24px 18px' } }}
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-700 border border-cyan-100">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Recruiting operations live
+              </div>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
+                {greetingTime()}, {userInfo?.username}
+              </h1>
+              <p className="mt-1 text-sm text-gray-500 md:text-base">
+                This is your recruiting workspace — track hiring progress, pipeline health, and AI-assisted candidate flow in real time.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button type="primary" onClick={() => navigate('/jobs')}>
+                Post a Role
+              </Button>
+              <Button onClick={() => navigate('/candidates/search')}>Smart Search</Button>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      {/* Stat cards */}
       <motion.div
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6"
       >
         {statCards.map((item) => (
           <motion.div key={item.title} variants={staggerItem}>
-            <Card
-              bordered={false}
-              className="!border-0 !shadow-sm hover:!shadow-md transition-shadow"
-              styles={{ body: { padding: '20px' } }}
-            >
+            <Card bordered={false} className="!border-0 !shadow-sm hover:!shadow-md transition-shadow" styles={{ body: { padding: '20px' } }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm mb-2">{item.title}</p>
+                  <p className="mb-2 text-sm text-gray-500">{item.title}</p>
                   <div className="text-3xl font-bold text-gray-900">
                     {typeof item.value === 'number' ? (
                       <Statistic
@@ -153,7 +168,7 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
-                <div className={`w-14 h-14 rounded-xl ${item.bg} flex items-center justify-center text-2xl ${item.color}`}>
+                <div className={`flex h-14 w-14 items-center justify-center rounded-xl ${item.bg} text-2xl ${item.color}`}>
                   {item.icon}
                 </div>
               </div>
@@ -162,116 +177,108 @@ export default function DashboardPage() {
         ))}
       </motion.div>
 
-      {/* Content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Hot jobs */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 30 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 30 }}
         >
-          <Card
-            bordered={false}
-            className="!border-0 !shadow-sm h-full"
-            title={<span className="font-medium text-gray-700">Popular Jobs</span>}
-            loading={loading}
-          >
-            <List
-              dataSource={hotJobs}
-              renderItem={(job) => (
-                <List.Item
-                  className="!border-b-0"
-                  extra={
-                    <Space size={4}>
-                      <EyeOutlined className="text-gray-400 text-xs" />
-                      <span className="text-gray-400 text-sm">{job.viewCount}</span>
-                    </Space>
-                  }
-                >
-                  <List.Item.Meta
-                    title={
-                      <Space>
-                        <span className="font-medium text-gray-900">{job.title}</span>
-                        <Tag className="!text-xs !bg-cyan-50 !text-cyan-600 !border-cyan-100">
-                          {job.salaryRange}
-                        </Tag>
+          <Card bordered={false} className="!border-0 !shadow-sm h-full" title={<span className="font-medium text-gray-700">Popular Jobs</span>} loading={loading}>
+            {hotJobs.length ? (
+              <List
+                dataSource={hotJobs}
+                renderItem={(job) => (
+                  <List.Item
+                    className="!border-b-0"
+                    extra={
+                      <Space size={4}>
+                        <EyeOutlined className="text-gray-400 text-xs" />
+                        <span className="text-gray-400 text-sm">{job.viewCount}</span>
                       </Space>
                     }
-                    description={
-                      <span className="text-gray-400 text-sm">
-                        {job.department || '-'} · {job.jobType || 'Full-time'} · {job.education || 'Any'}
-                      </span>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
+                  >
+                    <List.Item.Meta
+                      title={
+                        <Space>
+                          <span className="font-medium text-gray-900">{job.title}</span>
+                          <Tag className="!text-xs !border-cyan-100 !bg-cyan-50 !text-cyan-600">{job.salaryRange}</Tag>
+                        </Space>
+                      }
+                      description={
+                        <span className="text-gray-400 text-sm">
+                          {job.department || '-'} · {job.jobType || 'Full-time'} · {job.education || 'Any'}
+                        </span>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <Empty description="No hot jobs yet" imageStyle={{ height: 84 }} />
+            )}
           </Card>
         </motion.div>
 
-        {/* Recent applications */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 30 }}
+          transition={{ delay: 0.28, type: 'spring', stiffness: 200, damping: 30 }}
         >
-          <Card
-            bordered={false}
-            className="!border-0 !shadow-sm h-full"
-            title={<span className="font-medium text-gray-700">Latest Applications</span>}
-            loading={loading}
-          >
-            <List
-              dataSource={recentApps}
-              renderItem={(app) => (
-                <List.Item className="!border-b-0">
-                  <List.Item.Meta
-                    title={
-                      <div className="flex items-center justify-between w-full pr-4">
-                        <span className="font-medium text-gray-900">{app.candidateName || '-'}</span>
-                        <Tag color={statusColorMap[app.status]} className="!text-xs">
-                          {app.statusDesc}
-                        </Tag>
-                      </div>
-                    }
-                    description={
-                      <div className="flex items-center justify-between pr-4">
-                        <span className="text-gray-400">{app.jobTitle || '-'}</span>
-                        {app.matchScore && (
-                          <span className="text-cyan-600 font-medium text-sm">
-                            {app.matchScore}% match
-                          </span>
-                        )}
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
+          <Card bordered={false} className="!border-0 !shadow-sm h-full" title={<span className="font-medium text-gray-700">Latest Applications</span>} loading={loading}>
+            {recentApps.length ? (
+              <List
+                dataSource={recentApps}
+                renderItem={(app) => (
+                  <List.Item className="!border-b-0">
+                    <List.Item.Meta
+                      title={
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <span className="font-medium text-gray-900">{app.candidateName || '-'}</span>
+                          <Tag color={statusColorMap[app.status]} className="!text-xs">
+                            {app.statusDesc}
+                          </Tag>
+                        </div>
+                      }
+                      description={
+                        <div className="flex items-center justify-between pr-4">
+                          <span className="text-gray-400">{app.jobTitle || '-'}</span>
+                          {app.matchScore && (
+                            <span className="text-cyan-600 font-medium text-sm">
+                              {app.matchScore}% match
+                            </span>
+                          )}
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
+            ) : (
+              <Empty description="No recent applications" imageStyle={{ height: 84 }} />
+            )}
           </Card>
         </motion.div>
       </div>
 
-      {/* Quick actions */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 30 }}
+        transition={{ delay: 0.35, type: 'spring', stiffness: 200, damping: 30 }}
         className="mt-5"
       >
         <Card bordered={false} className="!border-0 !shadow-sm" title={<span className="font-medium text-gray-700">Quick Actions</span>}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {quickActions.map((item) => (
               <button
                 key={item.label}
                 onClick={() => navigate(item.path)}
-                className="p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-cyan-50 hover:border-cyan-200 transition-all text-left group"
+                className="group rounded-xl border border-gray-100 bg-gray-50 p-4 text-left transition-all hover:border-cyan-200 hover:bg-cyan-50"
               >
-                <div className="text-cyan-600 text-xl mb-2 group-hover:scale-110 transition-transform">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-white text-xl text-cyan-600 shadow-sm transition-transform group-hover:scale-110">
                   {item.icon}
                 </div>
-                <div className="font-medium text-gray-700 text-sm">{item.label}</div>
-                <div className="text-gray-400 text-xs">{item.desc}</div>
+                <div className="text-sm font-medium text-gray-700">{item.label}</div>
+                <div className="mt-1 text-xs text-gray-400">{item.desc}</div>
               </button>
             ))}
           </div>

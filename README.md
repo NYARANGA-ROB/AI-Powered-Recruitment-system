@@ -1,71 +1,134 @@
-# SmartATS — Intelligent Applicant Tracking System
+﻿# SmartATS
 
-<p align="center">
-  <b>An AI-Powered Applicant Tracking System Built with Spring Boot 3, Zhipu AI, and Milvus</b>
-</p>
+SmartATS is an AI-powered recruiting platform for HR teams. It combines resume ingestion, structured candidate extraction, automated job-application workflows, interview management, analytics, and semantic search into a single Spring Boot + React system.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Java-21-blue" alt="Java 21">
-  <img src="https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen" alt="Spring Boot 3.2.5">
-  <img src="https://img.shields.io/badge/Spring%20AI-1.0.0--M4-orange" alt="Spring AI">
-  <img src="https://img.shields.io/badge/Tests-190%20passed-success" alt="Tests">
-  <img src="https://img.shields.io/badge/API%20Endpoints-40-blue" alt="API">
-  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
-</p>
+## Highlights
 
----
+- AI resume parsing via Zhipu AI with PDF/DOC/DOCX support
+- Distributed async pipeline with RabbitMQ, Redis, Redisson, and DLQ retry handling
+- Candidate search with Milvus vector embeddings and RAG-like enrichment
+- Job, application, interview, audit, and analytics modules
+- JWT-based authentication, webhook delivery, and SSE dashboard updates
+- Full-stack dashboard in React + TypeScript
 
-## Project Overview
+## Stack
 
-**SmartATS (Smart Applicant Tracking System)** is an intelligent recruitment management system designed for HR professionals. It supports resume uploads, automatic AI-powered information extraction, comprehensive recruitment workflow management (job applications and interview scheduling), RAG-based semantic candidate search, and webhook event notifications.
+- Backend: Java 21, Spring Boot 3.2.5, Spring Security, MyBatis-Plus
+- Database: MySQL 8, Redis 7, Milvus, MinIO
+- Messaging: RabbitMQ
+- AI: Spring AI + Zhipu AI
+- Frontend: React 19, Vite, TypeScript, Ant Design
 
-> 📌 This is a **learning project** designed to demonstrate practical experience with Spring Boot 3 full-stack development, AI integration, and distributed systems architecture.
+## Repository layout
 
-### Core Features
+- `src/main/java` — backend services, controllers, security, MQ, AI integrations
+- `src/main/resources` — app config and SQL resources
+- `src/test/java` — backend tests
+- `frontend` — React admin dashboard and API client
+- `docs` — architecture and deployment references
+- `docker-compose.yml` — local infrastructure for MySQL, Redis, RabbitMQ, and MinIO
 
-- **AI-Powered Resume Parsing** — Upload PDF, DOC, and DOCX resumes. Zhipu AI automatically extracts structured information, including names, skills, and work experience.
-- **Asynchronous Processing Pipeline** — RabbitMQ message queues, Redisson distributed locks, retry mechanisms, and dead-letter queues.
-- **RAG Semantic Search** — Milvus vector database combined with the embedding-3 model to enable natural language candidate searches.
-- **Complete Recruitment Workflow** — Job publishing → Resume parsing → Candidate management → Job applications → Interview scheduling → Feedback.
-- **Webhook Notifications** — 12 event types, HMAC-SHA256 signatures, asynchronous delivery, and retry mechanisms.
-- **Redis Caching System** — Cache-aside pattern, delayed double deletion, atomic counters, and trending rankings.
+## Quick start
 
-### Business Workflow
+### 1) Prerequisites
 
-```text
-Resume Upload → MD5 Deduplication → MinIO Storage → RabbitMQ Async Processing
-     → AI Structured Data Extraction → Vector Embedding and Storage
-     → Webhook Notifications
+- JDK 21+
+- Maven 3.9+
+- Node.js 20+
+- Docker Desktop
 
-Semantic Search → Query Embedding → Milvus ANN Retrieval
-     → Score Filtering → MySQL Data Enrichment → RAG Response
+### 2) Start infrastructure
+
+```bash
+docker-compose up -d
 ```
 
----
+This starts:
 
-## Technology Stack
+- MySQL: `localhost:3307`
+- Redis: `localhost:6379`
+- RabbitMQ: `localhost:5672` and UI at `http://localhost:15672`
+- MinIO: `localhost:9000` and Console at `http://localhost:9001`
 
-| Layer | Technology | Version |
-|------|------|------|
-| Core Framework | Spring Boot | 3.2.5 |
-| Runtime | JDK | 21 |
-| ORM | MyBatis-Plus | 3.5.10.1 |
-| Database | MySQL | 8.0 |
-| Caching & Distributed Locks | Redis + Redisson | 7.0 / 3.25.0 |
-| Message Queue | RabbitMQ | 3.12 |
-| File Storage | MinIO | 8.5.10 |
-| Vector Database | Milvus | 2.4.17 |
-| AI Integration | Spring AI + Zhipu AI | 1.0.0-M4 |
-| Document Parsing | Apache POI + PDFBox | 5.2.5 / 2.0.29 |
-| Authentication & Security | Spring Security + JWT | jjwt 0.11.5 |
-| API Documentation | SpringDoc OpenAPI | 2.5.0 |
-| Testing | JUnit 5 + Mockito + MockMvc | 190 test cases |
+### 3) Configure environment variables
 
----
+Copy the example file and update the values for your environment:
 
-## System Architecture
+```bash
+cp .env.example .env
+```
+
+The project also includes a frontend example file:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+### 4) Run the backend
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+The backend exposes the REST API under `/api/v1` and Swagger UI at:
 
 ```text
-                       Spring Security + JWT Authentication Filter
-                                      |
-   +--------+--------+--------+-------+-------+--------+
+http://localhost:8080/api/v1/swagger-ui.html
+```
+
+### 5) Run the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend is available at:
+
+```text
+http://localhost:3000
+```
+
+## Core modules
+
+- Auth and authorization
+- Job management
+- Resume upload and AI parsing
+- Candidate data and semantic search
+- Recruitment applications and matching
+- Interview scheduling and review
+- Webhooks and auditing
+- Analytics and SSE dashboard updates
+
+## Project documentation
+
+See the docs in `docs/` for deeper technical details:
+
+- `docs/SmartATS-Design-Document.md` — system design and architecture
+- `docs/SmartATS-development-handbook-from-zero.md` — implementation guidance
+- `docs/project-progress-summary.md` — project status and module progress
+- `docs/deployment-guide.md` — production deployment instructions
+- `docs/frontend-api-reference.md` — frontend to backend API overview
+
+## Suggested workflow
+
+1. Start Docker infrastructure
+2. Apply database schema and seed scripts if needed
+3. Run backend with environment variables
+4. Run frontend with local proxy configuration
+5. Use Swagger and the dashboard to validate flows end-to-end
+
+## Troubleshooting
+
+- If Docker services do not start cleanly, check that port 3307, 6379, 5672, 9000, and 15672 are free.
+- If the backend fails to connect to MySQL or Redis, verify your `.env` values and ensure the containers are running with `docker-compose ps`.
+- If the frontend cannot reach the API, confirm that the backend is running on `http://localhost:8080` and that `VITE_API_BASE_URL` points to the correct host.
+- If login or token refresh fails, verify that `JWT_SECRET` is set and consistent between app restarts.
+
+## Notes
+
+- The backend uses environment variables for secrets and service credentials.
+- The frontend reads `VITE_API_BASE_URL` from `.env` and proxies `/api/v1` to the backend during local development.
+- The project is designed for development and learning-use deployment; production hardening should include secrets management, stricter network policies, and CI/CD checks.

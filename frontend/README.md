@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+﻿# SmartATS Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React + TypeScript dashboard for SmartATS. It provides the management UI for jobs, resumes, candidates, interviews, analytics, and audit logs.
 
-Currently, two official plugins are available:
+## What the frontend includes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Authentication and token refresh flow
+- Job, candidate, application, interview, and audit management pages
+- Resume upload and candidate search flows
+- Analytics dashboards and live SSE stream views
+- Role-based access and unified API request handling
 
-## React Compiler
+## Local development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The Vite development server runs on `http://localhost:3000` by default and proxies `/api/v1` calls to the Spring Boot app on `http://localhost:8080`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Environment variables
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Create a `.env` file based on the template below:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api/v1
+VITE_APP_TITLE=SmartATS
 ```
+
+## Useful commands
+
+```bash
+npm run build
+npm run lint
+npm run dev -- --host 0.0.0.0
+```
+
+## Troubleshooting
+
+- If the Vite server reports a port conflict, either stop the process using port 3000 or update the port in `vite.config.ts`.
+- If API calls fail with 401s, log out and log back in so the refresh token flow can run again.
+- If requests hang, confirm the backend is listening on `http://localhost:8080` and that the proxy config is still pointing to the same target.
+
+## Notes
+
+- Keep the backend running before testing the dashboard flows.
+- Do not commit your local `.env` file.
+- For production builds, configure your API host explicitly in `VITE_API_BASE_URL`.
