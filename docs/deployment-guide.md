@@ -95,7 +95,7 @@ java -jar target/smartaps-1.0.0.jar \
   --server.port=8080
 ```
 
-Flyway applies versioned schema migrations at startup. Existing SmartAPS installations are baselined at version `0`; the migrations preserve existing tables, align the resume schema, and normalize legacy education values to English codes. Back up the database before upgrading.
+Flyway applies versioned schema migrations at startup. Existing SmartAPS installations are baselined at version `0`; the migrations preserve existing tables, align the resume schema, normalize legacy education values to English codes, and add the job view-count and logical-delete columns. Back up the database before upgrading.
 
 ### 7. Verify the Deployment
 
